@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Resources Menu App</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .placeholder {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 4px;
+            padding: 40px;
+            text-align: center;
+            color: #6c757d;
+        }
+        .placeholder h2 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .code-snippet {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .feature-list li:before {
+            content: "✓";
+            color: #28a745;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .option-box {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .option-box h4 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Profile Resources Menu Module</h1>
+        
+        <div class="placeholder">
+            <h2>🚀 Ready to Build!</h2>
+            <p>This template provides the foundation for a Crowdin app with a Profile Resources Menu module.</p>
+            
+            <h3>What's Included:</h3>
+            <ul class="feature-list">
+                <li>Express.js server with Crowdin SDK integration</li>
+                <li>Profile Resources Menu module configuration</li>
+                <li>JWT authentication handling</li>
+                <li>React JSON Schema forms support</li>
+                <li>Metadata storage for user preferences</li>
+                <li>Form data endpoints</li>
+            </ul>
+            
+            <h3>Implementation Options:</h3>
+            
+            <div class="option-box">
+                <h4>Option 1: Custom HTML Interface</h4>
+                <p>Replace this HTML file with your custom interface. Good for simple UIs or when you want full control.</p>
+            </div>
+            
+            <div class="option-box">
+                <h4>Option 2: React JSON Schema Forms</h4>
+                <p>Use declarative form schemas for automatic form generation. Uncomment the form configuration in index.js.</p>
+            </div>
+            
+            <h3>Next Steps:</h3>
+            <div class="code-snippet">
+                1. Choose your implementation approach (HTML or JSON Schema)<br>
+                2. Define your form schema or replace this HTML<br>
+                3. Add your business logic in index.js<br>
+                4. Test with your Crowdin user profile
+            </div>
+            
+            <p><strong>Profile Resources Menu apps appear in the user profile menu and provide user-specific functionality.</strong></p>
+        </div>
+    </div>
+
+    <script>
+        // TODO: Add your JavaScript logic here
+        console.log('Profile Resources Menu App loaded');
+        
+        // Example: Get JWT token from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const jwt = urlParams.get('jwt');
+        
+        if (jwt) {
+            console.log('JWT token found:', jwt);
+            // TODO: Use this token to authenticate API requests
+        }
+    </script>
+</body>
+</html>

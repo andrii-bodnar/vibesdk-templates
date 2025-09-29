@@ -1,0 +1,21 @@
+{
+  "name": "crowdin-app-template",
+  "private": true,
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon -r dotenv/config index.js",
+    "debug": "nodemon --inspect -r dotenv/config index.js"
+  },
+  "dependencies": {
+    "@crowdin/app-project-module": "^0.94.0",
+    "@crowdin/crowdin-api-client": "^1.45.1",
+    "@crowdin/crowdin-apps-functions": "^0.12.1",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "dotenv": "^16.5.0",
+    "nodemon": "^3.1.10"
+  }
+}

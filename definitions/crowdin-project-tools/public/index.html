@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Tools App</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .tool-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .tool-section h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        .context-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .action-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 5px 5px 0;
+            font-size: 14px;
+        }
+        .action-button:hover {
+            background: #0056b3;
+        }
+        .action-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .loading {
+            color: #6c757d;
+            font-style: italic;
+        }
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .result {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .code-snippet {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .feature-list li:before {
+            content: "✓";
+            color: #28a745;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .language-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .language-tag {
+            background: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Project Tools</h1>
+        
+        <div class="tool-section">
+            <h3>🚀 Ready to Build!</h3>
+            <p>This template provides the foundation for a Crowdin app with Project Tools module.</p>
+            
+            <div class="context-info">
+                <strong>Project Tools apps appear in the project menu and provide project-specific functionality.</strong>
+            </div>
+            
+            <h4>What's Included:</h4>
+            <ul class="feature-list">
+                <li>Express.js server with Crowdin SDK integration</li>
+                <li>Project Tools module configuration</li>
+                <li>JWT authentication with project context</li>
+                <li>Project-specific API endpoints</li>
+                <li>Language and file access</li>
+            </ul>
+        </div>
+
+        <div class="tool-section">
+            <h3>Current Project Context</h3>
+            <div id="projectInfo" class="loading">Loading project information...</div>
+        </div>
+
+        <div class="tool-section">
+            <h3>Project Languages</h3>
+            <div id="languageInfo" class="loading">Loading languages...</div>
+        </div>
+
+        <div class="tool-section">
+            <h3>Project Actions</h3>
+            <button class="action-button" onclick="performAction('analyze')">Analyze Project</button>
+            <button class="action-button" onclick="performAction('export')">Export Data</button>
+            <button class="action-button" onclick="performAction('sync')">Sync Project</button>
+            <button class="action-button" onclick="performAction('report')">Generate Report</button>
+            
+            <div id="actionResult"></div>
+        </div>
+
+        <div class="tool-section">
+            <h3>Implementation Guide</h3>
+            <div class="code-snippet">
+                1. Replace this HTML with your project tool interface<br>
+                2. Add your business logic in index.js<br>
+                3. Use project context (project ID, languages, files)<br>
+                4. Test within your Crowdin project
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for project context
+        let projectContext = {};
+        
+        // Get parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const jwt = urlParams.get('jwt');
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Project Tools loaded');
+            
+            if (jwt) {
+                console.log('JWT token found:', jwt);
+                loadProjectInfo();
+                loadProjectLanguages();
+            } else {
+                showError('No JWT token found in URL parameters');
+            }
+        });
+        
+        async function loadProjectInfo() {
+            try {
+                const response = await fetch(`/api/project-info?jwt=${jwt}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    projectContext = result.data;
+                    updateProjectDisplay();
+                } else {
+                    showError('Failed to load project info: ' + result.error, 'projectInfo');
+                }
+            } catch (error) {
+                console.error('Error loading project info:', error);
+                showError('Error loading project information', 'projectInfo');
+            }
+        }
+        
+        async function loadProjectLanguages() {
+            try {
+                const response = await fetch(`/api/project-languages?jwt=${jwt}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateLanguageDisplay(result.languages);
+                } else {
+                    showError('Failed to load languages: ' + result.error, 'languageInfo');
+                }
+            } catch (error) {
+                console.error('Error loading languages:', error);
+                showError('Error loading project languages', 'languageInfo');
+            }
+        }
+        
+        function updateProjectDisplay() {
+            const projectDiv = document.getElementById('projectInfo');
+            if (projectContext && Object.keys(projectContext).length > 0) {
+                projectDiv.innerHTML = `
+                    <strong>Project ID:</strong> ${projectContext.projectId || 'N/A'}<br>
+                    <strong>Info:</strong> ${projectContext.info || 'No additional info'}<br>
+                    <strong>Status:</strong> Connected and ready
+                `;
+                projectDiv.className = '';
+            } else {
+                projectDiv.innerHTML = 'No project information available';
+                projectDiv.className = 'loading';
+            }
+        }
+        
+        function updateLanguageDisplay(languages) {
+            const languageDiv = document.getElementById('languageInfo');
+            if (languages && languages.length > 0) {
+                const languageTags = languages.map(lang => 
+                    `<span class="language-tag">${lang.name} (${lang.id})</span>`
+                ).join('');
+                languageDiv.innerHTML = `
+                    <div class="language-list">${languageTags}</div>
+                `;
+                languageDiv.className = '';
+            } else {
+                languageDiv.innerHTML = 'No languages found';
+                languageDiv.className = 'loading';
+            }
+        }
+        
+        async function performAction(action) {
+            const resultDiv = document.getElementById('actionResult');
+            resultDiv.innerHTML = '<div class="loading">Processing...</div>';
+            
+            try {
+                const response = await fetch(`/api/project-action?jwt=${jwt}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: action,
+                        data: projectContext
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `<div class="result">${result.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                console.error('Error performing action:', error);
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        function showError(message, elementId = 'actionResult') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="error">${message}</div>`;
+        }
+    </script>
+</body>
+</html>

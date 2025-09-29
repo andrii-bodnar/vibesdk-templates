@@ -1,0 +1,6 @@
+name: "crowdin-profile-resources-menu"
+description: "Crowdin app with Profile Resources Menu module"
+base_reference: "crowdin-reference"
+
+package_patches:
+  name: "crowdin-profile-resources-menu"

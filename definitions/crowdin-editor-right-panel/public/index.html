@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Right Panel App</title>
+    <script src="https://cdn.crowdin.com/apps/dist/iframe.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: #ffffff;
+            color: #333;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 100%;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .panel-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .panel-section h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #495057;
+            font-size: 14px;
+        }
+        .context-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        .action-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin: 5px 5px 5px 0;
+        }
+        .action-button:hover {
+            background: #0056b3;
+        }
+        .code-snippet {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 11px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Editor Right Panel</h1>
+        
+        <div class="panel-section">
+            <h3>🚀 Ready to Build!</h3>
+            <p>This template provides the foundation for a Crowdin app with Editor Right Panel module.</p>
+            
+            <div class="context-info">
+                <strong>Editor Right Panel apps appear in the translation editor sidebar and provide context-aware functionality.</strong>
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <h3>Example Actions</h3>
+            <button class="action-button" onclick="insertText('Sample Text')">Insert Text</button>
+            <button class="action-button" onclick="appendText(' (added)')">Append Text</button>
+            <button class="action-button" onclick="showCurrentString()">Show Current String</button>
+        </div>
+
+        <div class="panel-section">
+            <h3>Implementation Guide</h3>
+            <div class="code-snippet">
+                1. Replace this HTML with your custom panel UI<br>
+                2. Use Crowdin Editor API to interact with translations<br>
+                3. Most functionality is frontend-focused<br>
+                4. Test within Crowdin translation editor
+            </div>
+            
+            <h4>Available Editor API Methods:</h4>
+            <div class="code-snippet">
+                // Insert text at cursor position<br>
+                window.AP.editor.insertTranslation(text)<br><br>
+                
+                // Append text to current translation<br>
+                window.AP.editor.appendTranslation(text)<br><br>
+                
+                // Replace entire translation<br>
+                window.AP.editor.setTranslation(text)<br><br>
+                
+                // Get current translation<br>
+                window.AP.editor.getTranslation()<br><br>
+                
+                // Get source string<br>
+                window.AP.editor.getSourceString()
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // TODO: Replace this with your custom functionality
+        
+        function insertText(text) {
+            if (window.AP && window.AP.editor) {
+                window.AP.editor.insertTranslation(text);
+            } else {
+                alert('Editor API not available. This works only within Crowdin editor.');
+            }
+        }
+        
+        function appendText(text) {
+            if (window.AP && window.AP.editor) {
+                window.AP.editor.appendTranslation(text);
+            } else {
+                alert('Editor API not available. This works only within Crowdin editor.');
+            }
+        }
+        
+        function showCurrentString() {
+            if (window.AP && window.AP.editor) {
+                const sourceString = window.AP.editor.getSourceString();
+                const currentTranslation = window.AP.editor.getTranslation();
+                alert(`Source: "${sourceString}"\nTranslation: "${currentTranslation}"`);
+            } else {
+                alert('Editor API not available. This works only within Crowdin editor.');
+            }
+        }
+        
+        // TODO: Add your custom logic here
+        // Examples:
+        // - Load external data/suggestions
+        // - Integrate with translation services
+        // - Provide context-aware assistance
+        // - Add custom UI components
+    </script>
+</body>
+</html>
