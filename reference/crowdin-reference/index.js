@@ -1,61 +1,50 @@
-const crowdinModule = require('@crowdin/app-project-module');
-const bodyParser = require('body-parser');
+import { httpServerHandler } from 'cloudflare:node';
+import { sendFilePolyfill, setEnvironment } from './middleware/sendFilePolyfill.js';
 
-const app = crowdinModule.express();
-app.use(bodyParser.json());
+globalThis.__dirname = globalThis.__dirname || process.cwd?.() || '/';
+globalThis.__filename = globalThis.__filename || 'index.js';
+
+const crowdinModule = await import('@crowdin/app-project-module');
+const app = crowdinModule.default.express();
+
+app.use(sendFilePolyfill);
 
 const configuration = {
-  name: process.env.APP_NAME || 'Crowdin App',
-  identifier: process.env.APP_IDENTIFIER || 'crowdin-app',
-  description: process.env.APP_DESCRIPTION || 'A Crowdin app built with the SDK',
+  name: process.env.APP_NAME,
+  identifier: process.env.APP_IDENTIFIER,
+  description: process.env.APP_DESCRIPTION,
+  enableStatusPage: {
+    database: false,
+    filesystem: false
+  },
   dbFolder: __dirname + '/data',
-  imagePath: __dirname + '/logo.svg',
-  
+  imagePath: __dirname + '/public/logo.svg',
   // Default module configurations will be overridden by specific templates
 };
 
+app.post('/installed', (req, res) => {
+  res.status(204).end();
+});
+
+app.post('/uninstall', (req, res) => {
+  res.status(204).end();
+});
+
 // Initialize Crowdin app
 const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
-const metadataStore = crowdinModule.metadataStore;
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Default route
-app.get('/', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>${configuration.name}</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        h1 { color: #333; }
-        .info { background: #f5f5f5; padding: 20px; border-radius: 8px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h1>${configuration.name}</h1>
-        <div class="info">
-          <p><strong>Description:</strong> ${configuration.description}</p>
-          <p><strong>Status:</strong> Running</p>
-          <p><strong>Identifier:</strong> ${configuration.identifier}</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `);
-});
+const httpHandler = httpServerHandler(app.listen(process.env.PORT || 3000));
 
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Crowdin app "${configuration.name}" is running on port ${PORT}`);
-  console.log(`Base URL: ${configuration.baseUrl}`);
-});
-
-module.exports = { app, crowdinApp, metadataStore };
+export default {
+  async fetch(request, env, ctx) {
+    // Set environment for both polyfills
+    setEnvironment(env);
+    
+    return httpHandler.fetch(request, env, ctx);
+  }
+};

@@ -1,32 +1,47 @@
-const crowdinModule = require('@crowdin/app-project-module');
-const bodyParser = require('body-parser');
+import { httpServerHandler } from 'cloudflare:node';
+import { sendFilePolyfill, setEnvironment } from './middleware/sendFilePolyfill.js';
 
-const app = crowdinModule.express();
-app.use(bodyParser.json());
+globalThis.__dirname = globalThis.__dirname || process.cwd?.() || '/';
+globalThis.__filename = globalThis.__filename || 'index.js';
+
+const crowdinModule = await import('@crowdin/app-project-module');
+const app = crowdinModule.default.express();
+
+app.use(sendFilePolyfill);
 
 const configuration = {
-  baseUrl: process.env.BASE_URL,
-  clientId: process.env.CROWDIN_CLIENT_ID,
-  clientSecret: process.env.CROWDIN_CLIENT_SECRET,
-  name: process.env.APP_NAME || 'Project Tools App',
-  identifier: process.env.APP_IDENTIFIER || 'project-tools-app',
-  description: process.env.APP_DESCRIPTION || 'A Crowdin app with Project Tools module',
+  name: process.env.APP_NAME,
+  identifier: process.env.APP_IDENTIFIER,
+  description: process.env.APP_DESCRIPTION,
   scopes: [
     crowdinModule.Scope.PROJECTS,
     crowdinModule.Scope.TRANSLATIONS,
     // TODO: Add additional scopes as needed
   ],
+  enableStatusPage: {
+    database: false,
+    filesystem: false
+  },
   dbFolder: __dirname + '/data',
-  imagePath: __dirname + '/logo.svg',
+  imagePath: __dirname + '/public/logo.svg',
+  
+  // Project Tools module configuration
   projectTools: {
     fileName: 'index.html',
     uiPath: __dirname + '/public'
   }
 };
 
+app.post('/installed', (req, res) => {
+  res.status(204).end();
+});
+
+app.post('/uninstall', (req, res) => {
+  res.status(204).end();
+});
+
 // Initialize Crowdin app
 const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
-const metadataStore = crowdinModule.metadataStore;
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -133,11 +148,26 @@ app.get('/api/project-languages', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+// TODO: Add your custom API endpoints here
+// Example:
+// app.get('/api/user-settings', async (req, res) => {
+//   try {
+//     const { client, context } = await crowdinApp.establishCrowdinConnection(req.query.jwt);
+//     // Your business logic here
+//     res.status(200).json({ success: true, data: [] });
+//   } catch (error) {
+//     console.error('Error:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
 
-app.listen(PORT, () => {
-  console.log(`Crowdin app "${configuration.name}" is running on port ${PORT}`);
-  console.log(`Project Tools module enabled`);
-});
+const httpHandler = httpServerHandler(app.listen(process.env.PORT || 3000));
 
-module.exports = { app, crowdinApp, metadataStore };
+export default {
+  async fetch(request, env, ctx) {
+    // Set environment for both polyfills
+    setEnvironment(env);
+    
+    return httpHandler.fetch(request, env, ctx);
+  }
+};

@@ -1,46 +1,68 @@
-const crowdinModule = require('@crowdin/app-project-module');
-const bodyParser = require('body-parser');
+import { httpServerHandler } from 'cloudflare:node';
+import { sendFilePolyfill, setEnvironment } from './middleware/sendFilePolyfill.js';
 
-const app = crowdinModule.express();
-app.use(bodyParser.json());
+globalThis.__dirname = globalThis.__dirname || process.cwd?.() || '/';
+globalThis.__filename = globalThis.__filename || 'index.js';
+
+const crowdinModule = await import('@crowdin/app-project-module');
+const app = crowdinModule.default.express();
+
+app.use(sendFilePolyfill);
 
 const configuration = {
-  name: process.env.APP_NAME || 'Editor Right Panel App',
-  identifier: process.env.APP_IDENTIFIER || 'editor-right-panel-app',
-  description: process.env.APP_DESCRIPTION || 'A Crowdin app with Editor Right Panel module',
+  name: process.env.APP_NAME,
+  identifier: process.env.APP_IDENTIFIER,
+  description: process.env.APP_DESCRIPTION,
+  enableStatusPage: {
+    database: false,
+    filesystem: false
+  },
   dbFolder: __dirname + '/data',
-  imagePath: __dirname + '/logo.svg',
+  imagePath: __dirname + '/public/logo.svg',
   
-  // Editor Right Panel module configuration
-  editorRightPanel: {
+  // Organization Menu module configuration
+  organizationMenu: {
     fileName: 'index.html',
-    uiPath: __dirname + '/public',
-    modes: ['translate'], // Specify editor modes where panel appears
-    environments: 'crowdin' // or 'enterprise' or 'crowdin,enterprise'
+    uiPath: __dirname + '/public'
   }
 };
 
+app.post('/installed', (req, res) => {
+  res.status(204).end();
+});
+
+app.post('/uninstall', (req, res) => {
+  res.status(204).end();
+});
+
 // Initialize Crowdin app
 const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
-const metadataStore = crowdinModule.metadataStore;
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// TODO: Add your custom API endpoints here if needed
-// Most editor right panel apps are frontend-focused and may not need backend APIs
-// Examples:
-// - Data fetching endpoints for your UI
-// - Configuration endpoints
-// - Integration endpoints with external services
+// TODO: Add your custom API endpoints here
+// Example:
+// app.get('/api/user-settings', async (req, res) => {
+//   try {
+//     const { client, context } = await crowdinApp.establishCrowdinConnection(req.query.jwt);
+//     // Your business logic here
+//     res.status(200).json({ success: true, data: [] });
+//   } catch (error) {
+//     console.error('Error:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
 
-const PORT = process.env.PORT || 3000;
+const httpHandler = httpServerHandler(app.listen(process.env.PORT || 3000));
 
-app.listen(PORT, () => {
-  console.log(`Crowdin app "${configuration.name}" is running on port ${PORT}`);
-  console.log(`Editor Right Panel module enabled for modes: ${configuration.editorRightPanel.modes.join(', ')}`);
-});
-
-module.exports = { app, crowdinApp, metadataStore };
+export default {
+  async fetch(request, env, ctx) {
+    // Set environment for both polyfills
+    setEnvironment(env);
+    
+    return httpHandler.fetch(request, env, ctx);
+  }
+};
