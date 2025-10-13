@@ -1,11 +1,19 @@
 import { httpServerHandler } from 'cloudflare:node';
-import { sendFilePolyfill, setEnvironment } from './middleware/sendFilePolyfill.js';
+import { sendFilePolyfill } from './middleware/sendFilePolyfill.js';
+import { Express, Request, Response } from 'express';
+
+// Extend global namespace for Node.js compatibility
+declare global {
+  var __dirname: string;
+  var __filename: string;
+}
 
 globalThis.__dirname = globalThis.__dirname || process.cwd?.() || '/';
-globalThis.__filename = globalThis.__filename || 'index.js';
+globalThis.__filename = globalThis.__filename || 'index.ts';
 
+// Import Crowdin module with proper typing
 const crowdinModule = await import('@crowdin/app-project-module');
-const app = crowdinModule.default.express();
+const app: Express = crowdinModule.express();
 
 app.use(sendFilePolyfill);
 
@@ -36,16 +44,16 @@ const formConfiguration = {
 };
 
 const configuration = {
-  name: process.env.APP_NAME,
-  identifier: process.env.APP_IDENTIFIER,
-  description: process.env.APP_DESCRIPTION,
+  name: "Profile Resources Menu App",
+  identifier: "profile-resources-menu-app",
+  description: "A Crowdin app built with the SDK with Profile Resources Menu module",
   enableStatusPage: {
     database: false,
     filesystem: false
   },
   dbFolder: __dirname + '/data',
   imagePath: __dirname + '/public/logo.svg',
-  
+
   // Profile Resources Menu module configuration
   // Choose one approach:
   
@@ -59,11 +67,11 @@ const configuration = {
   // profileResourcesMenu: formConfiguration
 };
 
-app.post('/installed', (req, res) => {
+app.post('/installed', (req: Request, res: Response) => {
   res.status(204).end();
 });
 
-app.post('/uninstall', (req, res) => {
+app.post('/uninstall', (req: Request, res: Response) => {
   res.status(204).end();
 });
 
@@ -71,12 +79,12 @@ app.post('/uninstall', (req, res) => {
 const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 // Form data endpoints (for React JSON Schema forms)
-app.get('/form-data', async (req, res) => {
+app.get('/form-data', async (req: Request, res: Response) => {
   try {
     const { client, context } = await crowdinApp.establishCrowdinConnection(req.query.jwtToken);
     
@@ -97,7 +105,7 @@ app.get('/form-data', async (req, res) => {
   }
 });
 
-app.post('/form-data', async (req, res) => {
+app.post('/form-data', async (req: Request, res: Response) => {
   try {
     const { client, context } = await crowdinApp.establishCrowdinConnection(req.query.jwtToken);
     const formData = req.body.data;
@@ -118,26 +126,7 @@ app.post('/form-data', async (req, res) => {
   }
 });
 
-// TODO: Add your custom API endpoints here
-// Example:
-// app.get('/api/user-settings', async (req, res) => {
-//   try {
-//     const { client, context } = await crowdinApp.establishCrowdinConnection(req.query.jwt);
-//     // Your business logic here
-//     res.status(200).json({ success: true, data: [] });
-//   } catch (error) {
-//     console.error('Error:', error);
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// });
+const port: number = Number(process.env.PORT) || 3000;
+app.listen(port);
 
-const httpHandler = httpServerHandler(app.listen(process.env.PORT || 3000));
-
-export default {
-  async fetch(request, env, ctx) {
-    // Set environment for both polyfills
-    setEnvironment(env);
-    
-    return httpHandler.fetch(request, env, ctx);
-  }
-};
+export default httpServerHandler({ port });
