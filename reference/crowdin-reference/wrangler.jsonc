@@ -17,8 +17,6 @@
 	},
 	"vars": {
 		"URL": "http://localhost:3000",
-		"CROWDIN_CLIENT_ID": "<client_id>",
-		"CROWDIN_CLIENT_SECRET": "<client_secret>",
 	}
 	/**
 	 * Smart Placement

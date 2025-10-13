@@ -16,10 +16,7 @@
     "incremental": true,
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "types": [
-        "@cloudflare/workers-types/2023-07-01"
-    ]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "cloudflare-env.d.ts"],
   "exclude": ["node_modules", "dist"]

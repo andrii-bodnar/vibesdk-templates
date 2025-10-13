@@ -1,7 +1,3 @@
-import { httpServerHandler } from 'cloudflare:node';
-import { sendFilePolyfill } from './middleware/sendFilePolyfill.js';
-import { Express, Request, Response } from 'express';
-
 // Extend global namespace for Node.js compatibility
 declare global {
   var __dirname: string;
@@ -10,6 +6,11 @@ declare global {
 
 globalThis.__dirname = globalThis.__dirname || process.cwd?.() || '/';
 globalThis.__filename = globalThis.__filename || 'index.ts';
+
+import { httpServerHandler } from 'cloudflare:node';
+import { sendFilePolyfill } from './middleware/sendFilePolyfill.js';
+import { Express, Request, Response } from 'express';
+import { AuthenticationType } from '@crowdin/app-project-module/out/types';
 
 // Import Crowdin module with proper typing
 const crowdinModule = await import('@crowdin/app-project-module');
@@ -21,6 +22,7 @@ const configuration = {
   name: "Organization Menu App",
   identifier: "organization-menu-app",
   description: "A Crowdin app built with the SDK with Organization Menu module",
+  authenticationType: AuthenticationType.NONE,
   enableStatusPage: {
     database: false,
     filesystem: false
@@ -34,14 +36,6 @@ const configuration = {
     uiPath: __dirname + '/public'
   }
 };
-
-app.post('/installed', (req: Request, res: Response) => {
-  res.status(204).end();
-});
-
-app.post('/uninstall', (req: Request, res: Response) => {
-  res.status(204).end();
-});
 
 // Initialize Crowdin app
 crowdinModule.addCrowdinEndpoints(app, configuration);
