@@ -19,6 +19,7 @@ const app: Express = crowdinModule.express();
 app.use(sendFilePolyfill);
 
 const configuration = {
+  baseUrl: process.env.URL || 'http://localhost:3000',
   name: "Editor Right Panel App",
   identifier: "editor-right-panel-app",
   description: "A Crowdin app built with the SDK with Editor Right Panel module",

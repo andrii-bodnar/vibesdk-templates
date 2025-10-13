@@ -19,6 +19,7 @@ const app: Express = crowdinModule.express();
 app.use(sendFilePolyfill);
 
 const configuration = {
+  baseUrl: process.env.URL || 'http://localhost:3000',
   name: "Project Tools App",
   identifier: "project-tools-app",
   description: "A Crowdin app built with the SDK with Project Tools module",

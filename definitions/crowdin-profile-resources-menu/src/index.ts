@@ -45,6 +45,7 @@ const formConfiguration = {
 };
 
 const configuration = {
+  baseUrl: process.env.URL || 'http://localhost:3000',
   name: "Profile Resources Menu App",
   identifier: "profile-resources-menu-app",
   description: "A Crowdin app built with the SDK with Profile Resources Menu module",

@@ -19,6 +19,7 @@ const app: Express = crowdinModule.express();
 app.use(sendFilePolyfill);
 
 const configuration = {
+  baseUrl: process.env.URL || 'http://localhost:3000',
   name: "Organization Menu App",
   identifier: "organization-menu-app",
   description: "A Crowdin app built with the SDK with Organization Menu module",
