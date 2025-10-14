@@ -53,7 +53,7 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
-dist/
+build/
 
 # Cloudflare Workers
 .wrangler/
