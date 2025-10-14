@@ -5,7 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "npm run build && wrangler dev --port ${PORT:-3000}",
-    "build": "rm -rf dist && tsc --noEmitOnError false",
+    "build": "rm -rf build && tsc --noEmitOnError false",
     "lint": "eslint src --ext .ts,.tsx --format json",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
