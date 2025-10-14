@@ -71,7 +71,7 @@ const configuration = {
 };
 
 // Initialize Crowdin app
-const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
+crowdinModule.addCrowdinEndpoints(app, configuration);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
@@ -81,8 +81,6 @@ app.get('/health', (req: Request, res: Response) => {
 // Form data endpoints (for React JSON Schema forms)
 app.get('/form-data', async (req: Request, res: Response) => {
   try {
-    const { client, context } = await crowdinApp.establishCrowdinConnection(req.query.jwtToken);
-    
     // TODO: Fetch and return form data
     const formData = {
       setting1: 'default value'
@@ -102,14 +100,10 @@ app.get('/form-data', async (req: Request, res: Response) => {
 
 app.post('/form-data', async (req: Request, res: Response) => {
   try {
-    const { client, context } = await crowdinApp.establishCrowdinConnection(req.query.jwtToken);
     const formData = req.body.data;
     
     // TODO: Process and save form data
     console.log('Form data received:', formData);
-    
-    // Example: Save to metadata store
-    await crowdinApp.saveMetadata(context.jwtPayload.context.user_id, formData);
     
     res.status(200).json({ 
       message: 'Settings saved successfully!',
