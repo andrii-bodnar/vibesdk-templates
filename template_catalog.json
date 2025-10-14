@@ -3,7 +3,6 @@
     "name": "crowdin-editor-right-panel",
     "language": "typescript",
     "frameworks": [
-      "cloudflare",
       "express",
       "typescript",
       "wrangler"
@@ -17,7 +16,6 @@
     "name": "crowdin-organization-menu",
     "language": "typescript",
     "frameworks": [
-      "cloudflare",
       "express",
       "typescript",
       "wrangler"
@@ -31,7 +29,6 @@
     "name": "crowdin-profile-resources-menu",
     "language": "typescript",
     "frameworks": [
-      "cloudflare",
       "express",
       "typescript",
       "wrangler"
@@ -45,7 +42,6 @@
     "name": "crowdin-project-tools",
     "language": "typescript",
     "frameworks": [
-      "cloudflare",
       "express",
       "typescript",
       "wrangler"
