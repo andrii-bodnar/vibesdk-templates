@@ -4,11 +4,11 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "dev": "npm run build && wrangler dev --port ${PORT:-3000}",
+    "dev": "bun run build && wrangler dev --port ${PORT:-3000}",
     "build": "rm -rf build && mkdir -p build/assets/static && mkdir -p build/assets && cp -r node_modules/@crowdin/app-project-module/out/static/* build/assets/static/ && cp -r public/* build/assets/",
     "lint": "eslint worker --ext .ts,.tsx --format json",
-    "deploy": "npm run build && wrangler deploy",
-    "preview": "npm run build && wrangler dev",
+    "deploy": "bun run build && wrangler deploy",
+    "preview": "bun run build && wrangler dev",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
