@@ -1,7 +1,9 @@
 [
     "public/",
     "worker/",
-    "tsconfig.json",
+    "cloudflare-env.d.ts",
+    "eslint.config.mjs",
     "package.json",
+    "tsconfig.json",
     "wrangler.jsonc"
 ]
