@@ -1,6 +1,6 @@
 [
     "public/",
-    "src/",
+    "worker/",
     "tsconfig.json",
     "package.json",
     "wrangler.jsonc"

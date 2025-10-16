@@ -15,9 +15,9 @@
     "jsx": "preserve",
     "incremental": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./worker/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "cloudflare-env.d.ts"],
+  "include": ["worker/**/*.ts", "worker/**/*.tsx", "cloudflare-env.d.ts"],
   "exclude": ["node_modules", "build"]
 }

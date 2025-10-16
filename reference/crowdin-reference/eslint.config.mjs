@@ -5,7 +5,7 @@ import tsparser from '@typescript-eslint/parser';
 export default [
   js.configs.recommended,
   {
-    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    files: ['worker/**/*.ts', 'worker/**/*.tsx'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
@@ -15,11 +15,15 @@ export default [
       },
       globals: {
         console: 'readonly',
-        process: 'readonly',
-        Buffer: 'readonly',
-        globalThis: 'writable',
-        __dirname: 'writable',
-        __filename: 'writable',
+        globalThis: 'readonly',
+        // Cloudflare Workers globals
+        ExportedHandler: 'readonly',
+        CloudflareEnv: 'readonly',
+        ExecutionContext: 'readonly',
+        Request: 'readonly',
+        Response: 'readonly',
+        IncomingRequestCfProperties: 'readonly',
+        CfProperties: 'readonly',
       },
     },
     plugins: {
