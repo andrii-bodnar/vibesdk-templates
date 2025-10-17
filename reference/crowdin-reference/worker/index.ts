@@ -3,12 +3,12 @@ import { createApp } from './app';
 
 let handler: ExportedHandler | undefined;
 
-function initializeHandler(): ExportedHandler {
+function initializeHandler(env: CloudflareEnv): ExportedHandler {
     if (handler) {
         return handler;
     }
 
-    const app = createApp();
+    const app = createApp(env);
 
     const port: number = 3000;
     app.listen(port);
@@ -19,6 +19,6 @@ function initializeHandler(): ExportedHandler {
 
 export default {
     async fetch(request: Request<unknown, IncomingRequestCfProperties>, env: CloudflareEnv, ctx: ExecutionContext) {
-        return initializeHandler().fetch!(request, env, ctx);
+        return initializeHandler(env).fetch!(request, env, ctx);
     }
 }

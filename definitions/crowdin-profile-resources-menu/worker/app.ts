@@ -1,9 +1,8 @@
-import { env } from 'cloudflare:workers';
 import { AuthenticationType } from '@crowdin/app-project-module/out/types';
 import * as crowdinModule from '@crowdin/app-project-module';
 import { Request, Response } from 'express';
 
-export function createApp() {
+export function createApp(env: CloudflareEnv) {
     const app = crowdinModule.express();
 
     // TODO: Define your form schema for React JSON Schema forms
@@ -42,9 +41,9 @@ export function createApp() {
             database: false,
             filesystem: false
         },
-        assets: env.ASSETS as any,
+        assets: env.ASSETS,
         d1Config: {
-            database: env.DB as any,
+            database: env.DB,
         },
         imagePath: '/logo.svg',
         

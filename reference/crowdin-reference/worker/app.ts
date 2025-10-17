@@ -1,9 +1,8 @@
-import { env } from 'cloudflare:workers';
 import { AuthenticationType } from '@crowdin/app-project-module/out/types';
 import * as crowdinModule from '@crowdin/app-project-module';
 import { Request, Response } from 'express';
 
-export function createApp() {
+export function createApp(env: CloudflareEnv) {
     const app = crowdinModule.express();
 
     const configuration = {
