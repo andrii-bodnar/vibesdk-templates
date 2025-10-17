@@ -7,7 +7,6 @@ export function createApp() {
     const app = crowdinModule.express();
 
     const configuration = {
-        baseUrl: 'http://localhost:3000',
         name: "Project Tools App",
         identifier: "project-tools-app",
         description: "A Crowdin app built with the SDK with Project Tools module",

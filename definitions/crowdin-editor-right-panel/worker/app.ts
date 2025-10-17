@@ -7,7 +7,6 @@ export function createApp() {
     const app = crowdinModule.express();
 
     const configuration = {
-        baseUrl: 'http://localhost:3000',
         name: "Editor Right Panel App",
         identifier: "editor-right-panel-app",
         description: "A Crowdin app built with the SDK with Editor Right Panel module",

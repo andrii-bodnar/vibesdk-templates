@@ -7,7 +7,6 @@ export function createApp() {
     const app = crowdinModule.express();
 
     const configuration = {
-        baseUrl: 'http://localhost:3000',
         name: "Organization Menu App",
         identifier: "organization-menu-app",
         description: "A Crowdin app built with the SDK with Organization Menu module",
