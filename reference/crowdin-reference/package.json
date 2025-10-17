@@ -5,7 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "bun run build && wrangler dev --port ${PORT:-3000}",
-    "build": "rm -rf build && mkdir -p build/assets/static && mkdir -p build/assets && cp -r node_modules/@crowdin/app-project-module/out/static/* build/assets/static/ && cp -r public/* build/assets/",
+    "build": "mkdir -p dist/client/static && cp -r node_modules/@crowdin/app-project-module/out/static/* dist/client/static/ && cp -r public/* dist/client/",
     "lint": "eslint worker --ext .ts,.tsx --format json",
     "deploy": "bun run build && wrangler deploy",
     "preview": "bun run build && wrangler dev",
