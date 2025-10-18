@@ -8,8 +8,7 @@ function initializeHandler(env: CloudflareEnv): ExportedHandler {
         return handler;
     }
 
-    const app = createApp(env);
-
+    const { expressApp: app } = createApp(env);
     const port: number = 3000;
     app.listen(port);
     handler = httpServerHandler({ port });
@@ -17,8 +16,17 @@ function initializeHandler(env: CloudflareEnv): ExportedHandler {
     return handler;
 }
 
+async function handleCronEvent(env: CloudflareEnv, cron: string): Promise<void> {
+    const { cronExecutions = {} } = createApp(env).crowdinApp;
+    await cronExecutions[cron]();
+}
+
 export default {
     async fetch(request: Request<unknown, IncomingRequestCfProperties>, env: CloudflareEnv, ctx: ExecutionContext) {
         return initializeHandler(env).fetch!(request, env, ctx);
+    },
+
+    async scheduled(event: ScheduledEvent, env: CloudflareEnv, ctx: ExecutionContext): Promise<void> {
+        await handleCronEvent(env, event.cron);
     }
 }
