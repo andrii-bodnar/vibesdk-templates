@@ -24,6 +24,7 @@ export default [
         Response: 'readonly',
         IncomingRequestCfProperties: 'readonly',
         CfProperties: 'readonly',
+        ScheduledController: 'readonly',
       },
     },
     plugins: {

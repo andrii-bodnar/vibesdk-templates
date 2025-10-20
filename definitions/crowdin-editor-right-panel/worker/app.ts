@@ -31,12 +31,12 @@ export function createApp(env: CloudflareEnv) {
     };
 
     // Initialize Crowdin app
-    crowdinModule.addCrowdinEndpoints(app, configuration);
+    const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
 
     // Health check endpoint
     app.get('/health', (req: Request, res: Response) => {
         res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
     });
 
-    return app;
+    return { expressApp: app, crowdinApp };
 }

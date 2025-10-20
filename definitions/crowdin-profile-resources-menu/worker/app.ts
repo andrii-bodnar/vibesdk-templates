@@ -61,7 +61,7 @@ export function createApp(env: CloudflareEnv) {
     };
 
     // Initialize Crowdin app
-    crowdinModule.addCrowdinEndpoints(app, configuration);
+    const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
 
     // Health check endpoint
     app.get('/health', (req: Request, res: Response) => {
@@ -105,5 +105,5 @@ export function createApp(env: CloudflareEnv) {
         }
     });
 
-    return app;
+    return { expressApp: app, crowdinApp };
 }
