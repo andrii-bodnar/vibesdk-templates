@@ -34,6 +34,10 @@
 			"0 */12 * * *",
 			"0 0 * * *"
 		]
+	},
+	"vars": {
+		"CROWDIN_CLIENT_ID": "{{CROWDIN_CLIENT_ID}}",
+		"CROWDIN_CLIENT_SECRET": "{{CROWDIN_CLIENT_SECRET}}"
 	}
 	/**
 	 * Smart Placement

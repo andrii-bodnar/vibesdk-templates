@@ -1,4 +1,3 @@
-import { AuthenticationType } from '@crowdin/app-project-module/out/types';
 import * as crowdinModule from '@crowdin/app-project-module';
 import { Request, Response } from 'express';
 
@@ -9,13 +8,15 @@ export function createApp(env: CloudflareEnv) {
         name: "Organization Menu App",
         identifier: "organization-menu-app",
         description: "A Crowdin app built with the SDK with Organization Menu module",
-        authenticationType: AuthenticationType.NONE,
+        clientId: env.CROWDIN_CLIENT_ID,
+        clientSecret: env.CROWDIN_CLIENT_SECRET,
         disableLogsFormatter: true,
         enableStatusPage: {
-            database: false,
             filesystem: false
         },
-        assets: env.ASSETS,
+        assetsConfig: {
+            fetcher: env.ASSETS,
+        },
         d1Config: {
             database: env.DB,
         },
