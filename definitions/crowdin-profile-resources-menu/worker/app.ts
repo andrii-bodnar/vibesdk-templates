@@ -54,7 +54,7 @@ export function createApp(env: CloudflareEnv) {
         // Option 1: Simple HTML interface
         profileResourcesMenu: {
             fileName: 'index.html',
-            uiPath: '/profile-resources-menu'
+            uiPath: '/profile-resources'
         }
         
         // Option 2: React JSON Schema forms (uncomment to use)

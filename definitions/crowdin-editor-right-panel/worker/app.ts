@@ -25,7 +25,7 @@ export function createApp(env: CloudflareEnv) {
         // Editor Right Panel module configuration
         editorRightPanel: {
             fileName: 'index.html',
-            uiPath: '/editor-right-panel',
+            uiPath: '/editor-panels',
             modes: ['translate'], // Specify editor modes where panel appears
             environments: 'crowdin' // or 'enterprise' or 'crowdin,enterprise'
         }

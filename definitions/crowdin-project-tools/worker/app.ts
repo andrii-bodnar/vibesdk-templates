@@ -25,7 +25,7 @@ export function createApp(env: CloudflareEnv) {
         // Project Tools module configuration
         projectTools: {
             fileName: 'index.html',
-            uiPath: '/project-tools'
+            uiPath: '/tools'
         }
     };
 
