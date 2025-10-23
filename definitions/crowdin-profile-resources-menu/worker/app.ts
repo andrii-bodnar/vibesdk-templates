@@ -46,7 +46,7 @@ export function createApp(env: CloudflareEnv) {
         d1Config: {
             database: env.DB,
         },
-        imagePath: '/logo.svg',
+        imagePath: '/logo.png',
         
         // Profile Resources Menu module configuration
         // Choose one approach:

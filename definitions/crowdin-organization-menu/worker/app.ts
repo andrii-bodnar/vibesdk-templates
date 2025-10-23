@@ -20,7 +20,7 @@ export function createApp(env: CloudflareEnv) {
         d1Config: {
             database: env.DB,
         },
-        imagePath: '/logo.svg',
+        imagePath: '/logo.png',
         
         // Organization Menu module configuration
         organizationMenu: {
