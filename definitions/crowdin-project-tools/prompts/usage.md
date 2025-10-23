@@ -2,17 +2,21 @@
 
 ## Overview
 Crowdin app with Project Tools module for project-specific functionality.
-- Backend: Express.js with Crowdin Apps SDK
-- Frontend: HTML/CSS/JavaScript with project context integration
-- Authentication: JWT tokens from Crowdin with project context
+- Backend: TypeScript with Express.js and Crowdin Apps SDK
+- Frontend: Modular HTML/CSS/JavaScript with Crowdin Apps JS API
+- Authentication: JWT tokens from Crowdin with automatic project context
 - Module: Project Tools (appears in project menu)
+- Features: Responsive design, error handling, empty states, accessibility
 
 ## Tech Stack
-- **Crowdin Apps SDK** (@crowdin/app-project-module) for Crowdin integration
+- **Crowdin Apps JS API** (AP object) for frontend integration
+- **Crowdin Apps SDK** (@crowdin/app-project-module) for backend
+- **TypeScript** for type-safe backend development
 - **Express.js** for server and API endpoints
-- **JWT** for authentication with project context
-- **HTML/CSS/JavaScript** for project tool interface
-- **Crowdin API** for project data access
+- **JWT** for secure authentication with project context
+- **Modular Frontend** - Separate HTML, CSS (styles.css), JS (app.js) files
+- **Responsive CSS** - Mobile-first design (320px+)
+- **Accessibility** - WCAG 2.1, ARIA labels
 
 ## Development Restrictions
 - **Authentication**: Always use JWT tokens from Crowdin for API requests
@@ -23,52 +27,76 @@ Crowdin app with Project Tools module for project-specific functionality.
 ## Project Structure
 
 ### Backend Structure
-- `index.js` - Main application with Project Tools configuration
+- `worker/app.ts` - TypeScript backend with Project Tools configuration
+- `worker/index.ts` - Entry point for Cloudflare Worker
 - `public/` - Static files served to the browser
-- `public/index.html` - Project tool interface
-- `data/` - Metadata storage directory
 
 ### Frontend Structure
-- `public/index.html` - Project tool interface
-- JavaScript for project context handling
-- Project-specific functionality
+- `public/tools/index.html` - Main HTML interface with demo UI
+- `public/tools/app.js` - JavaScript with Crowdin Apps JS API integration
+- `public/tools/styles.css` - Responsive CSS with accessibility support
 
 ## Project Tools Configuration
 
-```javascript
+```typescript
 projectTools: {
   fileName: 'index.html',
-  uiPath: __dirname + '/public'
+  uiPath: '/tools'  // Points to public/tools directory
 }
 ```
 
 ### Required Scopes
-Define scopes based on your app's functionality:
-```javascript
-scopes: [
-  crowdinModule.Scope.PROJECTS,        // Project management
-  crowdinModule.Scope.TRANSLATIONS,    // Translation data
-  crowdinModule.Scope.FILES,           // File management
-  crowdinModule.Scope.REPORTS,         // Reporting data
-  // Add other scopes as needed
-]
+Add scopes to configuration in `worker/app.ts` based on your app's functionality:
+```typescript
+const configuration = {
+    // ... other configuration ...
+    scopes: [
+        crowdinModule.Scope.PROJECTS,        // Project management
+        crowdinModule.Scope.TRANSLATIONS,    // Translation data  
+        crowdinModule.Scope.FILES,           // File management
+        crowdinModule.Scope.REPORTS,         // Reporting data
+        // Add other scopes as needed
+    ]
+}
 ```
 
-## Project Context Integration
+## Frontend Integration (Crowdin Apps JS API)
+
+### Initialize and Get Context
+```javascript
+// Frontend - app.js
+function initializeApp() {
+    // Get project context
+    AP.getContext(function(context) {
+        projectContext = context;
+        // context.project_id, context.organization_id, context.user_id
+    });
+    
+    // Get JWT token for API calls
+    AP.getJwtToken(function(token) {
+        jwtToken = token;
+        loadProjectLanguages();  // Make API calls with token
+    });
+}
+```
+
+## Backend Integration
 
 ### Accessing Project Context
-```javascript
-app.get('/api/project-data', async (req, res) => {
+```typescript
+// Backend - worker/app.ts  
+app.get('/api/project-languages', async (req, res) => {
   try {
-    const { client, context } = await crowdinApp.establishCrowdinConnection(req.query.jwt);
-    const projectId = context.jwtPayload.context.project_id;
+    const jwt = req.query.jwt as string;
+    const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+    const projectId = connection.context.jwtPayload.context.project_id;
     
     // Project context is automatically available
     console.log('Current project ID:', projectId);
     
-    // Access project data
-    const project = await client.projectsGroupsApi.getProject(projectId);
-    res.json({ success: true, project: project.data });
+    // Access project data via API client
+    const projectResponse = await connection.client.projectsGroupsApi.getProject(projectId);
+    res.json({ success: true, project: projectResponse.data });
   } catch (error) {
     res.status(500).json({ error: 'Failed to access project data' });
   }
@@ -76,35 +104,63 @@ app.get('/api/project-data', async (req, res) => {
 ```
 
 ### Available Context Information
-- `project_id` - Current project ID
-- `organization_id` - Organization ID
-- `user_id` - Current user ID
-- Additional project-specific context
+```typescript
+context.project_id             // Current project ID (number)
+context.user_id                // Current user ID (number)
+context.organization_id        // Organization ID (number)
+context.organization_domain    // Organization domain (string | null)
+context.invite_restrict_enabled // Invite restrictions flag (boolean)
+context.user_login             // User login/username (string)
+context.project_identifier     // Project identifier (string)
+```
 
 ## API Patterns
 
-### Project Information
-```javascript
+### Standard Endpoint Template
+```typescript
+app.get('/api/your-endpoint', async (req: Request, res: Response) => {
+    try {
+        const jwt = req.query.jwt as string;
+        if (!jwt) {
+            return res.status(400).json({ success: false, error: 'JWT token is required' });
+        }
+        
+        const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+        const projectId = connection.context.jwtPayload.context.project_id;
+        
+        // Your logic here using connection.client API
+        
+        res.status(200).json({ success: true, data: result });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ success: false, error: 'Operation failed' });
+    }
+});
+```
+
+### Project Information Example
+```typescript
 app.get('/api/project-overview', async (req, res) => {
   try {
-    const { client, context } = await crowdinApp.establishCrowdinConnection(req.query.jwt);
-    const projectId = context.jwtPayload.context.project_id;
+    const jwt = req.query.jwt as string;
+    const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+    const projectId = connection.context.jwtPayload.context.project_id;
     
-    // Get comprehensive project information
-    const [project, languages, files, progress] = await Promise.all([
-      client.projectsGroupsApi.getProject(projectId),
-      client.languagesApi.listProjectTargetLanguages(projectId),
-      client.sourceFilesApi.withFetchAll().listProjectFiles(projectId),
-      client.translationStatusApi.getProjectProgress(projectId)
-    ]);
+    // Get comprehensive project information (example)
+    const projectResponse = await connection.client.projectsGroupsApi.getProject(projectId);
+    const targetLanguageIds = projectResponse.data.targetLanguageIds || [];
+    
+    // Get supported languages and filter by project
+    const supportedLanguages = await connection.client.languagesApi.withFetchAll().listSupportedLanguages();
+    const projectLanguages = supportedLanguages.data.filter(
+      lang => targetLanguageIds.includes(lang.data.id)
+    );
     
     res.json({
       success: true,
       data: {
-        project: project.data,
-        languages: languages.data,
-        files: files.data,
-        progress: progress.data
+        project: projectResponse.data,
+        languages: projectLanguages
       }
     });
   } catch (error) {
@@ -113,117 +169,70 @@ app.get('/api/project-overview', async (req, res) => {
 });
 ```
 
-### Project Operations
-```javascript
-app.post('/api/project-operation', async (req, res) => {
-  try {
-    const { client, context } = await crowdinApp.establishCrowdinConnection(req.query.jwt);
-    const projectId = context.jwtPayload.context.project_id;
-    const { operation, parameters } = req.body;
-    
-    let result;
-    switch (operation) {
-      case 'build':
-        result = await client.translationsApi.buildProject(projectId, parameters);
-        break;
-      case 'export':
-        result = await client.translationsApi.exportProjectTranslation(projectId, parameters);
-        break;
-      case 'sync':
-        // Custom sync logic
-        result = await performProjectSync(client, projectId, parameters);
-        break;
-      default:
-        return res.status(400).json({ error: 'Unknown operation' });
-    }
-    
-    res.json({ success: true, result });
-  } catch (error) {
-    res.status(500).json({ error: 'Operation failed' });
-  }
+### Adding New Endpoints to app.ts
+Add new endpoints after the existing ones, before the return statement:
+```typescript
+// Add this AFTER existing endpoints in createApp function
+app.post('/api/your-new-endpoint', async (req: Request, res: Response) => {
+    // Your implementation following the standard template
 });
+
+// IMPORTANT: Add endpoints BEFORE this return statement:
+return { expressApp: app, crowdinApp };
 ```
-
-### Bulk Operations
-```javascript
-app.post('/api/bulk-operation', async (req, res) => {
-  try {
-    const { client, context } = await crowdinApp.establishCrowdinConnection(req.query.jwt);
-    const projectId = context.jwtPayload.context.project_id;
-    const { action, targets } = req.body;
-    
-    const results = [];
-    for (const target of targets) {
-      try {
-        const result = await performBulkAction(client, projectId, action, target);
-        results.push({ target, success: true, result });
-      } catch (error) {
-        results.push({ target, success: false, error: error.message });
-      }
-    }
-    
-    res.json({ success: true, results });
-  } catch (error) {
-    res.status(500).json({ error: 'Bulk operation failed' });
-  }
-});
-```
-
-## Environment Variables
-Required (automatically picked up by Crowdin Apps SDK):
-- `BASE_URL` - Your app's public URL
-- `CROWDIN_CLIENT_ID` - Your app's client ID
-- `CROWDIN_CLIENT_SECRET` - Your app's client secret
-
-Optional:
-- `APP_NAME` - Display name for your app
-- `APP_IDENTIFIER` - Unique identifier
-- `APP_DESCRIPTION` - App description
-- `PORT` - Server port (default: 3000)
 
 ## Development Workflow
-1. Replace `public/index.html` with your project tool interface
-2. Define required scopes for your project operations
-3. Add API endpoints for your project-specific logic
-4. Use project context to access relevant data
-5. Test within your Crowdin project
-6. Deploy and register in Crowdin Developer Console
 
-## Common Use Cases
-- **Project Analytics**: Progress tracking, statistics, reports
-- **Bulk Operations**: Mass updates, batch processing
-- **Quality Assurance**: Project-wide QA checks and validation
-- **Integration Management**: Sync with external systems
-- **Custom Workflows**: Specialized project processes
-- **File Management**: Advanced file operations and organization
-- **Team Management**: Project member tools and permissions
+### 1. Configure Your App Identity
+**⚠️ Important**: You MUST update the configuration in `worker/app.ts` before deployment:
+```typescript
+const configuration = {
+    name: "Your App Name",           // Change this to your app's display name
+    identifier: "your-app-id",       // Change to unique identifier (lowercase, hyphens)
+    description: "Your app description", // Change to describe your app's purpose
+    // ... rest of configuration
+}
+```
 
-## Project Data Access
-- **Files**: Source files, translations, file structures
-- **Strings**: Source strings, translations, contexts
-- **Languages**: Target languages, progress, statistics
-- **Members**: Project team, roles, permissions
-- **Settings**: Project configuration, preferences
-- **Reports**: Progress reports, activity logs
+**Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-project-tools`
 
-## Best Practices
-- **Efficient API Usage**: Batch requests, use pagination
-- **Error Handling**: Graceful degradation, user-friendly messages
-- **Progress Indicators**: Show progress for long-running operations
-- **Data Caching**: Cache frequently accessed project data
-- **Permissions**: Respect user permissions and project access
+### 2. Key Files to Modify
+- `worker/app.ts` - Add new API endpoints here
+- `public/tools/index.html` - Modify UI structure
+- `public/tools/app.js` - Add frontend logic  
+- `public/tools/styles.css` - Customize styles
 
-## Security Notes
-- JWT tokens contain project context information
-- Validate project access permissions
-- Use HTTPS in production
-- Handle sensitive project data securely
-- Follow Crowdin API rate limiting guidelines
-- Ensure operations are authorized for the current user
+## Crowdin API Access
 
-## Performance Considerations
-- **Lazy Loading**: Load data as needed
-- **Pagination**: Handle large datasets efficiently
-- **Background Processing**: Use async operations for heavy tasks
-- **Caching**: Cache project metadata and settings
-- **Optimization**: Minimize API calls, batch operations
+Use `connection.client` to access Crowdin API methods:
+```typescript
+// Access any Crowdin API endpoint via connection.client
+// Example: connection.client.projectsGroupsApi.getProject(projectId)
+// Example: connection.client.languagesApi.withFetchAll().listSupportedLanguages()
+// Use withFetchAll() for paginated results to get all data
+```
+
+## Frontend Patterns
+
+### Making API Calls from Frontend
+```javascript
+async function callBackendAPI(endpoint, method = 'GET', body = null) {
+    const options = {
+        method: method,
+        headers: { 'Content-Type': 'application/json' }
+    };
+    
+    if (body) options.body = JSON.stringify(body);
+    
+    const response = await fetch(`${endpoint}?jwt=${jwtToken}`, options);
+    return response.json();
+}
+```
+
+### Updating UI with Results
+```javascript
+function updateUI(elementId, content) {
+    const element = document.getElementById(elementId);
+    element.innerHTML = content;
+    element.className = ''; // Remove loading class
+}
