@@ -3,6 +3,7 @@
     "public/",
     "node_modules/@crowdin/app-project-module/out/static/"
   ],
+  "ext": "*",
   "exec": "bun run build:assets",
   "delay": "500",
   "verbose": true,
