@@ -22,6 +22,15 @@ export function createApp(env: CloudflareEnv) {
         },
         imagePath: '/logo.png',
         
+        // API scopes - define what your app can access
+        scopes: [
+            crowdinModule.Scope.PROJECTS,        // Project management
+            crowdinModule.Scope.GROUPS,          // Group management
+            // Add other scopes as needed:
+            // crowdinModule.Scope.TRANSLATIONS,  // Translation data
+            // crowdinModule.Scope.FILES,         // File management
+        ],
+        
         // Organization Menu module configuration
         organizationMenu: {
             fileName: 'index.html',
@@ -35,6 +44,75 @@ export function createApp(env: CloudflareEnv) {
     // Health check endpoint
     app.get('/health', (req: Request, res: Response) => {
         res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+    });
+
+    // Get projects organized by groups
+    app.get('/api/projects-by-groups', async (req: Request, res: Response) => {
+        try {
+            const jwt = req.query.jwt as string;
+            if (!jwt) {
+                return res.status(400).json({ success: false, error: 'JWT token is required' });
+            }
+
+            if (!crowdinApp.establishCrowdinConnection) {
+                return res.status(500).json({ success: false, error: 'Crowdin connection method not available' });
+            }
+
+            const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+
+            if (!connection.client) {
+                return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
+            }
+
+            // Get all groups
+            const groupsResponse = await connection.client.projectsGroupsApi.withFetchAll().listGroups();
+            const groups = groupsResponse.data.map((item: any) => ({
+                id: item.data.id,
+                name: item.data.name,
+                description: item.data.description || '',
+                projects: []
+            }));
+
+            // Get all projects
+            const projectsResponse = await connection.client.projectsGroupsApi.withFetchAll().listProjects();
+            const allProjects = projectsResponse.data.map((item: any) => ({
+                id: item.data.id,
+                name: item.data.name,
+                groupId: item.data.groupId
+            }));
+
+            // Organize projects by groups
+            const ungroupedProjects: typeof allProjects = [];
+            
+            allProjects.forEach((project: any) => {
+                if (project.groupId) {
+                    const group = groups.find((g: any) => g.id === project.groupId);
+                    if (group) {
+                        (group.projects as any[]).push(project);
+                    } else {
+                        ungroupedProjects.push(project);
+                    }
+                } else {
+                    ungroupedProjects.push(project);
+                }
+            });
+
+            res.status(200).json({ 
+                success: true, 
+                data: {
+                    groups: groups,
+                    ungroupedProjects: ungroupedProjects,
+                    totalGroups: groups.length,
+                    totalProjects: allProjects.length
+                }
+            });
+        } catch (error) {
+            console.error('Error fetching projects by groups:', error);
+            res.status(500).json({ 
+                success: false, 
+                error: 'Failed to fetch projects by groups' 
+            });
+        }
     });
 
     return { expressApp: app, crowdinApp };

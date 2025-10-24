@@ -236,3 +236,4 @@ function updateUI(elementId, content) {
     element.innerHTML = content;
     element.className = ''; // Remove loading class
 }
+```

@@ -2,98 +2,243 @@
 
 ## Overview
 Crowdin app with Organization Menu module for organization-wide functionality.
-- Backend: Express.js with Crowdin Apps SDK
-- Frontend: HTML/CSS/JavaScript (customizable)
-- Authentication: JWT tokens from Crowdin
-- Module: Organization Menu (appears in org navigation)
+- Backend: TypeScript with Express.js and Crowdin Apps SDK
+- Frontend: Modular HTML/CSS/JavaScript with Crowdin Apps JS API
+- Authentication: JWT tokens from Crowdin with automatic organization context
+- Module: Organization Menu (appears in organization navigation)
+- Features: Responsive design, error handling, empty states, accessibility
 
 ## Tech Stack
-- **Crowdin Apps SDK** (@crowdin/app-project-module) for Crowdin integration
+- **Crowdin Apps JS API** (AP object) for frontend integration
+- **Crowdin Apps SDK** (@crowdin/app-project-module) for backend
+- **TypeScript** for type-safe backend development
 - **Express.js** for server and API endpoints
-- **JWT** for authentication
-- **HTML/CSS/JavaScript** for frontend (replace with your framework)
+- **JWT** for secure authentication with organization context
+- **Modular Frontend** - Separate HTML, CSS (styles.css), JS (app.js) files
+- **Responsive CSS** - Mobile-first design (320px+)
+- **Accessibility** - WCAG 2.1, ARIA labels
 
 ## Development Restrictions
 - **Authentication**: Always use JWT tokens from Crowdin for API requests
 - **Module Configuration**: Don't modify the organizationMenu configuration structure
-- **Scopes**: Ensure your app has appropriate Crowdin API scopes
+- **Scopes**: Ensure your app has appropriate organization-level API scopes
+- **Organization Context**: Apps automatically receive organization context from JWT
 
 ## Project Structure
 
 ### Backend Structure
-- `index.js` - Main application entry point with Organization Menu configuration
+- `worker/app.ts` - TypeScript backend with Organization Menu configuration
+- `worker/index.ts` - Entry point for Cloudflare Worker
 - `public/` - Static files served to the browser
-- `public/index.html` - Main UI file (replace with your interface)
-- `data/` - Metadata storage directory
 
 ### Frontend Structure
-- `public/index.html` - Main interface (customize as needed)
-- Add CSS frameworks, JavaScript libraries as needed
-- Can be replaced with React, Vue, or any frontend framework
+- `public/organization-menu/index.html` - Main HTML interface with demo UI
+- `public/organization-menu/app.js` - JavaScript with Crowdin Apps JS API integration
+- `public/organization-menu/styles.css` - Responsive CSS with accessibility support
 
-## API Patterns
+## Organization Menu Configuration
 
-### Adding Custom Endpoints
-Add your business logic in `index.js`:
+```typescript
+organizationMenu: {
+  fileName: 'index.html',
+  uiPath: '/organization-menu'  // Points to public/organization-menu directory
+}
+```
+
+### Required Scopes
+Add scopes to configuration in `worker/app.ts` based on your app's functionality:
+```typescript
+const configuration = {
+    // ... other configuration ...
+    scopes: [
+        crowdinModule.Scope.PROJECTS,        // Project management
+        crowdinModule.Scope.GROUPS,          // Group management
+        crowdinModule.Scope.TRANSLATIONS,    // Translation data  
+        // Add other scopes as needed
+    ]
+}
+```
+
+## Frontend Integration (Crowdin Apps JS API)
+
+### Initialize and Get Context
 ```javascript
-// Example API endpoint
-app.get('/api/organizations', async (req, res) => {
+// Frontend - app.js
+function initializeApp() {
+    // Get organization context
+    AP.getContext(function(context) {
+        orgContext = context;
+        // context.organization_id, context.user_id
+    });
+    
+    // Get JWT token for API calls
+    AP.getJwtToken(function(token) {
+        jwtToken = token;
+        loadProjectsByGroups();  // Make API calls with token
+    });
+}
+```
+
+## Backend Integration
+
+### Accessing Organization Context
+```typescript
+// Backend - worker/app.ts  
+app.get('/api/projects-by-groups', async (req, res) => {
   try {
-    const { client } = await crowdinApp.establishCrowdinConnection(req.query.jwt);
-    const organizations = await client.organizationsApi.listOrganizations();
-    res.status(200).json({ success: true, data: organizations.data });
+    const jwt = req.query.jwt as string;
+    const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+    const organizationId = connection.context.jwtPayload.context.organization_id;
+    
+    // Organization context is automatically available
+    console.log('Current organization ID:', organizationId);
+    
+    // Access organization data via API client
+    const groupsResponse = await connection.client.projectsGroupsApi.withFetchAll().listGroups();
+    res.json({ success: true, groups: groupsResponse.data });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Failed to access organization data' });
   }
 });
 ```
 
-### Frontend API Calls
-Use JWT token from URL parameters:
-```javascript
-const urlParams = new URLSearchParams(window.location.search);
-const jwt = urlParams.get('jwt');
-
-fetch(`/api/organizations?jwt=${jwt}`)
-  .then(response => response.json())
-  .then(data => console.log(data));
+### Available Context Information
+```typescript
+context.project_id             // Current project ID (number)
+context.user_id                // Current user ID (number)
+context.organization_id        // Organization ID (number)
+context.organization_domain    // Organization domain (string | null)
+context.invite_restrict_enabled // Invite restrictions flag (boolean)
+context.user_login             // User login/username (string)
+context.project_identifier     // Project identifier (string)
 ```
 
-## Organization Menu Module
-- Appears in organization-level navigation
-- Accessible to organization admins and members (based on app permissions)
-- Provides organization-wide functionality
-- Can access organization-level APIs
+## API Patterns
 
-## Environment Variables
-Required (automatically picked up by Crowdin Apps SDK):
-- `BASE_URL` - Your app's public URL
-- `CROWDIN_CLIENT_ID` - Your app's client ID
-- `CROWDIN_CLIENT_SECRET` - Your app's client secret
+### Standard Endpoint Template
+```typescript
+app.get('/api/your-endpoint', async (req: Request, res: Response) => {
+    try {
+        const jwt = req.query.jwt as string;
+        if (!jwt) {
+            return res.status(400).json({ success: false, error: 'JWT token is required' });
+        }
+        
+        const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+        const organizationId = connection.context.jwtPayload.context.organization_id;
+        
+        // Your logic here using connection.client API
+        
+        res.status(200).json({ success: true, data: result });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ success: false, error: 'Operation failed' });
+    }
+});
+```
 
-Optional:
-- `APP_NAME` - Display name for your app
-- `APP_IDENTIFIER` - Unique identifier
-- `APP_DESCRIPTION` - App description
-- `PORT` - Server port (default: 3000)
+### Organization Groups and Projects Example
+```typescript
+app.get('/api/projects-by-groups', async (req, res) => {
+  try {
+    const jwt = req.query.jwt as string;
+    const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+    
+    // Get all groups
+    const groupsResponse = await connection.client.projectsGroupsApi.withFetchAll().listGroups();
+    const groups = groupsResponse.data.map((item: any) => ({
+        id: item.data.id,
+        name: item.data.name,
+        description: item.data.description || '',
+        projects: []
+    }));
+    
+    // Get all projects
+    const projectsResponse = await connection.client.projectsGroupsApi.withFetchAll().listProjects();
+    const allProjects = projectsResponse.data.map((item: any) => ({
+        id: item.data.id,
+        name: item.data.name,
+        groupId: item.data.groupId
+    }));
+    
+    // Organize projects by groups
+    // ... your organization logic ...
+    
+    res.json({
+      success: true,
+      data: { groups, ungroupedProjects }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch projects by groups' });
+  }
+});
+```
+
+### Adding New Endpoints to app.ts
+Add new endpoints after the existing ones, before the return statement:
+```typescript
+// Add this AFTER existing endpoints in createApp function
+app.post('/api/your-new-endpoint', async (req: Request, res: Response) => {
+    // Your implementation following the standard template
+});
+
+// IMPORTANT: Add endpoints BEFORE this return statement:
+return { expressApp: app, crowdinApp };
+```
 
 ## Development Workflow
-1. Replace `public/index.html` with your custom UI
-2. Add API endpoints in `index.js` for your business logic
-3. Use `establishCrowdinConnection()` to get authenticated Crowdin API client
-4. Test with your Crowdin organization
-5. Deploy and register in Crowdin Developer Console
 
-## Common Use Cases
-- Organization settings management
-- User management and permissions
-- Reporting and analytics dashboards
-- Integration configuration
-- Bulk operations across projects
+### 1. Configure Your App Identity
+**⚠️ Important**: You MUST update the configuration in `worker/app.ts` before deployment:
+```typescript
+const configuration = {
+    name: "Your App Name",           // Change this to your app's display name
+    identifier: "your-app-id",       // Change to unique identifier (lowercase, hyphens)
+    description: "Your app description", // Change to describe your app's purpose
+    // ... rest of configuration
+}
+```
 
-## Security Notes
-- JWT tokens are automatically validated by the SDK
-- Use HTTPS in production
-- Don't expose sensitive data to the frontend
-- Follow Crowdin API rate limiting guidelines
+**Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-organization-menu`
+
+### 2. Key Files to Modify
+- `worker/app.ts` - Add new API endpoints here
+- `public/organization-menu/index.html` - Modify UI structure
+- `public/organization-menu/app.js` - Add frontend logic  
+- `public/organization-menu/styles.css` - Customize styles
+
+## Crowdin API Access
+
+Use `connection.client` to access Crowdin API methods:
+```typescript
+// Access any Crowdin API endpoint via connection.client
+// Example: connection.client.projectsGroupsApi.listGroups()
+// Example: connection.client.projectsGroupsApi.withFetchAll().listProjects()
+// Use withFetchAll() for paginated results to get all data
+```
+
+## Frontend Patterns
+
+### Making API Calls from Frontend
+```javascript
+async function callBackendAPI(endpoint, method = 'GET', body = null) {
+    const options = {
+        method: method,
+        headers: { 'Content-Type': 'application/json' }
+    };
+    
+    if (body) options.body = JSON.stringify(body);
+    
+    const response = await fetch(`${endpoint}?jwt=${jwtToken}`, options);
+    return response.json();
+}
+```
+
+### Updating UI with Results
+```javascript
+function updateUI(elementId, content) {
+    const element = document.getElementById(elementId);
+    element.innerHTML = content;
+    element.className = ''; // Remove loading class
+}
+```
