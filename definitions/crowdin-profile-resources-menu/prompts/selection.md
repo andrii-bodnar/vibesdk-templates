@@ -7,6 +7,8 @@ Use when:
 - Creating personal dashboards and settings
 - Developing user profile extensions
 - Building user-level integrations and configurations
+- Managing user preferences and settings
+- Creating personal analytics and statistics tools
 
 Avoid when:
 - Building organization-wide tools (use Organization Menu instead)
@@ -14,9 +16,9 @@ Avoid when:
 - Building editor extensions (use Editor Right Panel instead)
 
 Built with:
+- Crowdin Apps JS API
 - Crowdin Apps SDK (@crowdin/app-project-module)
-- Express.js server
-- Profile Resources Menu module
-- JWT authentication
-- React JSON Schema forms support
-- User metadata storage
+- TypeScript
+- Express.js
+- Cloudflare Workers
+- HTML/CSS/JavaScript (modular structure)
