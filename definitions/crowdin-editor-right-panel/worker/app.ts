@@ -1,4 +1,5 @@
 import * as crowdinModule from '@crowdin/app-project-module';
+import { EditorMode } from '@crowdin/app-project-module/out/types';
 import { Request, Response } from 'express';
 
 export function createApp(env: CloudflareEnv) {
@@ -22,12 +23,18 @@ export function createApp(env: CloudflareEnv) {
         },
         imagePath: '/logo.png',
         
+        // API scopes - define what your app can access
+        scopes: [
+            crowdinModule.Scope.PROJECTS,        // Project management
+            // Add other scopes as needed
+        ],
+        
         // Editor Right Panel module configuration
         editorRightPanel: {
             fileName: 'index.html',
             uiPath: '/editor-panels',
-            modes: ['translate'], // Specify editor modes where panel appears
-            environments: 'crowdin' // or 'enterprise' or 'crowdin,enterprise'
+            modes: [EditorMode.COMFORTABLE], // Specify editor modes where panel appears
+            supportsMultipleStrings: true
         }
     };
 

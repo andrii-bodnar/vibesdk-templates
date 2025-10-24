@@ -2,178 +2,290 @@
 
 ## Overview
 Crowdin app with Editor Right Panel module for translation editor extensions.
-- Backend: Express.js with Crowdin Apps SDK (minimal - most functionality is frontend)
-- Frontend: HTML/CSS/JavaScript with Crowdin Editor API integration
+- Backend: TypeScript with Express.js and Crowdin Apps SDK (minimal - mostly frontend)
+- Frontend: Modular HTML/CSS/JavaScript with Crowdin Editor API
+- Authentication: JWT tokens from Crowdin with automatic editor context
 - Module: Editor Right Panel (appears in translation editor sidebar)
+- Features: Compact design for sidebar, Editor API integration, event listeners
 
 ## Tech Stack
-- **Crowdin Apps SDK** (@crowdin/app-project-module) for app structure
-- **Crowdin Editor API** (`window.AP.editor`) for translation interactions
-- **HTML/CSS/JavaScript** for panel interface
-- **Express.js** for serving static files and optional API endpoints
+- **Crowdin Editor API** (AP.editor object) for translation manipulation
+- **Crowdin Apps JS API** (AP object) for context and events
+- **Crowdin Apps SDK** (@crowdin/app-project-module) for backend
+- **TypeScript** for type-safe backend development
+- **Express.js** for server (minimal - optional API endpoints)
+- **Modular Frontend** - Separate HTML, CSS (styles.css), JS (app.js) files
+- **Compact CSS** - Optimized for narrow sidebar panel (300-400px)
 
-## Development Approach
-**Most editor right panel apps are frontend-focused** and use the Crowdin Editor API directly. The backend is typically minimal, serving static files and handling app installation.
+## Development Restrictions
+- **Panel Width**: Design for 300-400px width (sidebar constraint)
+- **Frontend-Focused**: Most functionality should be in frontend using AP.editor
+- **Module Configuration**: Don't modify the editorRightPanel configuration structure
+- **Editor Modes**: Panel appears only in specified editor modes (comfortable, side-by-side, multilingual, review, assets)
+- **Event Handling**: Listen to editor events for real-time updates
 
 ## Project Structure
 
-### Backend Structure (Minimal)
-- `index.js` - Main application with Editor Right Panel configuration
+### Backend Structure
+- `worker/app.ts` - TypeScript backend with Editor Right Panel configuration
+- `worker/index.ts` - Entry point for Cloudflare Worker
 - `public/` - Static files served to the browser
-- `public/index.html` - Main panel interface
-- `data/` - Metadata storage directory (if needed)
 
-### Frontend Structure (Primary Focus)
-- `public/index.html` - Editor panel interface with Crowdin Editor API integration
-- JavaScript for editor interactions and custom functionality
+### Frontend Structure
+- `public/editor-panels/index.html` - Main HTML interface with demo UI
+- `public/editor-panels/app.js` - JavaScript with Crowdin Editor API integration
+- `public/editor-panels/styles.css` - Compact CSS optimized for sidebar
 
 ## Editor Right Panel Configuration
 
-```javascript
+```typescript
 editorRightPanel: {
   fileName: 'index.html',
-  uiPath: __dirname + '/public',
-  modes: ['translate'], // Editor modes where panel appears
-  environments: 'crowdin' // or 'enterprise' or 'crowdin,enterprise'
+  uiPath: '/editor-panels',
+  modes: [EditorMode.COMFORTABLE],  // Specify editor modes where panel appears
+  supportsMultipleStrings: true      // Handle multiple string selection
 }
 ```
 
-### Available Editor Modes
-- `translate` - Translation mode (most common)
-- `proofread` - Proofreading mode
-- `review` - Review mode
+### Editor Modes
+```typescript
+import { EditorMode } from '@crowdin/app-project-module/out/types';
 
-## Crowdin Editor API
-
-The primary way to interact with translations is through the Crowdin Editor API:
-
-### Include the API Script
-```html
-<script src="https://cdn.crowdin.com/apps/dist/iframe.js"></script>
+modes: [
+  EditorMode.COMFORTABLE,   // Comfortable mode (most common)
+  EditorMode.SIDE_BY_SIDE,  // Side-by-side mode (most common)
+  EditorMode.MULTILINGUAL,  // Multilingual mode
+  EditorMode.REVIEW,        // Review mode
+  EditorMode.ASSETS         // Assets mode
+]
 ```
 
-### Core Editor Methods
-```javascript
-// Insert text at cursor position
-window.AP.editor.insertTranslation(text)
+**Recommended configuration:**
+```typescript
+modes: [EditorMode.COMFORTABLE, EditorMode.SIDE_BY_SIDE]  // Most common modes
+```
 
-// Append text to current translation
-window.AP.editor.appendTranslation(text)
+### Required Scopes
+Add scopes to configuration in `worker/app.ts` if you need backend API access:
+```typescript
+const configuration = {
+    // ... other configuration ...
+    scopes: [
+        crowdinModule.Scope.PROJECTS,        // Project management
+        // Add other scopes only if needed for backend
+    ]
+}
+```
+
+## Frontend Integration (Crowdin Editor API)
+
+### Initialize and Get String
+```javascript
+// Frontend - app.js
+function initializeApp() {
+    // Get current string information
+    AP.editor.getString(function(string) {
+        console.log('String ID:', string.id);
+        console.log('Text:', string.text);
+        console.log('Context:', string.context);
+        console.log('File:', string.file.name);
+    });
+    
+    // Listen to string changes
+    AP.events.on('string.change', function(data) {
+        // Update panel when user selects a different string
+        loadCurrentString();
+    });
+}
+```
+
+### Editor API Methods
+
+#### Get Information
+```javascript
+// Get current source string
+AP.editor.getString(function(string) {
+    // string.id, string.text, string.context, string.file
+    const sourceText = string.text;
+});
+
+// Get top translation for current string
+AP.editor.getTopTranslation(function(translation) {
+    // translation.id, translation.text, translation.author
+    const translationText = translation.text;
+});
+
+// Get all translations for current string
+AP.editor.getTranslations(function(translations) {
+    // Array of translation objects
+});
+```
+
+#### Modify Translation
+```javascript
+// Append text to end of translation
+AP.editor.appendTranslation(' additional text');
 
 // Replace entire translation
-window.AP.editor.setTranslation(text)
+AP.editor.setTranslation('new translation');
 
-// Get current translation
-const translation = window.AP.editor.getTranslation()
-
-// Get source string
-const sourceString = window.AP.editor.getSourceString()
+// Clear translation
+AP.editor.clearTranslation();
 ```
 
-### Example Usage
+#### Editor Messages
 ```javascript
-function insertText(text) {
-  if (window.AP && window.AP.editor) {
-    window.AP.editor.appendTranslation(text);
-  } else {
-    // Fallback for development/testing
-    console.log('Would insert:', text);
+// Show success message
+AP.editor.successMessage('Translation saved!');
+
+// Show error message
+AP.editor.errorMessage('Something went wrong');
+
+// Show notice message
+AP.editor.noticeMessage('Please review this translation');
+```
+
+### Available Context Information
+```typescript
+context.project_id             // Current project ID (number)
+context.user_id                // Current user ID (number)
+context.organization_id        // Organization ID (number)
+context.organization_domain    // Organization domain (string | null)
+context.invite_restrict_enabled // Invite restrictions flag (boolean)
+context.user_login             // User login/username (string)
+context.project_identifier     // Project identifier (string)
+// Plus editor-specific context with mode, theme, file, workflow_step
+```
+
+## Backend Integration (Optional)
+
+Editor Right Panel apps are primarily frontend-focused. Add backend endpoints only when needed (e.g., external API integration, suggestions).
+
+### Optional Backend Endpoint
+```typescript
+// Backend - worker/app.ts (only if needed)
+app.get('/api/suggestions', async (req: Request, res: Response) => {
+  try {
+    const jwt = req.query.jwt as string;
+    const sourceText = req.query.text as string;
+    
+    // Example: Fetch suggestions from external service
+    const suggestions = await fetchExternalSuggestions(sourceText);
+    
+    res.json({ success: true, suggestions });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch suggestions' });
   }
-}
-```
-
-## Development Patterns
-
-### Frontend-First Approach
-Most editor panel functionality can be implemented entirely in the frontend:
-```javascript
-// Load external data (dictionaries, suggestions, etc.)
-fetch('/api/external-data')
-  .then(response => response.json())
-  .then(data => {
-    // Use data to enhance the editor experience
-    displaySuggestions(data);
-  });
-
-// Interact with editor
-function applySuggestion(text) {
-  window.AP.editor.insertTranslation(text);
-}
-```
-
-### Optional Backend APIs
-Add backend endpoints only when needed:
-```javascript
-// Optional: Custom data endpoints
-app.get('/api/suggestions', async (req, res) => {
-  // Fetch suggestions from external service
-  const suggestions = await getExternalSuggestions(req.query.text);
-  res.json(suggestions);
-});
-
-// Optional: Configuration endpoints
-app.get('/api/config', async (req, res) => {
-  const { client } = await crowdinApp.establishCrowdinConnection(req.query.jwt);
-  // Return app-specific configuration
-  res.json({ config: 'data' });
 });
 ```
 
-## Environment Variables
-Required (automatically picked up by Crowdin Apps SDK):
-- `BASE_URL` - Your app's public URL
-- `CROWDIN_CLIENT_ID` - Your app's client ID
-- `CROWDIN_CLIENT_SECRET` - Your app's client secret
+## Common Editor Patterns
 
-Optional:
-- `APP_NAME` - Display name for your app
-- `APP_IDENTIFIER` - Unique identifier
-- `APP_DESCRIPTION` - App description
-- `PORT` - Server port (default: 3000)
+### Text Insertion Tool
+```javascript
+function insertSpecialCharacter(char) {
+    if (window.AP && window.AP.editor) {
+        AP.editor.appendTranslation(char);
+        AP.editor.successMessage(`Appended: ${char}`);
+    }
+}
+```
+
+### Translation Helper
+```javascript
+function applyTemplate(template) {
+    if (window.AP && window.AP.editor) {
+        AP.editor.getString(function(string) {
+            const sourceText = string.text;
+            const filledTemplate = template.replace('{source}', sourceText);
+            AP.editor.setTranslation(filledTemplate);
+        });
+    }
+}
+```
+
+### Quality Check
+```javascript
+function checkTranslation() {
+    if (window.AP && window.AP.editor) {
+        AP.editor.getString(function(string) {
+            AP.editor.getTopTranslation(function(translation) {
+                // Your validation logic
+                if (translation && translation.text.length > string.text.length * 2) {
+                    AP.editor.errorMessage('Translation might be too long');
+                }
+            });
+        });
+    }
+}
+```
 
 ## Development Workflow
-1. **Focus on frontend**: Replace `public/index.html` with your panel interface
-2. **Integrate Editor API**: Use `window.AP.editor` methods for translation interactions
-3. **Add backend APIs only if needed**: For external integrations or data processing
-4. **Test in Crowdin editor**: Panel appears in translation editor sidebar
-5. **Deploy and register**: Deploy to hosting platform and register in Crowdin Developer Console
+
+### 1. Configure Your App Identity
+**⚠️ Important**: You MUST update the configuration in `worker/app.ts` before deployment:
+```typescript
+const configuration = {
+    name: "Your App Name",           // Change this to your app's display name
+    identifier: "your-app-id",       // Change to unique identifier (lowercase, hyphens)
+    description: "Your app description", // Change to describe your app's purpose
+    // ... rest of configuration
+}
+```
+
+**Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-editor-tool`
+
+### 2. Key Files to Modify
+- `worker/app.ts` - Add backend endpoints only if needed
+- `public/editor-panels/index.html` - Modify compact UI
+- `public/editor-panels/app.js` - Add editor interaction logic  
+- `public/editor-panels/styles.css` - Customize compact styles
+
+### 3. Design Considerations
+- **Panel Width**: Design for 300-400px width (sidebar)
+- **Compact UI**: Keep interface minimal and focused
+- **Quick Actions**: Buttons should trigger immediate actions
+- **Event Driven**: Listen to string.change and other editor events
+- **Performance**: Keep UI lightweight and responsive
+
+## Editor Events
+
+### Available Events
+```javascript
+// String changed (user selected a different string)
+AP.events.on('string.change', function(data) {
+    // Update panel for new string
+    loadCurrentString();
+});
+
+// Translation added
+AP.events.on('translation.added', function(data) {
+    // React to new translation
+});
+
+// Translation approved
+AP.events.on('translation.approve', function(data) {
+    // React to approval
+});
+
+// Translation text edited
+AP.events.on('textarea.edited', function(data) {
+    // React to translation edits
+});
+```
 
 ## Common Use Cases
-- **Text insertion tools**: Special characters, templates, snippets
-- **Translation assistance**: Suggestions, auto-completion, terminology
-- **Quality tools**: Grammar checkers, style validators
-- **Reference tools**: Dictionaries, glossaries, context helpers
-- **Custom workflows**: Project-specific translation aids
+- Special character insertion tools
+- Translation templates and snippets
+- Glossary and terminology lookups
+- Quality assurance checks
+- External API integrations (dictionaries, MT services)
+- Context and reference displays
 
-## Panel Design Guidelines
-- **Compact Design**: Panel width is typically 300-400px
-- **Quick Actions**: Focus on immediate, actionable functionality
-- **Editor Integration**: Use Editor API methods for seamless translation workflow
-- **Responsive**: Handle different panel sizes gracefully
-- **Performance**: Keep UI lightweight and fast
-
-## Examples from Real Apps
-
-### Simple Text Insertion
-```javascript
-// Just frontend functionality
-function insertText(text) {
-  window.AP.editor.appendTranslation(text);
-}
-```
-
-### Translation Suggestions (With Backend)
-```javascript
-// Frontend requests suggestions, backend processes
-async function getSuggestions(sourceText) {
-  const response = await fetch(`/api/suggestions?text=${sourceText}`);
-  const suggestions = await response.json();
-  displaySuggestions(suggestions);
-}
-```
-
-## Security Notes
-- Editor API handles authentication automatically
-- Panel runs in iframe with Crowdin security context
-- Use HTTPS in production
-- Validate any external data before displaying
+## Best Practices
+- Keep UI compact and focused on editor panel width
+- Use Editor API for all translation interactions
+- Listen to events for real-time updates
+- Handle cases when Editor API is not available
+- Minimize backend usage - keep logic in frontend
+- Test with different string types and languages

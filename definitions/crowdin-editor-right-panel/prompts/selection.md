@@ -3,11 +3,12 @@
 Crowdin app with Editor Right Panel module.
 
 Use when:
-- Building translation assistance tools
+- Building translation assistance tools and helpers
 - Creating context-aware editor extensions
-- Developing quality assurance tools
-- Building translation validation and suggestion tools
+- Developing quality assurance and validation tools
+- Building translation suggestion and auto-completion tools
 - Creating custom translation workflows
+- Adding glossary, terminology, or reference tools
 
 Avoid when:
 - Building organization-wide tools (use Organization Menu instead)
@@ -15,8 +16,8 @@ Avoid when:
 - Building project management tools (use Project Tools instead)
 
 Built with:
+- Crowdin Apps JS API (AP.editor for translation interactions)
 - Crowdin Apps SDK (@crowdin/app-project-module)
-- Crowdin Editor API (window.AP.editor) for translation interactions
-- Express.js server (minimal - mostly frontend-focused)
-- Editor Right Panel module
-- HTML/CSS/JavaScript interface
+- TypeScript
+- Express.js (minimal backend - mostly frontend-focused)
+- HTML/CSS/JavaScript (modular structure)
