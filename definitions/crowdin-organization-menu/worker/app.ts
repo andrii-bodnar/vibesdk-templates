@@ -1,4 +1,5 @@
 import * as crowdinModule from '@crowdin/app-project-module';
+import { ProjectsGroupsModel, ResponseObject } from '@crowdin/crowdin-api-client';
 import { Request, Response } from 'express';
 
 export function createApp(env: CloudflareEnv) {
@@ -64,9 +65,22 @@ export function createApp(env: CloudflareEnv) {
                 return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
             }
 
+            type Group = {
+                id: number;
+                name: string;
+                description: string;
+                projects: Project[];
+            };
+
+            type Project = {
+                id: number;
+                name: string;
+                groupId: number;
+            };
+
             // Get all groups
             const groupsResponse = await connection.client.projectsGroupsApi.withFetchAll().listGroups();
-            const groups = groupsResponse.data.map((item: any) => ({
+            const groups: Group[] = groupsResponse.data.map((item: ResponseObject<ProjectsGroupsModel.Group>) => ({
                 id: item.data.id,
                 name: item.data.name,
                 description: item.data.description || '',
@@ -75,20 +89,20 @@ export function createApp(env: CloudflareEnv) {
 
             // Get all projects
             const projectsResponse = await connection.client.projectsGroupsApi.withFetchAll().listProjects();
-            const allProjects = projectsResponse.data.map((item: any) => ({
+            const allProjects: Project[] = projectsResponse.data.map((item: ResponseObject<ProjectsGroupsModel.Project>) => ({
                 id: item.data.id,
                 name: item.data.name,
                 groupId: item.data.groupId
             }));
 
             // Organize projects by groups
-            const ungroupedProjects: typeof allProjects = [];
+            const ungroupedProjects: Project[] = [];
             
-            allProjects.forEach((project: any) => {
+            allProjects.forEach((project: Project) => {
                 if (project.groupId) {
-                    const group = groups.find((g: any) => g.id === project.groupId);
+                    const group = groups.find((g: Group) => g.id === project.groupId);
                     if (group) {
-                        (group.projects as any[]).push(project);
+                        group.projects.push(project);
                     } else {
                         ungroupedProjects.push(project);
                     }
