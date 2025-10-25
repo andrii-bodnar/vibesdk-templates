@@ -21,6 +21,14 @@ export function createApp(env: CloudflareEnv) {
             database: env.DB,
         },
         imagePath: '/logo.png',
+        fileStore: {
+            getFile: (fileId: string) => env.FILES_KV.get(fileId),
+            storeFile: async (content: Buffer) => {
+                const fileId = `file_${Date.now()}`;
+                await env.FILES_KV.put(fileId, content);
+                return fileId;
+            },
+        },
         // Default module configurations will be overridden by specific templates
     };
 
