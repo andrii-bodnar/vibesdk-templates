@@ -21,14 +21,6 @@ export function createApp(env: CloudflareEnv) {
         d1Config: {
             database: env.DB,
         },
-        fileStore: {
-            getFile: (fileId: string) => env.KVStore.get(fileId),
-            storeFile: async (content: Buffer) => {
-                const fileId = `file_${crypto.randomUUID()}`;
-                await env.KVStore.put(fileId, content);
-                return fileId;
-            },
-        },
         imagePath: '/logo.png',
         
         // API scopes - define what your app can access

@@ -23,12 +23,6 @@
 			"database_id": "{{D1_ID}}"
 		}
 	],
-	"kv_namespaces": [
-		{
-			"binding": "KVStore",
-			"id": "{{KV_ID}}"
-		}
-	],
 	"triggers": {
 		/**
 		 * Crons from module
