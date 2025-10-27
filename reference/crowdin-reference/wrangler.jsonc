@@ -23,6 +23,12 @@
 			"database_id": "{{D1_ID}}"
 		}
 	],
+	"kv_namespaces": [
+		{
+			"binding": "KVStore",
+			"id": "{{KV_ID}}"
+		}
+	],
 	"triggers": {
 		/**
 		 * Crons from module
@@ -38,13 +44,7 @@
 	"vars": {
 		"CROWDIN_CLIENT_ID": "{{CROWDIN_CLIENT_ID}}",
 		"CROWDIN_CLIENT_SECRET": "{{CROWDIN_CLIENT_SECRET}}"
-	},
-	"kv_namespaces": [
-		{
-			"binding": "FILES_KV",
-			"id": "{{FILES_KV_ID}}"
-		}
-	]
+	}
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

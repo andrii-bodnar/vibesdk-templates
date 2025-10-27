@@ -20,15 +20,15 @@ export function createApp(env: CloudflareEnv) {
         d1Config: {
             database: env.DB,
         },
-        imagePath: '/logo.png',
         fileStore: {
-            getFile: (fileId: string) => env.FILES_KV.get(fileId),
+            getFile: (fileId: string) => env.KVStore.get(fileId),
             storeFile: async (content: Buffer) => {
-                const fileId = `file_${Date.now()}`;
-                await env.FILES_KV.put(fileId, content);
+                const fileId = `file_${crypto.randomUUID()}`;
+                await env.KVStore.put(fileId, content);
                 return fileId;
             },
         },
+        imagePath: '/logo.png',
         // Default module configurations will be overridden by specific templates
     };
 
