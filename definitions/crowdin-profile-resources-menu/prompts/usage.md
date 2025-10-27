@@ -47,13 +47,51 @@ profileResourcesMenu: {
 ```
 
 ### Required Scopes
-Add scopes to configuration in `worker/app.ts` based on your app's functionality:
+Add scopes to configuration in `worker/app.ts` based on your app's functionality.
+
+**⚠️ IMPORTANT**: Only use scopes from the list below. Do not invent or use non-existent scopes!
+
+#### Available Scopes:
 ```typescript
 const configuration = {
     // ... other configuration ...
     scopes: [
-        crowdinModule.Scope.PROJECTS,        // Project management
-        // Add other scopes as needed
+        // Choose from the following valid scopes:
+        
+        // General scopes
+        crowdinModule.Scope.ALL_SCOPES,                  // 'all' - Full access (use with caution)
+        crowdinModule.Scope.NOTIFICATIONS,               // 'notification' - Notifications management
+        
+        // Project-level scopes
+        crowdinModule.Scope.PROJECTS,                    // 'project' - Project management
+        crowdinModule.Scope.TASKS,                       // 'project.task' - Project tasks
+        crowdinModule.Scope.REPORTS,                     // 'project.report' - Project reports
+        crowdinModule.Scope.TRANSLATION_STATUS,          // 'project.status' - Translation status
+        crowdinModule.Scope.SOURCE_FILES_AND_STRINGS,    // 'project.source' - Source files and strings
+        crowdinModule.Scope.WEBHOOKS,                    // 'project.webhook' - Project webhooks
+        crowdinModule.Scope.TRANSLATIONS,                // 'project.translation' - Translations
+        crowdinModule.Scope.SCREENSHOTS,                 // 'project.screenshot' - Screenshots
+        
+        // Organization-level scopes
+        crowdinModule.Scope.USERS,                       // 'user' - User management
+        crowdinModule.Scope.TEAMS,                       // 'team' - Team management
+        crowdinModule.Scope.GROUPS,                      // 'group' - Group management
+        crowdinModule.Scope.ORGANIZATION_WEBHOOKS,       // 'webhook' - Organization webhooks
+        crowdinModule.Scope.VENDORS,                     // 'vendor' - Vendor management
+        crowdinModule.Scope.FIELDS,                      // 'field' - Custom fields
+        crowdinModule.Scope.SECURITY_LOGS,               // 'security-log' - Security logs
+        crowdinModule.Scope.APPLICATIONS,                // 'application' - Applications management
+        
+        // Resources
+        crowdinModule.Scope.TRANSLATION_MEMORIES,        // 'tm' - Translation memories
+        crowdinModule.Scope.MACHINE_TRANSLATION_ENGINES, // 'mt' - Machine translation engines
+        crowdinModule.Scope.GLOSSARIES,                  // 'glossary' - Glossaries
+        
+        // AI-related scopes
+        crowdinModule.Scope.AI,                          // 'ai' - AI features
+        crowdinModule.Scope.AI_PROVIDERS,                // 'ai.provider' - AI providers
+        crowdinModule.Scope.AI_PROMPTS,                  // 'ai.prompt' - AI prompts
+        crowdinModule.Scope.AI_PROXIES,                  // 'ai.proxy' - AI proxies
     ]
 }
 ```
