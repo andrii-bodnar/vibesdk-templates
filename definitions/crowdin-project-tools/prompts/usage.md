@@ -239,12 +239,233 @@ const configuration = {
 
 ## Crowdin API Access
 
-Use `connection.client` to access Crowdin API methods:
+### Official Documentation
+The `connection.client` object is an instance of `@crowdin/crowdin-api-client`.
+
+**📚 Complete API Reference:** https://crowdin.github.io/crowdin-api-client-js/modules.html
+
+**⚠️ CRITICAL**: Only use methods documented in the official API reference. Do NOT invent or assume methods exist.
+
+### Available API Modules
+
+The `connection.client` provides access to these API modules:
+
 ```typescript
-// Access any Crowdin API endpoint via connection.client
-// Example: connection.client.projectsGroupsApi.getProject(projectId)
-// Example: connection.client.languagesApi.withFetchAll().listSupportedLanguages()
-// Use withFetchAll() for paginated results to get all data
+connection.client.projectsGroupsApi      // Projects and groups management
+connection.client.languagesApi           // Languages operations
+connection.client.sourceFilesApi         // Source files management
+connection.client.sourceStringsApi       // Source strings operations
+connection.client.translationsApi        // Translations operations
+connection.client.stringTranslationsApi  // String translations
+connection.client.translationStatusApi   // Translation status/progress
+connection.client.reportsApi             // Reports generation
+connection.client.tasksApi               // Tasks management
+connection.client.glossariesApi          // Glossaries operations
+connection.client.translationMemoryApi   // Translation memory (TM)
+connection.client.machineTranslationApi  // Machine translation engines
+connection.client.usersApi               // Users management
+connection.client.teamsApi               // Teams management
+connection.client.webhooksApi            // Webhooks management
+connection.client.screenshotsApi         // Screenshots management
+connection.client.labelsApi              // Labels operations
+connection.client.notificationsApi       // Notifications
+// ... and more - see official docs
+```
+
+### Response Structure
+
+**ALL** Crowdin API methods return responses wrapped in `ResponseObject` or `ResponseList`:
+
+#### Single Item Response (ResponseObject)
+```typescript
+interface ResponseObject<T> {
+  data: T;  // The actual data is in .data property
+}
+
+// Example: Getting a project
+const response = await connection.client.projectsGroupsApi.getProject(projectId);
+// ❌ WRONG: response.id, response.name
+// ✅ CORRECT: response.data.id, response.data.name
+
+const projectId = response.data.id;
+const projectName = response.data.name;
+const targetLanguageIds = response.data.targetLanguageIds;
+```
+
+#### List Response (ResponseList)
+```typescript
+interface ResponseList<T> {
+  data: Array<ResponseObject<T>>;  // Array of ResponseObject items
+  pagination?: Pagination;
+}
+
+// Example: Listing projects
+const response = await connection.client.projectsGroupsApi.listProjects();
+// ❌ WRONG: response[0].name
+// ✅ CORRECT: response.data[0].data.name
+
+response.data.forEach((item: ResponseObject<ProjectModel>) => {
+  const projectId = item.data.id;
+  const projectName = item.data.name;
+});
+```
+
+### Pagination with withFetchAll()
+
+For paginated endpoints, use `withFetchAll()` to automatically fetch all pages:
+
+```typescript
+// Without withFetchAll() - returns only first page (25 items by default)
+const firstPage = await connection.client.languagesApi.listSupportedLanguages();
+
+// With withFetchAll() - fetches ALL pages automatically
+const allPages = await connection.client.languagesApi.withFetchAll().listSupportedLanguages();
+// Returns: ResponseList with ALL items in .data array
+
+// Accessing data from withFetchAll()
+allPages.data.forEach((item: ResponseObject<Language>) => {
+  const languageId = item.data.id;      // e.g., "uk"
+  const languageName = item.data.name;  // e.g., "Ukrainian"
+});
+```
+
+### Common API Examples
+
+#### 1. Get Project Details
+```typescript
+const response = await connection.client.projectsGroupsApi.getProject(projectId);
+
+// Access project properties
+const project = response.data;
+const projectName = project.name;                    // string
+const sourceLanguageId = project.sourceLanguageId;   // string
+const targetLanguageIds = project.targetLanguageIds; // string[]
+const description = project.description;             // string | null
+```
+
+#### 2. List All Projects (with pagination)
+```typescript
+const response = await connection.client.projectsGroupsApi.withFetchAll().listProjects();
+
+// Iterate through all projects
+response.data.forEach((projectItem: ResponseObject<ProjectsGroupsModel.Project>) => {
+  const projectId = projectItem.data.id;
+  const projectName = projectItem.data.name;
+  const groupId = projectItem.data.groupId; // number | null
+});
+```
+
+#### 3. Get Supported Languages
+```typescript
+const response = await connection.client.languagesApi.withFetchAll().listSupportedLanguages();
+
+// Filter languages
+const targetLanguageIds = ['uk', 'pl', 'de'];
+const projectLanguages = response.data.filter(
+  (lang: ResponseObject<LanguagesModel.Language>) => targetLanguageIds.includes(lang.data.id)
+);
+
+// Map to simpler structure
+const languages = projectLanguages.map((lang: ResponseObject<LanguagesModel.Language>) => ({
+  id: lang.data.id,           // string: "uk"
+  name: lang.data.name,       // string: "Ukrainian"
+  locale: lang.data.locale,   // string: "uk-UA"
+  osxLocale: lang.data.osxLocale // string
+}));
+```
+
+#### 4. List Source Files
+```typescript
+const response = await connection.client.sourceFilesApi.withFetchAll().listProjectFiles(projectId);
+
+response.data.forEach((fileItem: ResponseObject<SourceFilesModel.File>) => {
+  const file = fileItem.data;
+  const fileId = file.id;             // number
+  const fileName = file.name;         // string
+  const branchId = file.branchId;     // number | null
+  const directoryId = file.directoryId; // number | null
+});
+```
+
+#### 5. Get Translation Status
+```typescript
+const response = await connection.client.translationStatusApi.getProjectProgress(projectId);
+
+const progress = response.data;
+progress.forEach((item: TranslationStatusModel.LanguageProgress) => {
+  const languageId = item.data.languageId;
+  const translationProgress = item.data.translationProgress; // number (0-100)
+  const approvalProgress = item.data.approvalProgress;       // number (0-100)
+});
+```
+
+### Best Practices
+
+1. **Always access data via `.data` property**
+   ```typescript
+   // ✅ CORRECT
+   const project = response.data;
+   const projectName = response.data.name;
+   
+   // ❌ WRONG - will be undefined
+   const projectName = response.name;
+   ```
+
+2. **Use withFetchAll() for complete data**
+   ```typescript
+   // ✅ CORRECT - gets all items
+   const response = await connection.client.languagesApi.withFetchAll().listSupportedLanguages();
+   
+   // ⚠️ PARTIAL - only first page (25 items)
+   const response = await connection.client.languagesApi.listSupportedLanguages();
+   ```
+
+3. **Check TypeScript types in official docs**
+   - Don't assume property names
+   - Check the API reference for exact response models
+   - Use TypeScript autocomplete in your IDE
+
+4. **Handle nullable properties**
+   ```typescript
+   const description = response.data.description || 'No description';
+   const groupId = response.data.groupId ?? null;
+   ```
+
+5. **Verify methods exist in documentation**
+   - Before using any method, check: https://crowdin.github.io/crowdin-api-client-js/modules.html
+   - Example: `ProjectsGroupsModel` module lists all available methods
+   - Do NOT invent methods like `.getProjectLanguages()` if they don't exist
+
+### Error Handling with API
+
+```typescript
+try {
+  const response = await connection.client.projectsGroupsApi.getProject(projectId);
+  const project = response.data;
+  // Use project data
+} catch (error: any) {
+  console.error('Crowdin API Error:', error);
+  
+  // API errors have specific structure
+  if (error.code === 404) {
+    return res.status(404).json({ error: 'Project not found' });
+  }
+  
+  return res.status(500).json({ 
+    error: 'API request failed',
+    details: error.message 
+  });
+}
+```
+
+### TypeScript Type Safety
+
+```typescript
+import { ResponseObject, ProjectsGroupsModel } from '@crowdin/crowdin-api-client';
+
+// Use in your code
+const response: ResponseObject<ProjectsGroupsModel.Project> = await connection.client.projectsGroupsApi.getProject(projectId);
+const project: ProjectsGroupsModel.Project = response.data;
 ```
 
 ## Frontend Patterns
