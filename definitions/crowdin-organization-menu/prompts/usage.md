@@ -4529,6 +4529,723 @@ export declare namespace WorkflowModel {
 
 <!-- CROWDIN_API_CLIENT_TYPES_END -->
 
+### App Metadata Storage
+
+#### Overview
+
+App Metadata Storage is a built-in key-value storage system provided by the Crowdin Apps SDK. It allows your app to persist data across sessions without needing external databases or storage services.
+
+#### Official Documentation
+
+**📚 Complete Documentation:** Refer to Crowdin Apps SDK documentation for metadata storage
+
+**⚠️ CRITICAL**: Metadata is stored at the organization level. Always include `organizationId` in your keys to properly scope data.
+
+#### Common Examples
+
+**Save Metadata:**
+```typescript
+app.post('/api/save-data', async (req: Request, res: Response) => {
+    try {
+        const jwt = req.query.jwt as string;
+        const { data } = req.body;
+
+        if (!jwt) {
+            return res.status(400).json({ success: false, error: 'JWT token is required' });
+        }
+        
+        if (!crowdinApp.establishCrowdinConnection) {
+            return res.status(500).json({ success: false, error: 'Crowdin connection method not available' });
+        }
+
+        const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+
+        if (!connection.client) {
+            return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
+        }
+
+        const userId = connection.context.jwtPayload.context.user_id;
+        const organizationId = connection.context.jwtPayload.context.organization_id;
+        
+        // Create a namespaced key
+        const key = `org_${organizationId}_user_${userId}_preferences`;
+        
+        // Save data to metadata storage
+        if (!crowdinApp.saveMetadata) {
+            return res.status(500).json({ success: false, error: 'Metadata storage not available' });
+        }
+        
+        await crowdinApp.saveMetadata(key, data, String(organizationId));
+        res.json({ success: true, message: 'Data saved successfully' });
+    } catch (error) {
+        console.error('Save error:', error);
+        res.status(500).json({ success: false, error: 'Failed to save data' });
+    }
+});
+```
+
+**Get Metadata:**
+```typescript
+app.get('/api/get-data', async (req: Request, res: Response) => {
+    try {
+        const jwt = req.query.jwt as string;
+        
+        if (!jwt) {
+            return res.status(400).json({ success: false, error: 'JWT token is required' });
+        }
+        
+        if (!crowdinApp.establishCrowdinConnection) {
+            return res.status(500).json({ success: false, error: 'Crowdin connection method not available' });
+        }
+
+        const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+
+        if (!connection.client) {
+            return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
+        }
+
+        const userId = connection.context.jwtPayload.context.user_id;
+        const organizationId = connection.context.jwtPayload.context.organization_id;
+        
+        const key = `org_${organizationId}_user_${userId}_preferences`;
+        
+        // Retrieve data from metadata storage
+        if (!crowdinApp.getMetadata) {
+            return res.status(500).json({ success: false, error: 'Metadata storage not available' });
+        }
+        
+        const data = await crowdinApp.getMetadata(key);
+            
+        // Handle case when no data exists
+        if (!data) {
+            return res.json({ 
+                success: true, 
+                data: null, 
+                message: 'No data found' 
+            });
+        }
+        
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error('Get error:', error);
+        res.status(500).json({ success: false, error: 'Failed to retrieve data' });
+    }
+});
+```
+
+**Delete Metadata:**
+```typescript
+app.delete('/api/delete-data', async (req: Request, res: Response) => {
+    try {
+        const jwt = req.query.jwt as string;
+        
+        if (!jwt) {
+            return res.status(400).json({ success: false, error: 'JWT token is required' });
+        }
+        
+        if (!crowdinApp.establishCrowdinConnection) {
+            return res.status(500).json({ success: false, error: 'Crowdin connection method not available' });
+        }
+
+        const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+
+        if (!connection.client) {
+            return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
+        }
+
+        const userId = connection.context.jwtPayload.context.user_id;
+        const organizationId = connection.context.jwtPayload.context.organization_id;
+        
+        const key = `org_${organizationId}_user_${userId}_preferences`;
+        
+        // Delete data from metadata storage
+        if (!crowdinApp.deleteMetadata) {
+            return res.status(500).json({ success: false, error: 'Metadata storage not available' });
+        }
+        
+        await crowdinApp.deleteMetadata(key);
+        res.json({ success: true, message: 'Data deleted successfully' });
+    } catch (error) {
+        console.error('Delete error:', error);
+        res.status(500).json({ success: false, error: 'Failed to delete data' });
+    }
+});
+```
+
+**Store Complex Objects:**
+```typescript
+// Save complex user preferences
+const preferences = {
+    theme: 'dark',
+    language: 'en',
+    notifications: {
+        email: true,
+        push: false,
+        digest: 'weekly'
+    },
+    lastUpdated: new Date().toISOString(),
+    settings: {
+        autoSave: true,
+        confirmActions: true
+    }
+};
+
+const key = `org_${organizationId}_user_${userId}_preferences`;
+await crowdinApp.saveMetadata(key, preferences, String(organizationId));
+
+// Retrieve and update
+const currentPrefs = await crowdinApp.getMetadata(key) || {};
+const updatedPrefs = {
+    ...currentPrefs,
+    theme: 'light',
+    lastUpdated: new Date().toISOString()
+};
+await crowdinApp.saveMetadata(key, updatedPrefs, String(organizationId));
+```
+
+#### Best Practices
+
+1. **Always use namespaced keys**
+   ```typescript
+   // ✅ CORRECT - includes organization and entity identifiers
+   const key = `org_${organizationId}_user_${userId}_preferences`;
+   const key = `org_${organizationId}_project_${projectId}_cache`;
+   
+   // ❌ WRONG - no organization scope, may cause conflicts
+   const key = `user_preferences`;
+   const key = `${userId}_data`;
+   ```
+
+2. **Check method availability**
+   ```typescript
+   // ✅ CORRECT - verify method exists before calling
+   if (!crowdinApp.saveMetadata) {
+        throw new Error('Metadata storage not available');
+   }
+   
+   await crowdinApp.saveMetadata(key, data, String(organizationId));
+   
+   // ❌ WRONG - may cause runtime errors
+   await crowdinApp.saveMetadata(key, data, String(organizationId));
+   ```
+
+3. **Handle missing data gracefully**
+   ```typescript
+   // ✅ CORRECT - provide defaults for missing data
+   const data = await crowdinApp.getMetadata(key) || { 
+       theme: 'auto', 
+       language: 'en' 
+   };
+   
+   // ✅ CORRECT - check for null/undefined
+   const data = await crowdinApp.getMetadata(key);
+   if (!data) {
+       return defaultSettings;
+   }
+   
+   // ❌ WRONG - may cause errors if data is null
+   const theme = data.theme; // Error if data is null
+   ```
+
+4. **Always pass organizationId as string**
+   ```typescript
+   // ✅ CORRECT - convert to string
+   await crowdinApp.saveMetadata(key, data, String(organizationId));
+   
+   // ⚠️ MAY FAIL - organizationId might be a number
+   await crowdinApp.saveMetadata(key, data, organizationId);
+   ```
+
+5. **Use descriptive key patterns**
+   ```typescript
+   // ✅ CORRECT - clear, hierarchical structure
+   `org_${orgId}_user_${userId}_preferences`
+   `org_${orgId}_project_${projectId}_settings`
+   `org_${orgId}_cache_${cacheType}_${identifier}`
+   
+   // ❌ WRONG - unclear, hard to maintain
+   `data_${id}`
+   `temp_storage`
+   ```
+
+6. **Handle errors properly**
+   ```typescript
+   // ✅ CORRECT - comprehensive error handling
+   try {
+       await crowdinApp.saveMetadata(key, data, String(organizationId));
+       return { success: true };
+   } catch (error: any) {
+       console.error('Metadata save failed:', error);
+       return { 
+           success: false, 
+           error: 'Failed to save data',
+           details: error.message 
+       };
+   }
+   ```
+
+7. **Store only JSON-serializable data**
+   ```typescript
+   // ✅ CORRECT - simple JSON-serializable objects
+   const data = {
+       name: 'John',
+       age: 30,
+       preferences: ['option1', 'option2'],
+       metadata: { key: 'value' }
+   };
+   
+   // ❌ WRONG - functions, dates, circular references
+   const data = {
+       name: 'John',
+       callback: () => {},           // Functions don't serialize
+       created: new Date(),           // Dates become strings
+       circular: data                 // Circular reference
+   };
+   
+   // ✅ CORRECT - convert dates to ISO strings
+   const data = {
+       name: 'John',
+       created: new Date().toISOString()
+   };
+   ```
+
+### Webhooks
+
+#### Overview
+
+Webhooks allow your app to subscribe to events that occur in Crowdin projects or organizations. When a subscribed event happens, Crowdin automatically sends the event data to your app's callback function.
+
+#### Official Documentation
+
+**📚 Complete Documentation:** [Crowdin Webhooks](https://crowdin.github.io/app-project-module/tools/webhook/)
+
+**📚 Available Events:** [Webhook Events List](https://support.crowdin.com/developer/webhooks/)
+
+**⚠️ CRITICAL**: Only use event names from the official events list. Invalid event names will be ignored.
+
+#### Configuration
+
+Configure webhooks in your app configuration in `worker/app.ts`:
+
+```typescript
+const configuration = {
+    // ... other configuration ...
+    
+    // Webhook subscriptions
+    webhooks: [
+        {
+            // List of events to subscribe to
+            events: ['file.added', 'file.updated', 'file.deleted'],
+            
+            // Callback function that handles events
+            callback({ client, events, webhookContext }) {
+                console.log('Received events:', events);
+                console.log('Organization:', webhookContext.organizationId);
+                console.log('User:', webhookContext.userId);
+                
+                // Process events here
+                events.forEach(event => {
+                    console.log('Event:', event.event, 'Project:', event.file.project.id);
+                });
+            }
+        },
+        {
+            // You can have multiple webhook subscriptions
+            events: ['suggestion.updated', 'string.added'],
+            callback({ client, events, webhookContext }) {
+                // Handle translation events
+            }
+        }
+    ]
+};
+```
+
+#### Common Examples
+
+**File Events:**
+```typescript
+webhooks: [
+    {
+        events: ['file.added', 'file.updated', 'file.deleted', 'file.reverted'],
+        async callback({ client, events, webhookContext }) {
+            for (const event of events) {
+                console.log(`File ${event.event} in project ${event.file.project.id}`);
+                console.log('File details:', event.file);
+                
+                // Example: Get project details when file is added
+                if (event.event === 'file.added') {
+                    const project = await client.projectsGroupsApi.getProject(event.file.project.id);
+                    console.log('Project name:', project.data.name);
+                }
+            }
+        }
+    }
+]
+```
+
+#### Callback Parameters
+
+The callback function receives an object with three properties:
+
+```typescript
+interface WebhookCallback {
+    /**
+     * Crowdin API client - use to make API calls
+     * Same client as connection.client in endpoints
+     */
+    client: CrowdinApi;
+    
+    /**
+     * Array of webhook event objects
+     * Multiple events may be batched together
+     */
+    events: WebhookEvent[];
+    
+    /**
+     * Context information about the webhook
+     */
+    webhookContext: {
+        /** Crowdin domain (e.g., "crowdin.com") */
+        domain: string;
+        
+        /** Organization ID where event occurred */
+        organizationId: number;
+        
+        /** User ID who installed the application */
+        userId: number;
+        
+        /** Agent ID (if authenticationType is "crowdin_agent") */
+        agentId?: number;
+    };
+}
+```
+
+#### Common Event Types
+
+**Project Events:**
+- `project.created` - New project added
+- `project.deleted` - Project deleted
+- `project.translated` - Project fully translated
+- `project.approved` - Project reviewed
+- `project.built` - Project built
+
+**Group Events:**
+- `group.created` - New group added
+- `group.deleted` - Group deleted
+
+**File Events:**
+- `file.added` - New file added to project
+- `file.updated` - File updated
+- `file.deleted` - File deleted from project
+- `file.reverted` - File reverted to previous version
+- `file.translated` - File fully translated
+- `file.approved` - File reviewed
+
+**String Events:**
+- `string.added` - New source string added
+- `string.updated` - Source string updated
+- `string.deleted` - Source string deleted
+- `string.hidden` - String hidden
+- `string.unhidden` - String unhidden
+
+**Translation Events:**
+- `suggestion.added` - String translation added
+- `suggestion.updated` - String translation updated
+- `suggestion.deleted` - String translation deleted
+- `suggestion.approved` - String translation approved
+- `suggestion.disapproved` - String translation disapproved
+
+**Task Events:**
+- `task.added` - New task added
+- `task.statusChanged` - Task status changed
+- `task.updated` - Task updated
+- `task.deleted` - Task deleted
+
+#### Best Practices
+
+1. **Handle multiple events in batch**
+   ```typescript
+   // ✅ CORRECT - process all events
+   callback({ client, events, webhookContext }) {
+       events.forEach(event => {
+           console.log('Processing event:', event.event);
+       });
+   }
+   
+   // ❌ WRONG - only processes first event
+   callback({ client, events, webhookContext }) {
+       const event = events[0];
+       console.log('Processing event:', event.event);
+   }
+   ```
+
+2. **Handle errors gracefully**
+   ```typescript
+   // ✅ CORRECT - catches and logs errors
+   async callback({ client, events, webhookContext }) {
+       for (const event of events) {
+           try {
+               await processEvent(event);
+           } catch (error) {
+               console.error('Failed to process event:', event.event, error);
+               // Continue processing other events
+           }
+       }
+   }
+   ```
+
+3. **Check event type before processing**
+   ```typescript
+   // ✅ CORRECT - checks event type
+   callback({ client, events, webhookContext }) {
+       events.forEach(event => {
+           if (event.event === 'file.added') {
+               console.log('New file:', event.file?.name);
+           } else if (event.event === 'file.updated') {
+               console.log('Updated file:', event.file?.name);
+           }
+       });
+   }
+   ```
+
+4. **Use webhookContext for scoping**
+   ```typescript
+   // ✅ CORRECT - uses context for organization-specific logic
+   async callback({ client, events, webhookContext }) {
+       const orgId = webhookContext.organizationId;
+       const userId = webhookContext.userId;
+       
+       // Store event in metadata
+       const key = `org_${orgId}_events_${Date.now()}`;
+       // await crowdinApp.saveMetadata(key, events, String(orgId));
+   }
+   ```
+
+5. **Don't perform long-running operations**
+   ```typescript
+   // ✅ CORRECT - quick processing, delegate heavy work
+   async callback({ client, events, webhookContext }) {
+       // Quick logging
+       console.log('Received', events.length, 'events');
+       
+       // Store for later processing
+       const key = `org_${webhookContext.organizationId}_queue`;
+       // await crowdinApp.saveMetadata(key, events, String(webhookContext.organizationId));
+   }
+   
+   // ⚠️ PROBLEMATIC - long-running operation blocks webhook
+   async callback({ client, events, webhookContext }) {
+       // This might timeout
+       for (const event of events) {
+           await processLargeFile(event.file?.id);
+           await sendMultipleNotifications(event);
+           await updateExternalDatabase(event);
+       }
+   }
+   ```
+
+#### Event Object Structure
+
+Common fields in webhook events:
+
+```typescript
+interface WebhookEvent {
+    /** Event name (e.g., "file.added") */
+    event: string;
+
+    /** Project data (for project events) */
+    project?: {
+        id: number;
+        name: string;
+        identifier: string;
+        sourceLanguageId: string;
+        targetLanguageIds: string[];
+        // ... other file properties
+    };
+
+    /** Build data */
+    build?: {
+        id: number;
+        downloadUrl: string;
+        project: {
+            id: number;
+            name: string;
+            identifier: string;
+            sourceLanguageId: string;
+            targetLanguageIds: string[];
+            // ... other file properties
+        };
+        // ... other file properties
+    };
+
+    /** Group data (for group events) */
+    group?: {
+        id: number;
+        name: string;
+        parentId: number | null;
+    };
+    
+    /** File data (for file events) */
+    file?: {
+        id: number;
+        name: string;
+        title: string;
+        type: string;
+        path: string;
+        branchId: number | null;
+        directoryId: number | null;
+        project: {
+            id: number;
+            name: string;
+            identifier: string;
+            sourceLanguageId: string;
+            targetLanguageIds: string[];
+            // ... other file properties
+        };
+        // ... other file properties
+    };
+    
+    /** String data (for string events) */
+    string?: {
+        id: number;
+        identifier: string;
+        text: string;
+        file: {
+            id: number;
+            name: string;
+            title: string;
+            type: string;
+            path: string;
+            branchId: number;
+            directoryId: number;
+            // ... other string properties
+        };
+        project: {
+            id: number;
+            name: string;
+            identifier: string;
+            sourceLanguageId: string;
+            targetLanguageIds: string[];
+            // ... other file properties
+        };
+        // ... other string properties
+    };
+    
+    /** Translation data (for translation events) */
+    translation?: {
+        id: number;
+        text: string;
+        targetLanguage: {
+            id: string;
+            name: string;
+            // ... other translation properties
+        };
+        string: {
+            id: number;
+            identifier: string;
+            text: string;
+            file: {
+                id: number;
+                name: string;
+                title: string;
+                type: string;
+                path: string;
+                branchId: number;
+                directoryId: number;
+                // ... other string properties
+            };
+            project: {
+                id: number;
+                name: string;
+                identifier: string;
+                sourceLanguageId: string;
+                targetLanguageIds: string[];
+                // ... other file properties
+            };
+            // ... other translation properties
+        };
+        // ... other translation properties
+    };
+    
+    /** Task data (for task events) */
+    task?: {
+        id: number;
+        type: 0 | 1; // 0 - Translate, 1 - Proofread
+        title: string;
+        status: 'todo' | 'in_progress' | 'done' | 'closed' | 'pending' | 'review';
+        sourceLanguage: {
+            id: string;
+            name: string;
+            // ... other translation properties
+        };
+        targetLanguage: {
+            id: string;
+            name: string;
+            // ... other translation properties
+        };
+        project: {
+            id: number;
+            name: string;
+            identifier: string;
+            sourceLanguageId: string;
+            targetLanguageIds: string[];
+            // ... other file properties
+        };
+        // ... other task properties
+    };
+
+    /** Comment data (for comment events) */
+    comment?: {
+        id: number;
+        text: string;
+        string: {
+            id: number;
+            identifier: string;
+            text: string;
+            file: {
+                id: number;
+                name: string;
+                title: string;
+                type: string;
+                path: string;
+                branchId: number;
+                directoryId: number;
+                // ... other string properties
+            };
+            project: {
+                id: number;
+                name: string;
+                identifier: string;
+                sourceLanguageId: string;
+                targetLanguageIds: string[];
+                // ... other file properties
+            };
+            // ... other string properties
+        };
+        targetLanguage: {
+            id: string;
+            name: string;
+            // ... other translation properties
+        };
+        user?: {
+            id: number;
+            username: string;
+            // ... other user properties
+        }
+        // ... other task properties
+    };
+
+    /** User data */
+    user?: {
+        id: number;
+        username: string;
+        // ... other user properties
+    };
+    
+    // Other event-specific fields...
+}
+```
+
 ## Frontend Development
 
 ### Crowdin Apps JS API
