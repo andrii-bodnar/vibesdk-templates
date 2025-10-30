@@ -2,18 +2,17 @@
 
 ## Overview
 Crowdin app with Editor Right Panel module for translation editor extensions.
-- Backend: TypeScript with Express.js and Crowdin Apps SDK (minimal - mostly frontend)
-- Frontend: Modular HTML/CSS/JavaScript with Crowdin Editor API
-- Authentication: JWT tokens from Crowdin with automatic editor context
+- Backend: TypeScript with Express.js and Crowdin Apps SDK
+- Frontend: Modular HTML/CSS/JavaScript with Crowdin Apps JS API
+- Authentication: JWT tokens from Crowdin with automatic user context
 - Module: Editor Right Panel (appears in translation editor sidebar)
 - Features: Compact design for sidebar, Editor API integration, event listeners
 
 ## Tech Stack
-- **Crowdin Editor API** (AP.editor object) for translation manipulation
-- **Crowdin Apps JS API** (AP object) for context and events
+- **Crowdin Apps JS API** (AP object for context/events) for frontend integration
 - **Crowdin Apps SDK** (@crowdin/app-project-module) for backend
 - **TypeScript** for type-safe backend development
-- **Express.js** for server (minimal - optional API endpoints)
+- **Express.js** for server and API endpoints
 - **Modular Frontend** - Separate HTML, CSS (styles.css), JS (app.js) files
 - **Compact CSS** - Optimized for narrow sidebar panel (300-400px)
 
@@ -36,41 +35,32 @@ Crowdin app with Editor Right Panel module for translation editor extensions.
 - `public/editor-panels/app.js` - JavaScript with Crowdin Editor API integration
 - `public/editor-panels/styles.css` - Compact CSS optimized for sidebar
 
-## Editor Right Panel Configuration
+## Backend Development
+
+### App Configuration
+
+Configure your app identity in `worker/app.ts`:
 
 ```typescript
-editorRightPanel: {
-  fileName: 'index.html',
-  uiPath: '/editor-panels',
-  modes: [EditorMode.COMFORTABLE],  // Specify editor modes where panel appears
-  supportsMultipleStrings: true      // Handle multiple string selection
+const configuration = {
+    name: "Your App Name",                    // Display name shown in Crowdin UI
+    identifier: "your-unique-app-identifier", // Unique ID (lowercase, hyphens)
+    description: "Your app description",      // Brief description of functionality
+    // ... rest of configuration
 }
 ```
 
-### Editor Modes
-```typescript
-import { EditorMode } from '@crowdin/app-project-module/out/types';
+**Guidelines:**
+- **identifier**: Must be unique across all Crowdin apps. Format: `company-editor-tool`
+- **name**: User-friendly display name (e.g., "Translation Helper")
+- **description**: Brief explanation of what your app does
 
-modes: [
-  EditorMode.COMFORTABLE,   // Comfortable mode (most common)
-  EditorMode.SIDE_BY_SIDE,  // Side-by-side mode (most common)
-  EditorMode.MULTILINGUAL,  // Multilingual mode
-  EditorMode.REVIEW,        // Review mode
-  EditorMode.ASSETS         // Assets mode
-]
-```
+#### Required Scopes
 
-**Recommended configuration:**
-```typescript
-modes: [EditorMode.COMFORTABLE, EditorMode.SIDE_BY_SIDE]  // Most common modes
-```
-
-### Required Scopes
 Add scopes to configuration in `worker/app.ts` based on your app's functionality.
 
 **⚠️ IMPORTANT**: Only use scopes from the list below. Do not invent or use non-existent scopes!
 
-#### Available Scopes:
 ```typescript
 const configuration = {
     // ... other configuration ...
@@ -115,177 +105,79 @@ const configuration = {
 }
 ```
 
-## Frontend Integration (Crowdin Editor API)
+### Module Configuration
 
-### Initialize and Get String
-```javascript
-// Frontend - app.js
-function initializeApp() {
-    // Get current string information
-    AP.editor.getString(function(string) {
-        console.log('String ID:', string.id);
-        console.log('Text:', string.text);
-        console.log('Context:', string.context);
-        console.log('File:', string.file.name);
-    });
-    
-    // Listen to string changes
-    AP.events.on('string.change', function(data) {
-        // Update panel when user selects a different string
-        loadCurrentString();
-    });
+Configure the Editor Right Panel module in `worker/app.ts`:
+
+```typescript
+editorRightPanel: {
+  fileName: 'index.html',
+  uiPath: '/editor-panels', // Points to public/editor-panels directory
+  modes: [EditorMode.COMFORTABLE, EditorMode.SIDE_BY_SIDE], // Specify editor modes where panel appears
+  supportsMultipleStrings: true // Handle multiple string selection
 }
 ```
 
-### Editor API Methods
+#### Editor Modes
 
-#### Get Information
-```javascript
-// Get current source string
-AP.editor.getString(function(string) {
-    // string.id, string.text, string.context, string.file
-    const sourceText = string.text;
-});
-
-// Get top translation for current string
-AP.editor.getTopTranslation(function(translation) {
-    // translation.id, translation.text, translation.author
-    const translationText = translation.text;
-});
-
-// Get all translations for current string
-AP.editor.getTranslations(function(translations) {
-    // Array of translation objects
-});
-```
-
-#### Modify Translation
-```javascript
-// Append text to end of translation
-AP.editor.appendTranslation(' additional text');
-
-// Replace entire translation
-AP.editor.setTranslation('new translation');
-
-// Clear translation
-AP.editor.clearTranslation();
-```
-
-#### Editor Messages
-```javascript
-// Show success message
-AP.editor.successMessage('Translation saved!');
-
-// Show error message
-AP.editor.errorMessage('Something went wrong');
-
-// Show notice message
-AP.editor.noticeMessage('Please review this translation');
-```
-
-### Available Context Information
 ```typescript
-context.project_id             // Current project ID (number)
-context.user_id                // Current user ID (number)
-context.organization_id        // Organization ID (number)
-context.organization_domain    // Organization domain (string | null)
-context.invite_restrict_enabled // Invite restrictions flag (boolean)
-context.user_login             // User login/username (string)
-context.project_identifier     // Project identifier (string)
-// Plus editor-specific context with mode, theme, file, workflow_step
+import { EditorMode } from '@crowdin/app-project-module/out/types';
+
+// Available editor modes:
+EditorMode.COMFORTABLE   // Comfortable mode (most common)
+EditorMode.SIDE_BY_SIDE  // Side-by-side mode (most common)
+EditorMode.MULTILINGUAL  // Multilingual mode
+EditorMode.REVIEW        // Review mode
+EditorMode.ASSETS        // Assets mode
 ```
 
-## Backend Integration (Optional)
+**Recommended:** Use `[EditorMode.COMFORTABLE, EditorMode.SIDE_BY_SIDE]` for most use cases.
 
-Editor Right Panel apps are primarily frontend-focused. Add backend endpoints only when needed (e.g., external API integration, suggestions).
+### Crowdin API Client
 
-### Optional Backend Endpoint
-```typescript
-// Backend - worker/app.ts (only if needed)
-app.get('/api/suggestions', async (req: Request, res: Response) => {
-  try {
-    const jwt = req.query.jwt as string;
-    const sourceText = req.query.text as string;
-    
-    // Example: Fetch suggestions from external service
-    const suggestions = await fetchExternalSuggestions(sourceText);
-    
-    res.json({ success: true, suggestions });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch suggestions' });
-  }
-});
-```
+#### Official Documentation
 
-## Crowdin API Access
-
-### Official Documentation
 The `connection.client` object is an instance of `@crowdin/crowdin-api-client`.
 
 **📚 Complete API Reference:** https://crowdin.github.io/crowdin-api-client-js/modules.html
 
 **⚠️ CRITICAL**: Only use methods documented in the official API reference. Do NOT invent or assume methods exist.
 
-### Response Structure
+#### Common Examples
 
-**ALL** Crowdin API methods return responses wrapped in `ResponseObject` or `ResponseList`:
-
-#### Single Item Response (ResponseObject)
+**Standard Endpoint Template:**
 ```typescript
-interface ResponseObject<T> {
-  data: T;  // The actual data is in .data property
-}
+app.get('/api/your-endpoint', async (req: Request, res: Response) => {
+    try {
+        const jwt = req.query.jwt as string;
+        if (!jwt) {
+            return res.status(400).json({ success: false, error: 'JWT token is required' });
+        }
 
-// Example: Getting a project
-const response = await connection.client.projectsGroupsApi.getProject(projectId);
-// ❌ WRONG: response.id, response.name
-// ✅ CORRECT: response.data.id, response.data.name
+        if (!crowdinApp.establishCrowdinConnection) {
+            return res.status(500).json({ success: false, error: 'Crowdin connection method not available' });
+        }
 
-const projectId = response.data.id;
-const projectName = response.data.name;
-const targetLanguageIds = response.data.targetLanguageIds;
-```
+        const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
 
-#### List Response (ResponseList)
-```typescript
-interface ResponseList<T> {
-  data: Array<ResponseObject<T>>;  // Array of ResponseObject items
-  pagination?: Pagination;
-}
+        if (!connection.client) {
+            return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
+        }
 
-// Example: Listing projects
-const response = await connection.client.projectsGroupsApi.listProjects();
-// ❌ WRONG: response[0].name
-// ✅ CORRECT: response.data[0].data.name
+        const userId = connection.context.jwtPayload.context.user_id;
+        const organizationId = connection.context.jwtPayload.context.organization_id;
 
-response.data.forEach((item: ResponseObject<ProjectModel>) => {
-  const projectId = item.data.id;
-  const projectName = item.data.name;
+        // Your logic here using connection.client API
+        
+        res.status(200).json({ success: true, data: result });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ success: false, error: 'Operation failed' });
+    }
 });
 ```
 
-### Pagination with withFetchAll()
-
-For paginated endpoints, use `withFetchAll()` to automatically fetch all pages:
-
-```typescript
-// Without withFetchAll() - returns only first page (25 items by default)
-const firstPage = await connection.client.languagesApi.listSupportedLanguages();
-
-// With withFetchAll() - fetches ALL pages automatically
-const allPages = await connection.client.languagesApi.withFetchAll().listSupportedLanguages();
-// Returns: ResponseList with ALL items in .data array
-
-// Accessing data from withFetchAll()
-allPages.data.forEach((item: ResponseObject<Language>) => {
-  const languageId = item.data.id;      // e.g., "uk"
-  const languageName = item.data.name;  // e.g., "Ukrainian"
-});
-```
-
-### Common API Examples
-
-#### 1. Get Project Details
+**Get Project Details:**
 ```typescript
 const response = await connection.client.projectsGroupsApi.getProject(projectId);
 
@@ -297,7 +189,7 @@ const targetLanguageIds = project.targetLanguageIds; // string[]
 const description = project.description;             // string | null
 ```
 
-#### 2. List All Projects (with pagination)
+**List All Projects (with pagination):**
 ```typescript
 const response = await connection.client.projectsGroupsApi.withFetchAll().listProjects();
 
@@ -309,7 +201,7 @@ response.data.forEach((projectItem: ResponseObject<ProjectsGroupsModel.Project>)
 });
 ```
 
-#### 3. Get Supported Languages
+**Get Supported Languages:**
 ```typescript
 const response = await connection.client.languagesApi.withFetchAll().listSupportedLanguages();
 
@@ -328,7 +220,7 @@ const languages = projectLanguages.map((lang: ResponseObject<LanguagesModel.Lang
 }));
 ```
 
-#### 4. List Source Files
+**List Source Files:**
 ```typescript
 const response = await connection.client.sourceFilesApi.withFetchAll().listProjectFiles(projectId);
 
@@ -341,19 +233,7 @@ response.data.forEach((fileItem: ResponseObject<SourceFilesModel.File>) => {
 });
 ```
 
-#### 5. Get Translation Status
-```typescript
-const response = await connection.client.translationStatusApi.getProjectProgress(projectId);
-
-const progress = response.data;
-progress.forEach((item: TranslationStatusModel.LanguageProgress) => {
-  const languageId = item.data.languageId;
-  const translationProgress = item.data.translationProgress; // number (0-100)
-  const approvalProgress = item.data.approvalProgress;       // number (0-100)
-});
-```
-
-### Best Practices
+#### Best Practices
 
 1. **Always access data via `.data` property**
    ```typescript
@@ -374,55 +254,43 @@ progress.forEach((item: TranslationStatusModel.LanguageProgress) => {
    const response = await connection.client.languagesApi.listSupportedLanguages();
    ```
 
-3. **Check TypeScript types in official docs**
-   - Don't assume property names
-   - Check the API reference for exact response models
-   - Use TypeScript autocomplete in your IDE
-
-4. **Handle nullable properties**
+3. **Handle nullable properties**
    ```typescript
    const description = response.data.description || 'No description';
    const groupId = response.data.groupId ?? null;
    ```
 
-5. **Verify methods exist in documentation**
-   - Before using any method, check: https://crowdin.github.io/crowdin-api-client-js/modules.html
-   - Example: `ProjectsGroupsModel` module lists all available methods
-   - Do NOT invent methods like `.getProjectLanguages()` if they don't exist
+4. **Handle errors properly**
+   ```typescript
+   try {
+     const response = await connection.client.projectsGroupsApi.getProject(projectId);
+     const project = response.data;
+     // Use project data
+   } catch (error: any) {
+     console.error('Crowdin API Error:', error);
 
-### Error Handling with API
+     // API errors have specific structure
+     if (error.code === 404) {
+       return res.status(404).json({ error: 'Project not found' });
+     }
+     
+     return res.status(500).json({
+       error: 'API request failed',
+       details: error.message
+     });
+   }
+   ```
 
-```typescript
-try {
-  const response = await connection.client.projectsGroupsApi.getProject(projectId);
-  const project = response.data;
-  // Use project data
-} catch (error: any) {
-  console.error('Crowdin API Error:', error);
-  
-  // API errors have specific structure
-  if (error.code === 404) {
-    return res.status(404).json({ error: 'Project not found' });
-  }
-  
-  return res.status(500).json({ 
-    error: 'API request failed',
-    details: error.message 
-  });
-}
-```
+5. **Use TypeScript types**
+   ```typescript
+   import { ResponseObject, ProjectsGroupsModel } from '@crowdin/crowdin-api-client';
+   
+   // Use in your code
+   const response: ResponseObject<ProjectsGroupsModel.Project> = await connection.client.projectsGroupsApi.getProject(projectId);
+   const project: ProjectsGroupsModel.Project = response.data;
+   ```
 
-### TypeScript Type Safety
-
-```typescript
-import { ResponseObject, ProjectsGroupsModel } from '@crowdin/crowdin-api-client';
-
-// Use in your code
-const response: ResponseObject<ProjectsGroupsModel.Project> = await connection.client.projectsGroupsApi.getProject(projectId);
-const project: ProjectsGroupsModel.Project = response.data;
-```
-
-### Complete Type Definitions
+#### Complete Type Definitions
 
 **⚠️ CRITICAL**: Only use methods and types from `@crowdin/crowdin-api-client` definitions below.
 
@@ -430,7 +298,7 @@ const project: ProjectsGroupsModel.Project = response.data;
 
 <!-- CROWDIN_API_CLIENT_TYPES_START -->
 
-#### ai/index.d.ts
+##### ai/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, PlainObject, ResponseList, ResponseObject, Status } from '../core';
@@ -804,7 +672,7 @@ export declare namespace AiModel {
 }
 ```
 
-#### applications/index.d.ts
+##### applications/index.d.ts
 
 ```typescript
 import { CrowdinApi, ResponseObject, PatchRequest, Pagination, ResponseList } from '../core';
@@ -860,7 +728,7 @@ export declare namespace ApplicationsModel {
 }
 ```
 
-#### bundles/index.d.ts
+##### bundles/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -911,7 +779,7 @@ export declare namespace BundlesModel {
 }
 ```
 
-#### clients/index.d.ts
+##### clients/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList } from '../core';
@@ -929,7 +797,7 @@ export declare namespace ClientsModel {
 }
 ```
 
-#### core/http-client-error.d.ts
+##### core/http-client-error.d.ts
 
 ```typescript
 import { AxiosError } from 'axios';
@@ -938,7 +806,7 @@ export type HttpClientError = AxiosError | FetchClientJsonPayloadError | Error;
 export declare const toHttpClientError: (error?: unknown) => HttpClientError;
 ```
 
-#### core/index.d.ts
+##### core/index.d.ts
 
 ```typescript
 import { HttpClientError } from './http-client-error';
@@ -1103,7 +971,7 @@ export interface ProjectRolePermissions {
 }
 ```
 
-#### dictionaries/index.d.ts
+##### dictionaries/index.d.ts
 
 ```typescript
 import { CrowdinApi, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1123,7 +991,7 @@ export declare namespace DictionariesModel {
 }
 ```
 
-#### distributions/index.d.ts
+##### distributions/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1176,7 +1044,7 @@ export declare namespace DistributionsModel {
 }
 ```
 
-#### fields/index.d.ts
+##### fields/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1237,7 +1105,7 @@ export declare namespace FieldsModel {
 }
 ```
 
-#### glossaries/index.d.ts
+##### glossaries/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -1414,7 +1282,7 @@ export declare namespace GlossariesModel {
 }
 ```
 
-#### index.d.ts
+##### index.d.ts
 
 ```typescript
 import { Ai } from './ai';
@@ -1524,7 +1392,7 @@ export default class Client extends CrowdinApi {
 export { Client };
 ```
 
-#### issues/index.d.ts
+##### issues/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1570,7 +1438,7 @@ export declare namespace IssuesModel {
 }
 ```
 
-#### labels/index.d.ts
+##### labels/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1609,7 +1477,7 @@ export declare namespace LabelsModel {
 }
 ```
 
-#### languages/index.d.ts
+##### languages/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1652,7 +1520,7 @@ export declare namespace LanguagesModel {
 }
 ```
 
-#### machineTranslation/index.d.ts
+##### machineTranslation/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1726,7 +1594,7 @@ export declare namespace MachineTranslationModel {
 }
 ```
 
-#### notifications/index.d.ts
+##### notifications/index.d.ts
 
 ```typescript
 import { CrowdinApi } from '../core';
@@ -1748,7 +1616,7 @@ export declare namespace NotificationsModel {
 }
 ```
 
-#### organizationWebhooks/index.d.ts
+##### organizationWebhooks/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1771,7 +1639,7 @@ export declare namespace OrganizationWebhooksModel {
 }
 ```
 
-#### projectsGroups/index.d.ts
+##### projectsGroups/index.d.ts
 
 ```typescript
 import { BooleanInt, CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -2219,7 +2087,7 @@ export declare namespace ProjectsGroupsModel {
 }
 ```
 
-#### reports/index.d.ts
+##### reports/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -2719,7 +2587,7 @@ export declare namespace ReportsModel {
 }
 ```
 
-#### screenshots/index.d.ts
+##### screenshots/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -2805,7 +2673,7 @@ export declare namespace ScreenshotsModel {
 }
 ```
 
-#### securityLogs/index.d.ts
+##### securityLogs/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList, ResponseObject } from '../core';
@@ -2838,7 +2706,7 @@ export declare namespace SecurityLogsModel {
 }
 ```
 
-#### sourceFiles/index.d.ts
+##### sourceFiles/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -3153,7 +3021,7 @@ export declare namespace SourceFilesModel {
 }
 ```
 
-#### sourceStrings/index.d.ts
+##### sourceStrings/index.d.ts
 
 ```typescript
 import { BooleanInt, CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -3276,7 +3144,7 @@ export declare namespace SourceStringsModel {
 }
 ```
 
-#### stringComments/index.d.ts
+##### stringComments/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -3353,7 +3221,7 @@ export declare namespace StringCommentsModel {
 }
 ```
 
-#### stringCorrections/index.d.ts
+##### stringCorrections/index.d.ts
 
 ```typescript
 import { BooleanInt, CrowdinApi, PaginationOptions, ResponseList, ResponseObject } from '../core';
@@ -3394,7 +3262,7 @@ export declare namespace StringCorrectionsModel {
 }
 ```
 
-#### stringTranslations/index.d.ts
+##### stringTranslations/index.d.ts
 
 ```typescript
 import { BooleanInt, CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -3554,7 +3422,7 @@ export declare namespace StringTranslationsModel {
 }
 ```
 
-#### tasks/index.d.ts
+##### tasks/index.d.ts
 
 ```typescript
 import { BooleanInt, CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -3902,7 +3770,7 @@ export declare namespace TasksModel {
 }
 ```
 
-#### teams/index.d.ts
+##### teams/index.d.ts
 
 ```typescript
 import { CrowdinApi, Pagination, PaginationOptions, PatchRequest, ProjectRole, ProjectRoles, ResponseList, ResponseObject } from '../core';
@@ -3992,7 +3860,7 @@ export declare namespace TeamsModel {
 }
 ```
 
-#### translationMemory/index.d.ts
+##### translationMemory/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -4113,7 +3981,7 @@ export declare namespace TranslationMemoryModel {
 }
 ```
 
-#### translationStatus/index.d.ts
+##### translationStatus/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList } from '../core';
@@ -4180,7 +4048,7 @@ export declare namespace TranslationStatusModel {
 }
 ```
 
-#### translations/index.d.ts
+##### translations/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -4388,7 +4256,7 @@ export declare namespace TranslationsModel {
 }
 ```
 
-#### uploadStorage/index.d.ts
+##### uploadStorage/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList, ResponseObject } from '../core';
@@ -4407,7 +4275,7 @@ export declare namespace UploadStorageModel {
 }
 ```
 
-#### users/index.d.ts
+##### users/index.d.ts
 
 ```typescript
 import { CrowdinApi, Pagination, PaginationOptions, PatchRequest, ProjectRole, ProjectRoles, ResponseList, ResponseObject } from '../core';
@@ -4558,7 +4426,7 @@ export declare namespace UsersModel {
 }
 ```
 
-#### vendors/index.d.ts
+##### vendors/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList } from '../core';
@@ -4577,7 +4445,7 @@ export declare namespace VendorsModel {
 }
 ```
 
-#### webhooks/index.d.ts
+##### webhooks/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -4622,7 +4490,7 @@ export declare namespace WebhooksModel {
 }
 ```
 
-#### workflows/index.d.ts
+##### workflows/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList, ResponseObject } from '../core';
@@ -4680,51 +4548,486 @@ export declare namespace WorkflowModel {
 
 <!-- CROWDIN_API_CLIENT_TYPES_END -->
 
-## Common Editor Patterns
+## Frontend Development
 
-### Text Insertion Tool
+### Crowdin Apps JS API
+
+#### Official Documentation
+
+The `AP` object provides the Crowdin Apps JS API for interacting with the Crowdin application context.
+
+**📚 Complete API Reference:** https://support.crowdin.com/developer/crowdin-apps-js/
+
+**⚠️ CRITICAL**: Only use methods and types from the Crowdin Apps JS API definitions below.
+
+**Do NOT invent methods or properties that are not listed here.**
+
+#### Common Examples
+
+**Get Context:**
 ```javascript
-function insertSpecialCharacter(char) {
-    if (window.AP && window.AP.editor) {
-        AP.editor.appendTranslation(char);
-        AP.editor.successMessage(`Appended: ${char}`);
+// Get application context
+AP.getContext(function(context) {
+    console.log('Project ID:', context.project_id);
+});
+```
+
+**Modify Translations:**
+```javascript
+// Set translation
+AP.editor.setTranslation('New translation');
+
+// Append to translation
+AP.editor.appendTranslation(' - additional text');
+
+// Clear translation
+AP.editor.clearTranslation();
+```
+
+**Event Listeners:**
+```javascript
+// Listen to theme change
+AP.events.on('theme.changed', function(theme) {
+    document.body.className = theme + '-theme';
+});
+```
+
+**UI Messages:**
+```javascript
+// Show messages
+AP.editor.successMessage('Success!');
+AP.editor.errorMessage('Error occurred');
+AP.editor.noticeMessage('Notice');
+```
+
+#### Best Practices
+
+1. **Always check AP availability**
+   ```javascript
+   if (window.AP) {
+       AP.getContext(function(context) {
+           // Your code
+       });
+   }
+   ```
+
+2. **Get JWT token for backend calls**
+   ```javascript
+   AP.getJwtToken(function(token) {
+       fetch('/api/endpoint?jwt=' + token)
+           .then(response => response.json());
+   });
+   ```
+
+3. **Handle errors gracefully**
+   ```javascript
+   try {
+       AP.editor.setTranslation(text);
+       AP.editor.successMessage('Updated!');
+   } catch (error) {
+       AP.editor.errorMessage('Failed to update');
+   }
+   ```
+
+4. **Use event listeners for real-time updates**
+   ```javascript
+   AP.events.on('string.change', function(data) {
+       updateUI(data.string);
+   });
+   ```
+
+#### Complete Type Definitions
+
+##### Global AP Object Structure
+
+```typescript
+declare namespace AP {
+    // Global Actions
+    function getContext(callback: (context: Context) => void): void;
+    function getJwtToken(callback: (token: string) => void): void;
+    function getTheme(): 'light' | 'dark';
+    function redirect(path: string): void;
+    
+    // Editor Module
+    namespace editor {
+        // String Operations
+        function getString(callback: (string: StringInfo) => void): void;
+        function getSelectedStrings(callback: (strings: StringInfo[] | null) => void): void;
+        function getTranslations(callback: (translations: Translation[]) => void): void;
+        function getTopTranslation(callback: (translation: Translation | null) => void): void;
+        
+        // Translation Manipulation
+        function setTranslation(text: string): void;
+        function appendTranslation(text: string): void;
+        function clearTranslation(): void;
+        function setFocus(): void;
+        
+        // Messages
+        function noticeMessage(message: string): void;
+        function successMessage(message: string): void;
+        function errorMessage(message: string): void;
+        function setApplicationNotification(count: number): void;
+        function clearApplicationNotification(): void;
+        
+        // Filters
+        function getCustomFilter(callback: (filter: CustomFilter) => void): void;
+        function setCustomFilter(customFilter: CustomFilter): void;
+        function resetCustomFilter(): void;
+        function getFilter(callback: (filter: number) => void): void;
+        function setFilter(filterNumber: number): void;
+        function getFiltersList(callback: (filters: FilterInfo[]) => void): void;
+        
+        // CroQL Filters
+        function getCroqlFilter(callback: (filter: string) => void): void;
+        function setCroqlFilter(query: string): void;
+        function resetCroqlFilter(): void;
+        
+        // Pagination
+        function getPage(callback: (page: number) => void): void;
+        function setPage(pageNumber: number): void;
+        
+        // Language Operations
+        function getProjectTargetLanguages(callback: (languages: Language[]) => void): void;
+        function setTargetLanguage(languageIdOrIds: string | string[], callback?: () => void): void;
+        
+        // Search
+        function search(text: string, options?: SearchOptions): void;
+        
+        // Workflow Step Status Filter
+        function setWorkflowStepStatusFilter(status: WorkflowStepStatus): void;
+        function getWorkflowStepStatusFilter(callback: (status: WorkflowStepStatus) => void): void;
+        
+        // Editor Mode
+        function getMode(callback: (mode: EditorMode) => void): void;
+        function setMode(mode: EditorMode): void;
+        
+        // Context Menu
+        function registerContextMenuAction(action: ContextMenuAction, callback: (action: ContextMenuActionWithId) => void): void;
+        
+        // File Operations
+        function changeFiles(ids: number[]): void;
+        function isMultipleFilesSelected(callback: (isMultiple: boolean) => void): void;
+        function getSelectedFiles(callback: (files: FileData[]) => void): void;
+    }
+    
+    // Events Module
+    namespace events {
+        function once(event: EditorEvent, callback: (data: any) => void): void;
+        function on(event: EditorEvent, callback: (data: any) => void): void;
+        function off(event: EditorEvent, callback?: (data: any) => void): void;
+        function ofAll(event: EditorEvent): void;
+        function onAny(callback: (event: string, data: any) => void): void;
+        function offAny(callback?: (event: string, data: any) => void): void;
     }
 }
 ```
 
-### Translation Helper
-```javascript
-function applyTemplate(template) {
-    if (window.AP && window.AP.editor) {
-        AP.editor.getString(function(string) {
-            const sourceText = string.text;
-            const filledTemplate = template.replace('{source}', sourceText);
-            AP.editor.setTranslation(filledTemplate);
-        });
-    }
+##### Type Definitions
+
+```typescript
+// Context Information
+interface Context {
+    project_id: number;
+    organization_id: number;
+    editor?: EditorContext;
 }
+
+interface EditorContext {
+    mode: 'translate' | 'proofread' | 'review' | 'multilingual';
+    theme: 'light' | 'dark';
+    source_language_id: string;
+    target_language_id: string;
+    file: number;
+    fileData?: FileData;
+    workflow_step?: WorkflowStep;
+}
+
+interface FileData {
+    id: string;
+    is_plain_text: boolean;
+    type: string;
+    status: string;
+    parent_id: string;
+    node_type: string;
+    created: string;
+    extension: string;
+    priority: string;
+    name: string;
+    upload_ready: number;
+    export_ready: number;
+    export_xliff_ready: number;
+    can_change: number;
+    plural_support: number;
+    excluded_languages: string[];
+    html_preview: boolean;
+    identifier_required: number;
+    total: number;
+    translated: number;
+    approved: number;
+    preTranslated: number;
+    translated_percent: number;
+    approved_percent: number;
+    progress: FileProgress;
+}
+
+interface FileProgress {
+    total: number;
+    translated: number;
+    approved: number;
+    translated_percent: number;
+    approved_percent: number;
+    pre_translated: number;
+    file_id: number;
+    language_id: number;
+    translation_link: string;
+}
+
+// String Information
+interface StringInfo {
+    id: number;
+    identifier: string;
+    text: string;
+    context: string;
+    max_length: number;
+    file: FileInfo;
+}
+
+interface FileInfo {
+    id: number;
+    name: string;
+}
+
+// Translation Information
+interface Translation {
+    id: number;
+    string_id: number;
+    text: string;
+    target_language_id: string;
+    votes_rating: number;
+    approved: boolean;
+    author: User;
+    created_at: string;
+}
+
+interface User {
+    id: string;
+    login: string;
+    name: string;
+    avatar_url: string;
+}
+
+// Filter Information
+interface CustomFilter {
+    added_from: string;
+    added_to: string;
+    updated_from: string;
+    updated_to: string;
+    changed_from: string;
+    changed_to: string;
+    verbal_expression: string;
+    verbal_expression_scope: string;
+    translations: string;
+    duplicates: string;
+    tm_and_mt: string;
+    pre_translation: string;
+    approvals: string;
+    comments: string;
+    screenshots: string;
+    visibility: string;
+    qa_issues: string;
+    labels: number[];
+    label_match_rule: string;
+    exclude_labels: number[];
+    exclude_label_match_rule: string;
+    string_type: string;
+    votes: string;
+    approvals_count_select: string;
+    translated_by_user: string;
+    not_translated_by_user: string;
+    approved_by_user: string;
+    not_approved_by_user: string;
+    approved_by_step: number;
+    approved_step: number;
+    sort_method: number;
+    sort_ascending: number;
+    em: number;
+    croql_expression: string;
+    ai_query: string;
+}
+
+interface FilterInfo {
+    name: string;
+    value: number;
+}
+
+// Language Information
+interface Language {
+    id: string;
+    name: string;
+    internal_code: string;
+    code: string;
+    preferred: boolean;
+}
+
+// Workflow Information
+interface WorkflowStep {
+    id: number;
+    title: string;
+    type: string;
+}
+
+// Search Options (for AP.editor.search)
+interface SearchOptions {
+    searchStrict: boolean;
+    searchFullMatch: boolean;
+    caseSensitive: boolean;
+    search_option: number; // 1 - Strings, 2 - Context, 3 - Translations, 4 - Identifier (Key), 0 - Everything
+}
+
+// Workflow step statuses (for AP.editor.setWorkflowStepStatusFilter)
+type WorkflowStepStatus =
+    | 'ALL'
+    | 'TODO'
+    | 'DONE'
+    | 'INCOMPLETE';
+
+// Editor mode (for AP.editor.setMode)
+type EditorMode =
+    | 'translate'
+    | 'proofread'
+    | 'review'
+    | 'multilingual';
+
+// Context Menu Action (for AP.editor.registerContextMenuAction)
+interface ContextMenuAction {
+    type: 'textarea-context-menu' | 'source-string-context-menu' | 'source-string-selected-text-context-menu';
+    name: string;
+    children?: ContextMenuChild[];
+}
+
+interface ContextMenuChild {
+    name: string;
+}
+
+interface ContextMenuActionWithId extends ContextMenuAction {
+    eventSubscriptionId: string;
+    children?: ContextMenuChildWithId[];
+}
+
+interface ContextMenuChildWithId extends ContextMenuChild {
+    eventSubscriptionId: string;
+}
+
+// Editor Events
+type EditorEvent = 
+    | 'string.change'
+    | 'string.selected'
+    | 'textarea.edited'
+    | 'translation.added'
+    | 'translation.deleted'
+    | 'translation.restored'
+    | 'translation.vote'
+    | 'translation.approve'
+    | 'translation.disapprove'
+    | 'language.change'
+    | 'file.change'
+    | 'theme.changed'
+    | 'asset.source.preview'
+    | 'asset.suggestion.preview';
 ```
 
-### Quality Check
-```javascript
-function checkTranslation() {
-    if (window.AP && window.AP.editor) {
-        AP.editor.getString(function(string) {
-            AP.editor.getTopTranslation(function(translation) {
-                // Your validation logic
-                if (translation && translation.text.length > string.text.length * 2) {
-                    AP.editor.errorMessage('Translation might be too long');
-                }
-            });
-        });
-    }
+##### Event Data Structures
+
+```typescript
+// Event: string.change
+interface StringChangeEvent {
+    id: number;
+    text: string;
+    context: string;
+    max_length: number;
+    file: FileInfo;
+}
+
+// Event: string.selected
+interface StringSelectedEvent {
+    string: StringInfo;
+    translations: Record<string, Translation[]>;
+}
+
+// Event: textarea.edited
+interface TextareaEditedEvent {
+    id: number;
+    text: string;
+    context: string;
+    max_length: number;
+    file: FileInfo;
+    oldText: string;
+    newText: string;
+}
+
+// Event: translation.added
+interface TranslationAddedEvent extends Translation {}
+
+// Event: translation.deleted
+interface TranslationDeletedEvent {
+    id: number;
+    string_id: number;
+}
+
+// Event: translation.restored
+interface TranslationRestoredEvent extends Translation {}
+
+// Event: translation.vote
+interface TranslationVoteEvent extends Translation {}
+
+// Event: translation.approve
+interface TranslationApproveEvent extends Translation {
+    approver: User;
+    approved_at: string;
+}
+
+// Event: translation.disapprove
+interface TranslationDisapproveEvent extends Translation {}
+
+// Event: language.change
+interface LanguageChangeEvent {
+    project_id: number;
+    organization_id: number;
+    editor: EditorContext;
+}
+
+// Event: file.change
+interface FileChangeEvent {
+    project_id: number;
+    organization_id: number;
+    editor: EditorContext;
+}
+
+// Event: theme.changed
+type ThemeChangedEvent = 'light' | 'dark';
+
+// Event: asset.source.preview
+interface AssetSourcePreviewEvent {
+    project_id: number;
+    organization_id: number;
+    editor: EditorContext;
+}
+
+// Event: asset.suggestion.preview
+interface AssetSuggestionPreviewEvent {
+    project_id: number;
+    organization_id: number;
+    editor: EditorContext;
+    suggestion: any;
 }
 ```
 
 ## Development Workflow
 
 ### 1. Configure Your App Identity
+
 **⚠️ Important**: You MUST update the configuration in `worker/app.ts` before deployment:
+
 ```typescript
 const configuration = {
     name: "Your App Name",           // Change this to your app's display name
@@ -4737,56 +5040,8 @@ const configuration = {
 **Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-editor-tool`
 
 ### 2. Key Files to Modify
+
 - `worker/app.ts` - Add backend endpoints only if needed
 - `public/editor-panels/index.html` - Modify compact UI
 - `public/editor-panels/app.js` - Add editor interaction logic  
 - `public/editor-panels/styles.css` - Customize compact styles
-
-### 3. Design Considerations
-- **Panel Width**: Design for 300-400px width (sidebar)
-- **Compact UI**: Keep interface minimal and focused
-- **Quick Actions**: Buttons should trigger immediate actions
-- **Event Driven**: Listen to string.change and other editor events
-- **Performance**: Keep UI lightweight and responsive
-
-## Editor Events
-
-### Available Events
-```javascript
-// String changed (user selected a different string)
-AP.events.on('string.change', function(data) {
-    // Update panel for new string
-    loadCurrentString();
-});
-
-// Translation added
-AP.events.on('translation.added', function(data) {
-    // React to new translation
-});
-
-// Translation approved
-AP.events.on('translation.approve', function(data) {
-    // React to approval
-});
-
-// Translation text edited
-AP.events.on('textarea.edited', function(data) {
-    // React to translation edits
-});
-```
-
-## Common Use Cases
-- Special character insertion tools
-- Translation templates and snippets
-- Glossary and terminology lookups
-- Quality assurance checks
-- External API integrations (dictionaries, MT services)
-- Context and reference displays
-
-## Best Practices
-- Keep UI compact and focused on editor panel width
-- Use Editor API for all translation interactions
-- Listen to events for real-time updates
-- Handle cases when Editor API is not available
-- Minimize backend usage - keep logic in frontend
-- Test with different string types and languages

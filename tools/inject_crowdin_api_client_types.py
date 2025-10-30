@@ -70,7 +70,7 @@ def generate_api_types_markdown(template_path: Path) -> str:
             continue
         
         # Add section
-        markdown += f"#### {rel_path}\n\n"
+        markdown += f"##### {rel_path}\n\n"
         markdown += "```typescript\n"
         markdown += content_clean
         markdown += "\n```\n\n"

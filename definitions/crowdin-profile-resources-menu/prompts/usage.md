@@ -10,20 +10,19 @@ Crowdin app with Profile Resources Menu module for user-specific functionality.
 - Features: Responsive design, error handling, empty states, accessibility
 
 ## Tech Stack
-- **Crowdin Apps JS API** (AP object) for frontend integration
+- **Crowdin Apps JS API** (AP object for context/events) for frontend integration
 - **Crowdin Apps SDK** (@crowdin/app-project-module) for backend
 - **TypeScript** for type-safe backend development
 - **Express.js** for server and API endpoints
-- **JWT** for secure authentication with user context
+- **Metadata Storage** - Built-in key-value storage for user data
 - **Modular Frontend** - Separate HTML, CSS (styles.css), JS (app.js) files
 - **Responsive CSS** - Mobile-first design (320px+)
-- **Accessibility** - WCAG 2.1, ARIA labels
 
 ## Development Restrictions
 - **Authentication**: Always use JWT tokens from Crowdin for API requests
 - **Module Configuration**: Don't modify the profileResourcesMenu configuration structure
 - **Scopes**: Ensure your app has appropriate user-level API scopes
-- **User Context**: Apps automatically receive user context from JWT
+- **Storage Keys**: Always include organizationId in metadata keys to isolate data per organization
 
 ## Project Structure
 
@@ -37,21 +36,32 @@ Crowdin app with Profile Resources Menu module for user-specific functionality.
 - `public/profile-resources/app.js` - JavaScript with Crowdin Apps JS API integration
 - `public/profile-resources/styles.css` - Responsive CSS with accessibility support
 
-## Profile Resources Menu Configuration
+## Backend Development
+
+### App Configuration
+
+Configure your app identity in `worker/app.ts`:
 
 ```typescript
-profileResourcesMenu: {
-  fileName: 'index.html',
-  uiPath: '/profile-resources'  // Points to public/profile-resources directory
+const configuration = {
+    name: "Your App Name",                    // Display name shown in Crowdin UI
+    identifier: "your-unique-app-identifier", // Unique ID (lowercase, hyphens)
+    description: "Your app description",      // Brief description of functionality
+    // ... rest of configuration
 }
 ```
 
-### Required Scopes
+**Guidelines:**
+- **identifier**: Must be unique across all Crowdin apps. Format: `company-profile-menu`
+- **name**: User-friendly display name (e.g., "User Preferences")
+- **description**: Brief explanation of what your app does
+
+#### Required Scopes
+
 Add scopes to configuration in `worker/app.ts` based on your app's functionality.
 
 **⚠️ IMPORTANT**: Only use scopes from the list below. Do not invent or use non-existent scopes!
 
-#### Available Scopes:
 ```typescript
 const configuration = {
     // ... other configuration ...
@@ -96,68 +106,30 @@ const configuration = {
 }
 ```
 
-## Frontend Integration (Crowdin Apps JS API)
+### Module Configuration
 
-### Initialize and Get Context
-```javascript
-// Frontend - app.js
-function initializeApp() {
-    // Get user context
-    AP.getContext(function(context) {
-        userContext = context;
-        // context.user_id, context.organization_id
-    });
-    
-    // Get JWT token for API calls
-    AP.getJwtToken(function(token) {
-        jwtToken = token;
-        loadUserPreferences();  // Make API calls with token
-    });
+Configure the Profile Resources Menu module in `worker/app.ts`:
+
+```typescript
+profileResourcesMenu: {
+  fileName: 'index.html',
+  uiPath: '/profile-resources' // Points to public/profile-resources directory
 }
 ```
 
-## Backend Integration
+### Crowdin API Client
 
-### Accessing User Context
-```typescript
-// Backend - worker/app.ts  
-app.get('/api/user-preferences', async (req, res) => {
-  try {
-    const jwt = req.query.jwt as string;
-    const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
-    const userId = connection.context.jwtPayload.context.user_id;
-    const organizationId = connection.context.jwtPayload.context.organization_id;
-    
-    // User context is automatically available
-    console.log('Current user ID:', userId);
-    console.log('Organization ID:', organizationId);
-    
-    // Access user data from metadata storage
-    // IMPORTANT: Include organizationId in key to isolate data per org
-    const metadataKey = `org_${organizationId}_user_${userId}_preferences`;
-    const preferences = await crowdinApp.getMetadata(metadataKey);
-    
-    res.json({ success: true, preferences: preferences });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to access user data' });
-  }
-});
-```
+#### Official Documentation
 
-### Available Context Information
-```typescript
-context.project_id             // Current project ID (number)
-context.user_id                // Current user ID (number)
-context.organization_id        // Organization ID (number)
-context.organization_domain    // Organization domain (string | null)
-context.invite_restrict_enabled // Invite restrictions flag (boolean)
-context.user_login             // User login/username (string)
-context.project_identifier     // Project identifier (string)
-```
+The `connection.client` object is an instance of `@crowdin/crowdin-api-client`.
 
-## API Patterns
+**📚 Complete API Reference:** https://crowdin.github.io/crowdin-api-client-js/modules.html
 
-### Standard Endpoint Template
+**⚠️ CRITICAL**: Only use methods documented in the official API reference. Do NOT invent or assume methods exist.
+
+#### Common Examples
+
+**Standard Endpoint Template:**
 ```typescript
 app.get('/api/your-endpoint', async (req: Request, res: Response) => {
     try {
@@ -165,11 +137,21 @@ app.get('/api/your-endpoint', async (req: Request, res: Response) => {
         if (!jwt) {
             return res.status(400).json({ success: false, error: 'JWT token is required' });
         }
-        
+
+        if (!crowdinApp.establishCrowdinConnection) {
+            return res.status(500).json({ success: false, error: 'Crowdin connection method not available' });
+        }
+
         const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+
+        if (!connection.client) {
+            return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
+        }
+
         const userId = connection.context.jwtPayload.context.user_id;
-        
-        // Your logic here using connection.client API or user storage
+        const organizationId = connection.context.jwtPayload.context.organization_id;
+
+        // Your logic here using connection.client API
         
         res.status(200).json({ success: true, data: result });
     } catch (error) {
@@ -179,164 +161,7 @@ app.get('/api/your-endpoint', async (req: Request, res: Response) => {
 });
 ```
 
-### User Preferences with Storage Example
-```typescript
-// GET - Load user preferences from metadata storage
-app.get('/api/user-preferences', async (req, res) => {
-  try {
-    const jwt = req.query.jwt as string;
-    const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
-    const userId = connection.context.jwtPayload.context.user_id;
-    const organizationId = connection.context.jwtPayload.context.organization_id;
-    
-    // Load from metadata storage with organization-scoped key
-    const metadataKey = `org_${organizationId}_user_${userId}_preferences`;
-    const storedPreferences = await crowdinApp.getMetadata(metadataKey);
-    
-    // Default preferences if none stored
-    const preferences = storedPreferences || {
-        theme: 'auto',
-        language: 'en',
-        notifications: true,
-        emailDigest: 'weekly'
-    };
-    
-    res.json({
-      success: true,
-      preferences: preferences,
-      fromStorage: !!storedPreferences
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch user preferences' });
-  }
-});
-
-// POST - Save user preferences to metadata storage
-app.post('/api/user-preferences', async (req, res) => {
-  try {
-    const jwt = req.query.jwt as string;
-    const { preferences } = req.body;
-    
-    const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
-    const userId = connection.context.jwtPayload.context.user_id;
-    const organizationId = connection.context.jwtPayload.context.organization_id;
-    
-    // Save to metadata storage with organization-scoped key
-    const metadataKey = `org_${organizationId}_user_${userId}_preferences`;
-    await crowdinApp.saveMetadata(metadataKey, preferences, String(organizationId));
-    
-    res.json({
-      success: true,
-      message: 'Preferences saved successfully'
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to save user preferences' });
-  }
-});
-```
-
-### Adding New Endpoints to app.ts
-Add new endpoints after the existing ones, before the return statement:
-```typescript
-// Add this AFTER existing endpoints in createApp function
-app.post('/api/your-new-endpoint', async (req: Request, res: Response) => {
-    // Your implementation following the standard template
-});
-
-// IMPORTANT: Add endpoints BEFORE this return statement:
-return { expressApp: app, crowdinApp };
-```
-
-## Development Workflow
-
-### 1. Configure Your App Identity
-**⚠️ Important**: You MUST update the configuration in `worker/app.ts` before deployment:
-```typescript
-const configuration = {
-    name: "Your App Name",           // Change this to your app's display name
-    identifier: "your-app-id",       // Change to unique identifier (lowercase, hyphens)
-    description: "Your app description", // Change to describe your app's purpose
-    // ... rest of configuration
-}
-```
-
-**Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-profile-menu`
-
-### 2. Key Files to Modify
-- `worker/app.ts` - Add new API endpoints here
-- `public/profile-resources/index.html` - Modify UI structure
-- `public/profile-resources/app.js` - Add frontend logic  
-- `public/profile-resources/styles.css` - Customize styles
-
-## Crowdin API Access
-
-### Official Documentation
-The `connection.client` object is an instance of `@crowdin/crowdin-api-client`.
-
-**📚 Complete API Reference:** https://crowdin.github.io/crowdin-api-client-js/modules.html
-
-**⚠️ CRITICAL**: Only use methods documented in the official API reference. Do NOT invent or assume methods exist.
-
-### Response Structure
-
-**ALL** Crowdin API methods return responses wrapped in `ResponseObject` or `ResponseList`:
-
-#### Single Item Response (ResponseObject)
-```typescript
-interface ResponseObject<T> {
-  data: T;  // The actual data is in .data property
-}
-
-// Example: Getting a project
-const response = await connection.client.projectsGroupsApi.getProject(projectId);
-// ❌ WRONG: response.id, response.name
-// ✅ CORRECT: response.data.id, response.data.name
-
-const projectId = response.data.id;
-const projectName = response.data.name;
-const targetLanguageIds = response.data.targetLanguageIds;
-```
-
-#### List Response (ResponseList)
-```typescript
-interface ResponseList<T> {
-  data: Array<ResponseObject<T>>;  // Array of ResponseObject items
-  pagination?: Pagination;
-}
-
-// Example: Listing projects
-const response = await connection.client.projectsGroupsApi.listProjects();
-// ❌ WRONG: response[0].name
-// ✅ CORRECT: response.data[0].data.name
-
-response.data.forEach((item: ResponseObject<ProjectModel>) => {
-  const projectId = item.data.id;
-  const projectName = item.data.name;
-});
-```
-
-### Pagination with withFetchAll()
-
-For paginated endpoints, use `withFetchAll()` to automatically fetch all pages:
-
-```typescript
-// Without withFetchAll() - returns only first page (25 items by default)
-const firstPage = await connection.client.languagesApi.listSupportedLanguages();
-
-// With withFetchAll() - fetches ALL pages automatically
-const allPages = await connection.client.languagesApi.withFetchAll().listSupportedLanguages();
-// Returns: ResponseList with ALL items in .data array
-
-// Accessing data from withFetchAll()
-allPages.data.forEach((item: ResponseObject<Language>) => {
-  const languageId = item.data.id;      // e.g., "uk"
-  const languageName = item.data.name;  // e.g., "Ukrainian"
-});
-```
-
-### Common API Examples
-
-#### 1. Get Project Details
+**Get Project Details:**
 ```typescript
 const response = await connection.client.projectsGroupsApi.getProject(projectId);
 
@@ -348,7 +173,7 @@ const targetLanguageIds = project.targetLanguageIds; // string[]
 const description = project.description;             // string | null
 ```
 
-#### 2. List All Projects (with pagination)
+**List All Projects (with pagination):**
 ```typescript
 const response = await connection.client.projectsGroupsApi.withFetchAll().listProjects();
 
@@ -360,7 +185,7 @@ response.data.forEach((projectItem: ResponseObject<ProjectsGroupsModel.Project>)
 });
 ```
 
-#### 3. Get Supported Languages
+**Get Supported Languages:**
 ```typescript
 const response = await connection.client.languagesApi.withFetchAll().listSupportedLanguages();
 
@@ -379,7 +204,7 @@ const languages = projectLanguages.map((lang: ResponseObject<LanguagesModel.Lang
 }));
 ```
 
-#### 4. List Source Files
+**List Source Files:**
 ```typescript
 const response = await connection.client.sourceFilesApi.withFetchAll().listProjectFiles(projectId);
 
@@ -392,19 +217,7 @@ response.data.forEach((fileItem: ResponseObject<SourceFilesModel.File>) => {
 });
 ```
 
-#### 5. Get Translation Status
-```typescript
-const response = await connection.client.translationStatusApi.getProjectProgress(projectId);
-
-const progress = response.data;
-progress.forEach((item: TranslationStatusModel.LanguageProgress) => {
-  const languageId = item.data.languageId;
-  const translationProgress = item.data.translationProgress; // number (0-100)
-  const approvalProgress = item.data.approvalProgress;       // number (0-100)
-});
-```
-
-### Best Practices
+#### Best Practices
 
 1. **Always access data via `.data` property**
    ```typescript
@@ -425,55 +238,43 @@ progress.forEach((item: TranslationStatusModel.LanguageProgress) => {
    const response = await connection.client.languagesApi.listSupportedLanguages();
    ```
 
-3. **Check TypeScript types in official docs**
-   - Don't assume property names
-   - Check the API reference for exact response models
-   - Use TypeScript autocomplete in your IDE
-
-4. **Handle nullable properties**
+3. **Handle nullable properties**
    ```typescript
    const description = response.data.description || 'No description';
    const groupId = response.data.groupId ?? null;
    ```
 
-5. **Verify methods exist in documentation**
-   - Before using any method, check: https://crowdin.github.io/crowdin-api-client-js/modules.html
-   - Example: `ProjectsGroupsModel` module lists all available methods
-   - Do NOT invent methods like `.getProjectLanguages()` if they don't exist
+4. **Handle errors properly**
+   ```typescript
+   try {
+     const response = await connection.client.projectsGroupsApi.getProject(projectId);
+     const project = response.data;
+     // Use project data
+   } catch (error: any) {
+     console.error('Crowdin API Error:', error);
 
-### Error Handling with API
+     // API errors have specific structure
+     if (error.code === 404) {
+       return res.status(404).json({ error: 'Project not found' });
+     }
+     
+     return res.status(500).json({
+       error: 'API request failed',
+       details: error.message
+     });
+   }
+   ```
 
-```typescript
-try {
-  const response = await connection.client.projectsGroupsApi.getProject(projectId);
-  const project = response.data;
-  // Use project data
-} catch (error: any) {
-  console.error('Crowdin API Error:', error);
-  
-  // API errors have specific structure
-  if (error.code === 404) {
-    return res.status(404).json({ error: 'Project not found' });
-  }
-  
-  return res.status(500).json({ 
-    error: 'API request failed',
-    details: error.message 
-  });
-}
-```
+5. **Use TypeScript types**
+   ```typescript
+   import { ResponseObject, ProjectsGroupsModel } from '@crowdin/crowdin-api-client';
+   
+   // Use in your code
+   const response: ResponseObject<ProjectsGroupsModel.Project> = await connection.client.projectsGroupsApi.getProject(projectId);
+   const project: ProjectsGroupsModel.Project = response.data;
+   ```
 
-### TypeScript Type Safety
-
-```typescript
-import { ResponseObject, ProjectsGroupsModel } from '@crowdin/crowdin-api-client';
-
-// Use in your code
-const response: ResponseObject<ProjectsGroupsModel.Project> = await connection.client.projectsGroupsApi.getProject(projectId);
-const project: ProjectsGroupsModel.Project = response.data;
-```
-
-### Complete Type Definitions
+#### Complete Type Definitions
 
 **⚠️ CRITICAL**: Only use methods and types from `@crowdin/crowdin-api-client` definitions below.
 
@@ -481,7 +282,7 @@ const project: ProjectsGroupsModel.Project = response.data;
 
 <!-- CROWDIN_API_CLIENT_TYPES_START -->
 
-#### ai/index.d.ts
+##### ai/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, PlainObject, ResponseList, ResponseObject, Status } from '../core';
@@ -855,7 +656,7 @@ export declare namespace AiModel {
 }
 ```
 
-#### applications/index.d.ts
+##### applications/index.d.ts
 
 ```typescript
 import { CrowdinApi, ResponseObject, PatchRequest, Pagination, ResponseList } from '../core';
@@ -911,7 +712,7 @@ export declare namespace ApplicationsModel {
 }
 ```
 
-#### bundles/index.d.ts
+##### bundles/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -962,7 +763,7 @@ export declare namespace BundlesModel {
 }
 ```
 
-#### clients/index.d.ts
+##### clients/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList } from '../core';
@@ -980,7 +781,7 @@ export declare namespace ClientsModel {
 }
 ```
 
-#### core/http-client-error.d.ts
+##### core/http-client-error.d.ts
 
 ```typescript
 import { AxiosError } from 'axios';
@@ -989,7 +790,7 @@ export type HttpClientError = AxiosError | FetchClientJsonPayloadError | Error;
 export declare const toHttpClientError: (error?: unknown) => HttpClientError;
 ```
 
-#### core/index.d.ts
+##### core/index.d.ts
 
 ```typescript
 import { HttpClientError } from './http-client-error';
@@ -1154,7 +955,7 @@ export interface ProjectRolePermissions {
 }
 ```
 
-#### dictionaries/index.d.ts
+##### dictionaries/index.d.ts
 
 ```typescript
 import { CrowdinApi, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1174,7 +975,7 @@ export declare namespace DictionariesModel {
 }
 ```
 
-#### distributions/index.d.ts
+##### distributions/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1227,7 +1028,7 @@ export declare namespace DistributionsModel {
 }
 ```
 
-#### fields/index.d.ts
+##### fields/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1288,7 +1089,7 @@ export declare namespace FieldsModel {
 }
 ```
 
-#### glossaries/index.d.ts
+##### glossaries/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -1465,7 +1266,7 @@ export declare namespace GlossariesModel {
 }
 ```
 
-#### index.d.ts
+##### index.d.ts
 
 ```typescript
 import { Ai } from './ai';
@@ -1575,7 +1376,7 @@ export default class Client extends CrowdinApi {
 export { Client };
 ```
 
-#### issues/index.d.ts
+##### issues/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1621,7 +1422,7 @@ export declare namespace IssuesModel {
 }
 ```
 
-#### labels/index.d.ts
+##### labels/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1660,7 +1461,7 @@ export declare namespace LabelsModel {
 }
 ```
 
-#### languages/index.d.ts
+##### languages/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1703,7 +1504,7 @@ export declare namespace LanguagesModel {
 }
 ```
 
-#### machineTranslation/index.d.ts
+##### machineTranslation/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1777,7 +1578,7 @@ export declare namespace MachineTranslationModel {
 }
 ```
 
-#### notifications/index.d.ts
+##### notifications/index.d.ts
 
 ```typescript
 import { CrowdinApi } from '../core';
@@ -1799,7 +1600,7 @@ export declare namespace NotificationsModel {
 }
 ```
 
-#### organizationWebhooks/index.d.ts
+##### organizationWebhooks/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -1822,7 +1623,7 @@ export declare namespace OrganizationWebhooksModel {
 }
 ```
 
-#### projectsGroups/index.d.ts
+##### projectsGroups/index.d.ts
 
 ```typescript
 import { BooleanInt, CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -2270,7 +2071,7 @@ export declare namespace ProjectsGroupsModel {
 }
 ```
 
-#### reports/index.d.ts
+##### reports/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -2770,7 +2571,7 @@ export declare namespace ReportsModel {
 }
 ```
 
-#### screenshots/index.d.ts
+##### screenshots/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -2856,7 +2657,7 @@ export declare namespace ScreenshotsModel {
 }
 ```
 
-#### securityLogs/index.d.ts
+##### securityLogs/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList, ResponseObject } from '../core';
@@ -2889,7 +2690,7 @@ export declare namespace SecurityLogsModel {
 }
 ```
 
-#### sourceFiles/index.d.ts
+##### sourceFiles/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -3204,7 +3005,7 @@ export declare namespace SourceFilesModel {
 }
 ```
 
-#### sourceStrings/index.d.ts
+##### sourceStrings/index.d.ts
 
 ```typescript
 import { BooleanInt, CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -3327,7 +3128,7 @@ export declare namespace SourceStringsModel {
 }
 ```
 
-#### stringComments/index.d.ts
+##### stringComments/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -3404,7 +3205,7 @@ export declare namespace StringCommentsModel {
 }
 ```
 
-#### stringCorrections/index.d.ts
+##### stringCorrections/index.d.ts
 
 ```typescript
 import { BooleanInt, CrowdinApi, PaginationOptions, ResponseList, ResponseObject } from '../core';
@@ -3445,7 +3246,7 @@ export declare namespace StringCorrectionsModel {
 }
 ```
 
-#### stringTranslations/index.d.ts
+##### stringTranslations/index.d.ts
 
 ```typescript
 import { BooleanInt, CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -3605,7 +3406,7 @@ export declare namespace StringTranslationsModel {
 }
 ```
 
-#### tasks/index.d.ts
+##### tasks/index.d.ts
 
 ```typescript
 import { BooleanInt, CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -3953,7 +3754,7 @@ export declare namespace TasksModel {
 }
 ```
 
-#### teams/index.d.ts
+##### teams/index.d.ts
 
 ```typescript
 import { CrowdinApi, Pagination, PaginationOptions, PatchRequest, ProjectRole, ProjectRoles, ResponseList, ResponseObject } from '../core';
@@ -4043,7 +3844,7 @@ export declare namespace TeamsModel {
 }
 ```
 
-#### translationMemory/index.d.ts
+##### translationMemory/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -4164,7 +3965,7 @@ export declare namespace TranslationMemoryModel {
 }
 ```
 
-#### translationStatus/index.d.ts
+##### translationStatus/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList } from '../core';
@@ -4231,7 +4032,7 @@ export declare namespace TranslationStatusModel {
 }
 ```
 
-#### translations/index.d.ts
+##### translations/index.d.ts
 
 ```typescript
 import { CrowdinApi, DownloadLink, PaginationOptions, PatchRequest, ResponseList, ResponseObject, Status } from '../core';
@@ -4439,7 +4240,7 @@ export declare namespace TranslationsModel {
 }
 ```
 
-#### uploadStorage/index.d.ts
+##### uploadStorage/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList, ResponseObject } from '../core';
@@ -4458,7 +4259,7 @@ export declare namespace UploadStorageModel {
 }
 ```
 
-#### users/index.d.ts
+##### users/index.d.ts
 
 ```typescript
 import { CrowdinApi, Pagination, PaginationOptions, PatchRequest, ProjectRole, ProjectRoles, ResponseList, ResponseObject } from '../core';
@@ -4609,7 +4410,7 @@ export declare namespace UsersModel {
 }
 ```
 
-#### vendors/index.d.ts
+##### vendors/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList } from '../core';
@@ -4628,7 +4429,7 @@ export declare namespace VendorsModel {
 }
 ```
 
-#### webhooks/index.d.ts
+##### webhooks/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
@@ -4673,7 +4474,7 @@ export declare namespace WebhooksModel {
 }
 ```
 
-#### workflows/index.d.ts
+##### workflows/index.d.ts
 
 ```typescript
 import { CrowdinApi, PaginationOptions, ResponseList, ResponseObject } from '../core';
@@ -4731,76 +4532,106 @@ export declare namespace WorkflowModel {
 
 <!-- CROWDIN_API_CLIENT_TYPES_END -->
 
-## Storage API (Metadata)
+## Frontend Development
 
-Profile Resources Menu apps can store user-specific data using the Crowdin Apps SDK Storage API:
+### Crowdin Apps JS API
 
-### Save User Preferences
-```typescript
-// Save metadata for a specific user in organization
-// Key format includes organizationId to isolate data per organization
-const metadataKey = `org_${organizationId}_user_${userId}_preferences`;
-const preferences = {
-    theme: 'dark',
-    language: 'en',
-    notifications: true
-};
+#### Official Documentation
 
-await crowdinApp.saveMetadata(
-    metadataKey,              // Unique key for this data
-    preferences,              // Data to store (any serializable object)
-    String(organizationId)    // Organization ID from context
-);
-```
+The `AP` object provides the Crowdin Apps JS API for interacting with the Crowdin application context.
 
-### Load User Preferences
-```typescript
-// Retrieve metadata
-const metadataKey = `org_${organizationId}_user_${userId}_preferences`;
-const storedPreferences = await crowdinApp.getMetadata(metadataKey);
+**📚 Complete API Reference:** https://support.crowdin.com/developer/crowdin-apps-js/
 
-// Returns null if no data stored
-const preferences = storedPreferences || defaultPreferences;
-```
+**⚠️ CRITICAL**: Only use methods and types from the Crowdin Apps JS API definitions below.
 
-### Delete User Preferences
-```typescript
-// Remove metadata
-const metadataKey = `org_${organizationId}_user_${userId}_preferences`;
-await crowdinApp.deleteMetadata(metadataKey);
-```
+**Do NOT invent methods or properties that are not listed here.**
 
-### Storage Best Practices
-- **Key Format**: Always include organizationId and userId: `org_${organizationId}_user_${userId}_preferences`
-- **Isolation**: This ensures data is isolated per organization (same user can have different prefs in different orgs)
-- **Descriptive Keys**: Use clear naming: `_preferences`, `_settings`, `_cache`
-- Store only necessary data to minimize storage usage
-- Include timestamps for tracking when data was last updated
-- Handle cases when data doesn't exist (returns `null`)
-- Use organization ID for the third parameter in `saveMetadata()`
+#### Common Examples
 
-## Frontend Patterns
-
-### Making API Calls from Frontend
+**Get Context:**
 ```javascript
-async function callBackendAPI(endpoint, method = 'GET', body = null) {
-    const options = {
-        method: method,
-        headers: { 'Content-Type': 'application/json' }
-    };
-    
-    if (body) options.body = JSON.stringify(body);
-    
-    const response = await fetch(`${endpoint}?jwt=${jwtToken}`, options);
-    return response.json();
+// Get application context
+AP.getContext(function(context) {
+    console.log('Project ID:', context.project_id);
+});
+```
+
+#### Best Practices
+
+1. **Always check AP availability**
+   ```javascript
+   if (window.AP) {
+       AP.getContext(function(context) {
+           // Your code
+       });
+   }
+   ```
+
+2. **Get JWT token for backend calls**
+   ```javascript
+   AP.getJwtToken(function(token) {
+       fetch('/api/endpoint?jwt=' + token)
+           .then(response => response.json());
+   });
+   ```
+
+3. **Handle errors gracefully**
+   ```javascript
+   try {
+       AP.getContext(function(context) {
+           if (!context.organization_id) {
+               console.error('Organization ID not found');
+           }
+       });
+   } catch (error) {
+       console.error('Failed to get context:', error);
+   }
+   ```
+
+#### Complete Type Definitions
+
+##### Global AP Object Structure
+
+```typescript
+declare namespace AP {
+    // Global Actions
+    function getContext(callback: (context: Context) => void): void;
+    function getJwtToken(callback: (token: string) => void): void;
+    function getTheme(): 'light' | 'dark';
+    function redirect(path: string): void;
 }
 ```
 
-### Updating UI with Results
-```javascript
-function updateUI(elementId, content) {
-    const element = document.getElementById(elementId);
-    element.innerHTML = content;
-    element.className = ''; // Remove loading class
+##### Type Definitions
+
+```typescript
+// Context Information
+interface Context {
+    project_id: number;
+    organization_id: number;
 }
 ```
+
+## Development Workflow
+
+### 1. Configure Your App Identity
+
+**⚠️ Important**: You MUST update the configuration in `worker/app.ts` before deployment:
+
+```typescript
+const configuration = {
+    name: "Your App Name",           // Change this to your app's display name
+    identifier: "your-app-id",       // Change to unique identifier (lowercase, hyphens)
+    description: "Your app description", // Change to describe your app's purpose
+    // ... rest of configuration
+}
+```
+
+**Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-profile-menu`
+
+### 2. Key Files to Modify
+
+- `worker/app.ts` - Add new API endpoints here
+- `public/profile-resources/index.html` - Modify UI structure
+- `public/profile-resources/app.js` - Add frontend logic
+- `public/profile-resources/styles.css` - Customize styles
