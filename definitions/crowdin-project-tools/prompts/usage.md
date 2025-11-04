@@ -4945,8 +4945,6 @@ interface WebhookCallback {
 - `string.added` - New source string added
 - `string.updated` - Source string updated
 - `string.deleted` - Source string deleted
-- `string.hidden` - String hidden
-- `string.unhidden` - String unhidden
 
 **Translation Events:**
 - `suggestion.added` - String translation added
@@ -4954,6 +4952,12 @@ interface WebhookCallback {
 - `suggestion.deleted` - String translation deleted
 - `suggestion.approved` - String translation approved
 - `suggestion.disapproved` - String translation disapproved
+
+**Comment Events:**
+- `stringComment.created` - String comment added
+- `stringComment.updated` - String comment updated
+- `stringComment.deleted` - String comment deleted
+- `stringComment.restored` - String comment restored
 
 **Task Events:**
 - `task.added` - New task added
