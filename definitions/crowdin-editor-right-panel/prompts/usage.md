@@ -4594,7 +4594,7 @@ app.post('/api/save-data', async (req: Request, res: Response) => {
             return res.status(500).json({ success: false, error: 'Metadata storage not available' });
         }
         
-        await crowdinApp.saveMetadata(key, data, String(organizationId));
+        await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
         res.json({ success: true, message: 'Data saved successfully' });
     } catch (error) {
         console.error('Save error:', error);
@@ -4710,7 +4710,7 @@ const preferences = {
 };
 
 const key = `org_${organizationId}_user_${userId}_preferences`;
-await crowdinApp.saveMetadata(key, preferences, String(organizationId));
+await crowdinApp.saveMetadata(key, preferences, connection.context.crowdinId);
 
 // Retrieve and update
 const currentPrefs = await crowdinApp.getMetadata(key) || {};
@@ -4719,7 +4719,7 @@ const updatedPrefs = {
     theme: 'light',
     lastUpdated: new Date().toISOString()
 };
-await crowdinApp.saveMetadata(key, updatedPrefs, String(organizationId));
+await crowdinApp.saveMetadata(key, updatedPrefs, connection.context.crowdinId);
 ```
 
 #### Best Practices
@@ -4742,10 +4742,10 @@ await crowdinApp.saveMetadata(key, updatedPrefs, String(organizationId));
         throw new Error('Metadata storage not available');
    }
    
-   await crowdinApp.saveMetadata(key, data, String(organizationId));
+   await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
    
    // ❌ WRONG - may cause runtime errors
-   await crowdinApp.saveMetadata(key, data, String(organizationId));
+   await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
    ```
 
 3. **Handle missing data gracefully**
@@ -4766,13 +4766,16 @@ await crowdinApp.saveMetadata(key, updatedPrefs, String(organizationId));
    const theme = data.theme; // Error if data is null
    ```
 
-4. **Always pass organizationId as string**
+4. **Always use the correct identifier for the third parameter**
    ```typescript
-   // ✅ CORRECT - convert to string
-   await crowdinApp.saveMetadata(key, data, String(organizationId));
+   // ✅ CORRECT - when connection object is available
+   await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
    
-   // ⚠️ MAY FAIL - organizationId might be a number
-   await crowdinApp.saveMetadata(key, data, organizationId);
+   // ✅ CORRECT - when using webhookContext (no connection object)
+   await crowdinApp.saveMetadata(key, data, `${webhookContext.domain || webhookContext.organizationId}`);
+   
+   // ❌ WRONG - don't use organizationId directly
+   await crowdinApp.saveMetadata(key, data, String(organizationId));
    ```
 
 5. **Use descriptive key patterns**
@@ -4791,7 +4794,7 @@ await crowdinApp.saveMetadata(key, updatedPrefs, String(organizationId));
    ```typescript
    // ✅ CORRECT - comprehensive error handling
    try {
-       await crowdinApp.saveMetadata(key, data, String(organizationId));
+       await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
        return { success: true };
    } catch (error: any) {
        console.error('Metadata save failed:', error);
