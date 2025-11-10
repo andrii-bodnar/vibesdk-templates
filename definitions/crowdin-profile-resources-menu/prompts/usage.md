@@ -5056,204 +5056,339 @@ interface WebhookCallback {
 
 #### Event Object Structure
 
-Common fields in webhook events:
+Each event type has its own interface with specific fields. Use these interfaces to understand which data is available for each event:
 
 ```typescript
-interface WebhookEvent {
-    /** Event name (e.g., "file.added") */
-    event: string;
+// ============================================================================
+// SHARED MODELS - Reusable data structures
+// ============================================================================
 
-    /** Project data (for project events) */
-    project?: {
-        id: number;
-        name: string;
-        identifier: string;
-        sourceLanguageId: string;
-        targetLanguageIds: string[];
-        // ... other file properties
-    };
-
-    /** Build data */
-    build?: {
-        id: number;
-        downloadUrl: string;
-        project: {
-            id: number;
-            name: string;
-            identifier: string;
-            sourceLanguageId: string;
-            targetLanguageIds: string[];
-            // ... other file properties
-        };
-        // ... other file properties
-    };
-
-    /** Group data (for group events) */
-    group?: {
-        id: number;
-        name: string;
-        parentId: number | null;
-    };
-    
-    /** File data (for file events) */
-    file?: {
-        id: number;
-        name: string;
-        title: string;
-        type: string;
-        path: string;
-        branchId: number | null;
-        directoryId: number | null;
-        project: {
-            id: number;
-            name: string;
-            identifier: string;
-            sourceLanguageId: string;
-            targetLanguageIds: string[];
-            // ... other file properties
-        };
-        // ... other file properties
-    };
-    
-    /** String data (for string events) */
-    string?: {
-        id: number;
-        identifier: string;
-        text: string;
-        file: {
-            id: number;
-            name: string;
-            title: string;
-            type: string;
-            path: string;
-            branchId: number;
-            directoryId: number;
-            // ... other string properties
-        };
-        project: {
-            id: number;
-            name: string;
-            identifier: string;
-            sourceLanguageId: string;
-            targetLanguageIds: string[];
-            // ... other file properties
-        };
-        // ... other string properties
-    };
-    
-    /** Translation data (for translation events) */
-    translation?: {
-        id: number;
-        text: string;
-        targetLanguage: {
-            id: string;
-            name: string;
-            // ... other translation properties
-        };
-        string: {
-            id: number;
-            identifier: string;
-            text: string;
-            file: {
-                id: number;
-                name: string;
-                title: string;
-                type: string;
-                path: string;
-                branchId: number;
-                directoryId: number;
-                // ... other string properties
-            };
-            project: {
-                id: number;
-                name: string;
-                identifier: string;
-                sourceLanguageId: string;
-                targetLanguageIds: string[];
-                // ... other file properties
-            };
-            // ... other translation properties
-        };
-        // ... other translation properties
-    };
-    
-    /** Task data (for task events) */
-    task?: {
-        id: number;
-        type: 0 | 1; // 0 - Translate, 1 - Proofread
-        title: string;
-        status: 'todo' | 'in_progress' | 'done' | 'closed' | 'pending' | 'review';
-        sourceLanguage: {
-            id: string;
-            name: string;
-            // ... other translation properties
-        };
-        targetLanguage: {
-            id: string;
-            name: string;
-            // ... other translation properties
-        };
-        project: {
-            id: number;
-            name: string;
-            identifier: string;
-            sourceLanguageId: string;
-            targetLanguageIds: string[];
-            // ... other file properties
-        };
-        // ... other task properties
-    };
-
-    /** Comment data (for comment events) */
-    comment?: {
-        id: number;
-        text: string;
-        string: {
-            id: number;
-            identifier: string;
-            text: string;
-            file: {
-                id: number;
-                name: string;
-                title: string;
-                type: string;
-                path: string;
-                branchId: number;
-                directoryId: number;
-                // ... other string properties
-            };
-            project: {
-                id: number;
-                name: string;
-                identifier: string;
-                sourceLanguageId: string;
-                targetLanguageIds: string[];
-                // ... other file properties
-            };
-            // ... other string properties
-        };
-        targetLanguage: {
-            id: string;
-            name: string;
-            // ... other translation properties
-        };
-        user?: {
-            id: number;
-            username: string;
-            // ... other user properties
-        }
-        // ... other task properties
-    };
-
-    /** User data */
-    user?: {
-        id: number;
-        username: string;
-        // ... other user properties
-    };
-    
-    // Other event-specific fields...
+interface ProjectModel {
+    id: number;
+    name: string;
+    identifier: string;
+    sourceLanguageId: string;
+    targetLanguageIds: string[];
 }
+
+interface UserModel {
+    id: number;
+    username: string;
+}
+
+interface LanguageModel {
+    id: string;
+    name: string;
+}
+
+interface FileModelBase {
+    id: number;
+    name: string;
+    title: string;
+    type: string;
+    path: string;
+    branchId: number | null;
+    directoryId: number | null;
+}
+
+interface FileModel extends FileModelBase {
+    project: ProjectModel;
+}
+
+interface GroupModel {
+    id: number;
+    name: string;
+    parentId: number | null;
+}
+
+interface StringModelBase {
+    id: number;
+    identifier: string;
+    text: string;
+    context: string | null;
+    isHidden: boolean;
+}
+
+interface StringModel extends StringModelBase {
+    file: FileModelBase;
+    project: ProjectModel;
+}
+
+interface TranslationModelBase {
+    id: number;
+    text: string;
+}
+
+interface TranslationModel extends TranslationModelBase {
+    user: UserModel;
+    targetLanguage: LanguageModel;
+    string: StringModel;
+}
+
+interface TaskModel {
+    id: number;
+    type: 0 | 1; // 0 - Translate, 1 - Proofread
+    title: string;
+    status: 'todo' | 'in_progress' | 'done' | 'closed' | 'pending' | 'review';
+    sourceLanguage: LanguageModel;
+    targetLanguage: LanguageModel;
+    project: ProjectModel;
+    taskCreator: UserModel;
+}
+
+interface CommentModelBase {
+    id: number;
+    text: string;
+    type: 'issue' | 'comment';
+    issueType: 'general_question' | 'translation_mistake' |  'context_request' |  'source_mistake';
+    issueStatus: 'resolved' | 'unresolved';
+}
+
+interface CommentModel extends CommentModelBase {
+    string: StringModel;
+    targetLanguage: LanguageModel;
+    user: UserModel;
+    commentResolver: UserModel | null;
+}
+
+interface BuildModel {
+    id: number;
+    downloadUrl: string;
+    project: ProjectModel;
+}
+
+// ============================================================================
+// BASE EVENT INTERFACES
+// ============================================================================
+
+interface BaseEventWithUser {
+    user: UserModel;
+}
+
+interface BaseProjectEvent {
+    project: ProjectModel;
+}
+
+interface BaseGroupEvent {
+    group: GroupModel;
+}
+
+interface BaseFileEvent {
+    file: FileModel;
+}
+
+interface BaseStringEvent {
+    string: StringModel;
+}
+
+interface BaseTranslationEvent {
+    translation: TranslationModel;
+}
+
+interface BaseTaskEvent {
+    task: TaskModel;
+}
+
+interface BaseCommentEvent {
+    comment: CommentModel;
+}
+
+// ============================================================================
+// PROJECT EVENTS
+// ============================================================================
+
+interface ProjectCreatedEvent extends BaseProjectEvent, BaseEventWithUser {
+    event: 'project.created';
+}
+
+interface ProjectDeletedEvent extends BaseProjectEvent, BaseEventWithUser {
+    event: 'project.deleted';
+}
+
+interface ProjectTranslatedEvent extends BaseProjectEvent {
+    event: 'project.translated';
+    targetLanguage: LanguageModel;
+}
+
+interface ProjectApprovedEvent extends BaseProjectEvent {
+    event: 'project.approved';
+    targetLanguage: LanguageModel;
+}
+
+interface ProjectBuiltEvent {
+    event: 'project.built';
+    build: BuildModel;
+}
+
+// ============================================================================
+// GROUP EVENTS
+// ============================================================================
+
+interface GroupCreatedEvent extends BaseGroupEvent, BaseEventWithUser {
+    event: 'group.created';
+}
+
+interface GroupDeletedEvent extends BaseGroupEvent, BaseEventWithUser {
+    event: 'group.deleted';
+}
+
+// ============================================================================
+// FILE EVENTS
+// ============================================================================
+
+interface FileAddedEvent extends BaseFileEvent, BaseEventWithUser {
+    event: 'file.added';
+}
+
+interface FileUpdatedEvent extends BaseFileEvent, BaseEventWithUser {
+    event: 'file.updated';
+}
+
+interface FileDeletedEvent extends BaseFileEvent, BaseEventWithUser {
+    event: 'file.deleted';
+}
+
+interface FileRevertedEvent extends BaseFileEvent, BaseEventWithUser {
+    event: 'file.reverted';
+}
+
+interface FileTranslatedEvent extends BaseFileEvent {
+    event: 'file.translated';
+    targetLanguage: LanguageModel;
+}
+
+interface FileApprovedEvent extends BaseFileEvent {
+    event: 'file.approved';
+    targetLanguage: LanguageModel;
+}
+
+// ============================================================================
+// STRING EVENTS
+// ============================================================================
+
+interface StringAddedEvent extends BaseStringEvent, BaseEventWithUser {
+    event: 'string.added';
+}
+
+interface StringUpdatedEvent extends BaseStringEvent, BaseEventWithUser {
+    event: 'string.updated';
+}
+
+interface StringDeletedEvent extends BaseStringEvent, BaseEventWithUser {
+    event: 'string.deleted';
+}
+
+// ============================================================================
+// TRANSLATION/SUGGESTION EVENTS
+// ============================================================================
+
+interface SuggestionAddedEvent extends BaseTranslationEvent {
+    event: 'suggestion.added';
+}
+
+interface SuggestionUpdatedEvent extends BaseTranslationEvent {
+    event: 'suggestion.updated';
+}
+
+interface SuggestionDeletedEvent extends BaseTranslationEvent {
+    event: 'suggestion.deleted';
+}
+
+interface SuggestionApprovedEvent extends BaseTranslationEvent {
+    event: 'suggestion.approved';
+}
+
+interface SuggestionDisapprovedEvent extends BaseTranslationEvent {
+    event: 'suggestion.disapproved';
+}
+
+interface TranslationUpdatedEvent {
+    event: 'translation.updated';
+    newTranslation: TranslationModel;
+}
+
+// ============================================================================
+// COMMENT EVENTS
+// ============================================================================
+
+interface StringCommentCreatedEvent extends BaseCommentEvent {
+    event: 'stringComment.created';
+}
+
+interface StringCommentUpdatedEvent extends BaseCommentEvent {
+    event: 'stringComment.updated';
+}
+
+interface StringCommentDeletedEvent extends BaseCommentEvent {
+    event: 'stringComment.deleted';
+}
+
+interface StringCommentRestoredEvent extends BaseCommentEvent {
+    event: 'stringComment.restored';
+}
+
+// ============================================================================
+// TASK EVENTS
+// ============================================================================
+
+interface TaskAddedEvent extends BaseTaskEvent {
+    event: 'task.added';
+}
+
+interface TaskStatusChangedEvent extends BaseTaskEvent {
+    event: 'task.statusChanged';
+}
+
+interface TaskUpdatedEvent extends BaseTaskEvent {
+    event: 'task.updated';
+}
+
+interface TaskDeletedEvent extends BaseTaskEvent {
+    event: 'task.deleted';
+}
+
+// ============================================================================
+// UNION TYPE - All possible webhook events
+// ============================================================================
+
+type WebhookEvent = 
+    // Project events
+    | ProjectCreatedEvent
+    | ProjectDeletedEvent
+    | ProjectTranslatedEvent
+    | ProjectApprovedEvent
+    | ProjectBuiltEvent
+    // Group events
+    | GroupCreatedEvent
+    | GroupDeletedEvent
+    // File events
+    | FileAddedEvent
+    | FileUpdatedEvent
+    | FileDeletedEvent
+    | FileRevertedEvent
+    | FileTranslatedEvent
+    | FileApprovedEvent
+    // String events
+    | StringAddedEvent
+    | StringUpdatedEvent
+    | StringDeletedEvent
+    // Translation/Suggestion events
+    | SuggestionAddedEvent
+    | SuggestionUpdatedEvent
+    | SuggestionDeletedEvent
+    | SuggestionApprovedEvent
+    | SuggestionDisapprovedEvent
+    | TranslationUpdatedEvent
+    // Comment events
+    | StringCommentCreatedEvent
+    | StringCommentUpdatedEvent
+    | StringCommentDeletedEvent
+    | StringCommentRestoredEvent
+    // Task events
+    | TaskAddedEvent
+    | TaskStatusChangedEvent
+    | TaskUpdatedEvent
+    | TaskDeletedEvent;
 ```
 
 ## Frontend Development
