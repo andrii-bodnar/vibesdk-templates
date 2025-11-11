@@ -4574,11 +4574,7 @@ app.post('/api/save-data', async (req: Request, res: Response) => {
         const key = `org_${organizationId}_user_${userId}_preferences`;
         
         // Save data to metadata storage
-        if (!crowdinApp.saveMetadata) {
-            return res.status(500).json({ success: false, error: 'Metadata storage not available' });
-        }
-        
-        await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
+        await crowdinModule.metadataStore.saveMetadata(key, data, connection.context.crowdinId);
         res.json({ success: true, message: 'Data saved successfully' });
     } catch (error) {
         console.error('Save error:', error);
@@ -4613,11 +4609,7 @@ app.get('/api/get-data', async (req: Request, res: Response) => {
         const key = `org_${organizationId}_user_${userId}_preferences`;
         
         // Retrieve data from metadata storage
-        if (!crowdinApp.getMetadata) {
-            return res.status(500).json({ success: false, error: 'Metadata storage not available' });
-        }
-        
-        const data = await crowdinApp.getMetadata(key);
+        const data = await crowdinModule.metadataStore.getMetadata(key);
             
         // Handle case when no data exists
         if (!data) {
@@ -4662,11 +4654,7 @@ app.delete('/api/delete-data', async (req: Request, res: Response) => {
         const key = `org_${organizationId}_user_${userId}_preferences`;
         
         // Delete data from metadata storage
-        if (!crowdinApp.deleteMetadata) {
-            return res.status(500).json({ success: false, error: 'Metadata storage not available' });
-        }
-        
-        await crowdinApp.deleteMetadata(key);
+        await crowdinModule.metadataStore.deleteMetadata(key);
         res.json({ success: true, message: 'Data deleted successfully' });
     } catch (error) {
         console.error('Delete error:', error);
@@ -4694,16 +4682,16 @@ const preferences = {
 };
 
 const key = `org_${organizationId}_user_${userId}_preferences`;
-await crowdinApp.saveMetadata(key, preferences, connection.context.crowdinId);
+await crowdinModule.metadataStore.saveMetadata(key, preferences, connection.context.crowdinId);
 
 // Retrieve and update
-const currentPrefs = await crowdinApp.getMetadata(key) || {};
+const currentPrefs = await crowdinModule.metadataStore.getMetadata(key) || {};
 const updatedPrefs = {
     ...currentPrefs,
     theme: 'light',
     lastUpdated: new Date().toISOString()
 };
-await crowdinApp.saveMetadata(key, updatedPrefs, connection.context.crowdinId);
+await crowdinModule.metadataStore.saveMetadata(key, updatedPrefs, connection.context.crowdinId);
 ```
 
 #### Best Practices
@@ -4719,29 +4707,16 @@ await crowdinApp.saveMetadata(key, updatedPrefs, connection.context.crowdinId);
    const key = `${userId}_data`;
    ```
 
-2. **Check method availability**
-   ```typescript
-   // ✅ CORRECT - verify method exists before calling
-   if (!crowdinApp.saveMetadata) {
-        throw new Error('Metadata storage not available');
-   }
-   
-   await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
-   
-   // ❌ WRONG - may cause runtime errors
-   await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
-   ```
-
-3. **Handle missing data gracefully**
+2. **Handle missing data gracefully**
    ```typescript
    // ✅ CORRECT - provide defaults for missing data
-   const data = await crowdinApp.getMetadata(key) || { 
+   const data = await crowdinModule.metadataStore.getMetadata(key) || { 
        theme: 'auto', 
        language: 'en' 
    };
    
    // ✅ CORRECT - check for null/undefined
-   const data = await crowdinApp.getMetadata(key);
+   const data = await crowdinModule.metadataStore.getMetadata(key);
    if (!data) {
        return defaultSettings;
    }
@@ -4750,19 +4725,19 @@ await crowdinApp.saveMetadata(key, updatedPrefs, connection.context.crowdinId);
    const theme = data.theme; // Error if data is null
    ```
 
-4. **Always use the correct identifier for the third parameter**
+3. **Always use the correct identifier for the third parameter**
    ```typescript
    // ✅ CORRECT - when connection object is available
-   await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
+   await crowdinModule.metadataStore.saveMetadata(key, data, connection.context.crowdinId);
    
    // ✅ CORRECT - when using webhookContext (no connection object)
-   await crowdinApp.saveMetadata(key, data, `${webhookContext.domain || webhookContext.organizationId}`);
+   await crowdinModule.metadataStore.saveMetadata(key, data, `${webhookContext.domain || webhookContext.organizationId}`);
    
    // ❌ WRONG - don't use organizationId directly
-   await crowdinApp.saveMetadata(key, data, String(organizationId));
+   await crowdinModule.metadataStore.saveMetadata(key, data, String(organizationId));
    ```
 
-5. **Use descriptive key patterns**
+4. **Use descriptive key patterns**
    ```typescript
    // ✅ CORRECT - clear, hierarchical structure
    `org_${orgId}_user_${userId}_preferences`
@@ -4774,11 +4749,11 @@ await crowdinApp.saveMetadata(key, updatedPrefs, connection.context.crowdinId);
    `temp_storage`
    ```
 
-6. **Handle errors properly**
+5. **Handle errors properly**
    ```typescript
    // ✅ CORRECT - comprehensive error handling
    try {
-       await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
+       await crowdinModule.metadataStore.saveMetadata(key, data, connection.context.crowdinId);
        return { success: true };
    } catch (error: any) {
        console.error('Metadata save failed:', error);
@@ -5027,7 +5002,7 @@ interface WebhookCallback {
        
        // Store event in metadata
        const key = `org_${orgId}_events_${Date.now()}`;
-       // await crowdinApp.saveMetadata(key, events, String(orgId));
+       // await crowdinModule.metadataStore.saveMetadata(key, events, `${webhookContext.domain || webhookContext.organizationId}`);
    }
    ```
 
@@ -5040,7 +5015,7 @@ interface WebhookCallback {
        
        // Store for later processing
        const key = `org_${webhookContext.organizationId}_queue`;
-       // await crowdinApp.saveMetadata(key, events, String(webhookContext.organizationId));
+       // await crowdinModule.metadataStore.saveMetadata(key, events, `${webhookContext.domain || webhookContext.organizationId}`);
    }
    
    // ⚠️ PROBLEMATIC - long-running operation blocks webhook

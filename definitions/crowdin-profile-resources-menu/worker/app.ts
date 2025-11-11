@@ -66,9 +66,7 @@ export function createApp(env: CloudflareEnv) {
             // Get user preferences from metadata storage
             // Key format: org_${organizationId}_user_${userId}_preferences
             const metadataKey = `org_${organizationId}_user_${userId}_preferences`;
-            const storedPreferences = crowdinApp.getMetadata 
-                ? await crowdinApp.getMetadata(metadataKey) 
-                : null;
+            const storedPreferences = await crowdinModule.metadataStore.getMetadata(metadataKey);
 
             // Default preferences if none are stored
             const preferences = storedPreferences || {
@@ -121,11 +119,7 @@ export function createApp(env: CloudflareEnv) {
             // Save preferences to metadata storage
             // Key format: org_${organizationId}_user_${userId}_preferences
             const metadataKey = `org_${organizationId}_user_${userId}_preferences`;
-            if (crowdinApp.saveMetadata) {
-                await crowdinApp.saveMetadata(metadataKey, preferences, String(organizationId));
-            } else {
-                return res.status(500).json({ success: false, error: 'Metadata storage not available' });
-            }
+            await crowdinModule.metadataStore.saveMetadata(metadataKey, preferences, connection.context.crowdinId);
 
             res.status(200).json({ 
                 success: true, 
@@ -170,31 +164,23 @@ export function createApp(env: CloudflareEnv) {
             switch (action) {
                 case 'update-preferences':
                     // Example: Update some preferences
-                    if (crowdinApp.getMetadata && crowdinApp.saveMetadata) {
-                        const metadataKey = `org_${organizationId}_user_${actualUserId}_preferences`;
-                        const currentPrefs = await crowdinApp.getMetadata(metadataKey) || {};
-                        const updatedPrefs = {
-                            ...currentPrefs,
-                            lastUpdated: new Date().toISOString()
-                        };
-                        await crowdinApp.saveMetadata(metadataKey, updatedPrefs, String(organizationId));
-                        message = `Preferences updated for user ${actualUserId}`;
-                    } else {
-                        return res.status(500).json({ success: false, error: 'Metadata storage not available' });
-                    }
+                    const metadataKey = `org_${organizationId}_user_${actualUserId}_preferences`;
+                    const currentPrefs = await crowdinModule.metadataStore.getMetadata(metadataKey) || {};
+                    const updatedPrefs = {
+                        ...currentPrefs,
+                        lastUpdated: new Date().toISOString()
+                    };
+                    await crowdinModule.metadataStore.saveMetadata(metadataKey, updatedPrefs, connection.context.crowdinId);
+                    message = `Preferences updated for user ${actualUserId}`;
                     break;
                 case 'export-data':
                     message = `Data export initiated for user ${actualUserId}`;
                     break;
                 case 'clear-cache':
                     // Example: Clear user metadata (delete from storage)
-                    if (crowdinApp.deleteMetadata) {
-                        const cacheKey = `org_${organizationId}_user_${actualUserId}_preferences`;
-                        await crowdinApp.deleteMetadata(cacheKey);
-                        message = `Cache cleared for user ${actualUserId}`;
-                    } else {
-                        return res.status(500).json({ success: false, error: 'Metadata storage not available' });
-                    }
+                    const cacheKey = `org_${organizationId}_user_${actualUserId}_preferences`;
+                    await crowdinModule.metadataStore.deleteMetadata(cacheKey);
+                    message = `Cache cleared for user ${actualUserId}`;
                     break;
                 default:
                     return res.status(400).json({ 
