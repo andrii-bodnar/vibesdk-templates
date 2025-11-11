@@ -4828,14 +4828,18 @@ const configuration = {
                 events.forEach(event => {
                     console.log('Event:', event.event, 'Project:', event.file.project.id);
                 });
-            }
+            },
+            
+            deferResponse: true
         },
         {
             // You can have multiple webhook subscriptions
             events: ['suggestion.updated', 'string.added'],
             callback({ client, events, webhookContext }) {
                 // Handle translation events
-            }
+            },
+            
+            deferResponse: true
         }
     ]
 };
@@ -4859,7 +4863,8 @@ webhooks: [
                     console.log('Project name:', project.data.name);
                 }
             }
-        }
+        },
+        deferResponse: true
     }
 ]
 ```
@@ -4948,7 +4953,32 @@ interface WebhookCallback {
 
 #### Best Practices
 
-1. **Handle multiple events in batch**
+1. **Always set deferResponse to true**
+   ```typescript
+   // ✅ CORRECT - deferResponse is set to true
+   webhooks: [
+       {
+           events: ['file.added'],
+           callback({ client, events, webhookContext }) {
+               console.log('Processing events');
+           },
+           deferResponse: true  // REQUIRED!
+       }
+   ]
+   
+   // ❌ WRONG - missing deferResponse
+   webhooks: [
+       {
+           events: ['file.added'],
+           callback({ client, events, webhookContext }) {
+               console.log('Processing events');
+           }
+           // Missing deferResponse: true - this will cause issues!
+       }
+   ]
+   ```
+
+2. **Handle multiple events in batch**
    ```typescript
    // ✅ CORRECT - process all events
    callback({ client, events, webhookContext }) {
@@ -4964,7 +4994,7 @@ interface WebhookCallback {
    }
    ```
 
-2. **Handle errors gracefully**
+3. **Handle errors gracefully**
    ```typescript
    // ✅ CORRECT - catches and logs errors
    async callback({ client, events, webhookContext }) {
@@ -4979,7 +5009,7 @@ interface WebhookCallback {
    }
    ```
 
-3. **Check event type before processing**
+4. **Check event type before processing**
    ```typescript
    // ✅ CORRECT - checks event type
    callback({ client, events, webhookContext }) {
@@ -4993,7 +5023,7 @@ interface WebhookCallback {
    }
    ```
 
-4. **Use webhookContext for scoping**
+5. **Use webhookContext for scoping**
    ```typescript
    // ✅ CORRECT - uses context for organization-specific logic
    async callback({ client, events, webhookContext }) {
@@ -5006,7 +5036,7 @@ interface WebhookCallback {
    }
    ```
 
-5. **Don't perform long-running operations**
+6. **Don't perform long-running operations**
    ```typescript
    // ✅ CORRECT - quick processing, delegate heavy work
    async callback({ client, events, webhookContext }) {
