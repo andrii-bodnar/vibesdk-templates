@@ -27,7 +27,8 @@ Crowdin app with Custom MT (Machine Translation), Profile Resources Menu and Org
 - **Scopes**: Ensure your app has appropriate project-level API scopes
 - **Storage Keys**: Always include organizationId in metadata keys to isolate data per organization
 - **Return Values**: translate function must return array of strings matching input length
-- **Error Handling**: Always throw descriptive error messages for missing configuration or errors
+- **Error Handling**: Return empty strings for failed translations instead of throwing errors to avoid failing entire batches
+- **Critical Errors**: Throw errors for critical configuration issues (missing API keys, invalid credentials) that prevent the entire translation service from working
 
 ## Project Structure
 
@@ -193,31 +194,35 @@ const configuration = {
             targetLanguage: string,
             strings: CustomMtString[]
         ): Promise<string[]> => {
-            const translations = await Promise.all(
+            return await Promise.all(
                 strings.map(async (string: CustomMtString) => {
-                    const sourceText = extractSourceText(string);
+                    try {
+                        const sourceText = extractSourceText(string);
 
-                    // Call your external MT API
-                    const response = await fetch('https://your-mt-api.com/translate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            text: sourceText,
-                            source: sourceLanguage,
-                            target: targetLanguage
-                        })
-                    });
+                        // Call your external MT API
+                        const response = await fetch('https://your-mt-api.com/translate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                text: sourceText,
+                                source: sourceLanguage,
+                                target: targetLanguage
+                            })
+                        });
 
-                    if (!response.ok) {
-                        throw new Error(`MT API failed: ${response.statusText}`);
+                        if (!response.ok) {
+                            console.error(`MT API failed: ${response.statusText}`);
+                            return '';
+                        }
+
+                        const result = await response.json();
+                        return result.translation || '';
+                    } catch (error) {
+                        console.error('Translation failed:', error);
+                        return '';
                     }
-
-                    const result = await response.json();
-                    return result.translation;
                 })
             );
-
-            return translations;
         }
     }
 }
@@ -434,36 +439,9 @@ function extractSourceText(string: CustomMtString): string {
     }
    ```
 
-3. **Throw errors instead of returning fallbacks**
+3. **Return empty string for failed translations instead of throwing errors**
    ```typescript
-   // ✅ CORRECT - throws error to prevent caching bad translations
-   translate: async (
-       client: Client,
-       context: CrowdinContextInfo,
-       projectId: number,
-       sourceLanguage: string,
-       targetLanguage: string,
-       strings: CustomMtString[]
-   ): Promise<string[]> => {
-       const translations = await Promise.all(
-           strings.map(async (string: CustomMtString) => {
-               const sourceText = extractSourceText(string);
-               
-               // If MT API fails, throw error
-               const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage);
-               
-               if (!translation) {
-                   throw new Error(`Failed to translate: "${sourceText}"`);
-               }
-               
-               return translation;
-           })
-       );
-       
-       return translations;
-   }
-   
-   // ❌ WRONG - returns source text, which gets cached as translation
+   // ✅ CORRECT - returns empty string for failed translations, doesn't fail entire batch
    translate: async (
        client: Client,
        context: CrowdinContextInfo,
@@ -476,17 +454,121 @@ function extractSourceText(string: CustomMtString): string {
            strings.map(async (string: CustomMtString) => {
                try {
                    const sourceText = extractSourceText(string);
-                   return await callMTAPI(sourceText, sourceLanguage, targetLanguage);
+                   const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage);
+                   
+                   // If translation failed, return empty string
+                   return translation || '';
                } catch (error) {
-                   // BAD: This will cache source text as translation!
-                   return extractSourceText(string);
+                   // Return empty string instead of failing entire batch
+                   console.error('Translation failed:', error);
+                   return '';
+               }
+           })
+       );
+   }
+   
+   // ❌ WRONG - throws error and fails entire batch when 1 string fails
+   translate: async (
+       client: Client,
+       context: CrowdinContextInfo,
+       projectId: number,
+       sourceLanguage: string,
+       targetLanguage: string,
+       strings: CustomMtString[]
+   ): Promise<string[]> => {
+       const translations = await Promise.all(
+           strings.map(async (string: CustomMtString) => {
+               const sourceText = extractSourceText(string);
+               const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage);
+               
+               if (!translation) {
+                   // BAD: This fails entire batch of 100 strings if 1 fails!
+                   throw new Error(`Failed to translate: "${sourceText}"`);
+               }
+               
+               return translation;
+           })
+       );
+       
+       return translations;
+   }
+   ```
+
+4. **Throw errors for critical configuration issues**
+   ```typescript
+   // ✅ CORRECT - throws error for missing critical configuration
+   translate: async (
+       client: Client,
+       context: CrowdinContextInfo,
+       projectId: number,
+       sourceLanguage: string,
+       targetLanguage: string,
+       strings: CustomMtString[]
+   ): Promise<string[]> => {
+       // Load organization-specific configuration
+       const organizationId = context.jwtPayload.context.organization_id;
+       const configKey = `mt_config_org_${organizationId}`;
+       const config = await crowdinModule.metadataStore.getMetadata(configKey);
+       
+       // Check for critical configuration at the start
+       if (!config) {
+           throw new Error('MT service is not configured. Please configure the MT service in app settings.');
+       }
+       
+       if (!config.apiKey) {
+           throw new Error('MT API key is missing. Please add your API key in the app configuration.');
+       }
+       
+       if (!config.apiUrl) {
+           throw new Error('MT API URL is missing. Please add your API URL in the app configuration.');
+       }
+       
+       // Process translations - return empty strings for individual failures
+       return await Promise.all(
+           strings.map(async (string: CustomMtString) => {
+               try {
+                   const sourceText = extractSourceText(string);
+                   const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage, config.apiKey, config.apiUrl);
+                   return translation || '';
+               } catch (error) {
+                   console.error('Translation failed for individual string:', error);
+                   return ''; // Individual failure - return empty string
+               }
+           })
+       );
+   }
+   
+   // ❌ WRONG - doesn't check critical configuration, fails silently
+   translate: async (
+       client: Client,
+       context: CrowdinContextInfo,
+       projectId: number,
+       sourceLanguage: string,
+       targetLanguage: string,
+       strings: CustomMtString[]
+   ): Promise<string[]> => {
+       // BAD: No check for configuration, will fail for all requests
+       const organizationId = context.jwtPayload.context.organization_id;
+       const configKey = `mt_config_org_${organizationId}`;
+       const config = await crowdinModule.metadataStore.getMetadata(configKey);
+       
+       return await Promise.all(
+           strings.map(async (string: CustomMtString) => {
+               try {
+                   const sourceText = extractSourceText(string);
+                   // BAD: Using config without checking if it exists
+                   const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage, config?.apiKey, config?.apiUrl);
+                   return translation || '';
+               } catch (error) {
+                   // Silently returns empty strings even when service is misconfigured
+                   return '';
                }
            })
        );
    }
    ```
 
-4. **Use batchSize appropriately**
+5. **Use batchSize appropriately**
    ```typescript
    // ✅ CORRECT - reasonable batch size for API limits
    customMT: {
@@ -521,7 +603,7 @@ function extractSourceText(string: CustomMtString): string {
    }
    ```
 
-7. **Use context information for customization**
+6. **Use context information for customization**
    ```typescript
    // ✅ CORRECT - uses context for per-organization settings
    translate: async (

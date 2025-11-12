@@ -124,11 +124,8 @@ export function createApp(env: CloudflareEnv) {
                     return strings.map(string => extractSourceText(string));
                 }
 
-                // No matching mapping configured - throw error to inform user
-                throw new Error(
-                    `No language mapping configured for target language "${targetLanguage}". ` +
-                    `Please configure a mapping from "${targetLanguage}" to "${sourceLanguage}" in the app settings.`
-                );
+                // No matching mapping configured - return empty translations
+                return strings.map(() => '');
             }
         },
         

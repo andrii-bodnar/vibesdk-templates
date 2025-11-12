@@ -137,7 +137,7 @@
                 <li><strong>Language Mapping Check:</strong> System checks if <code>en-GB</code> has a mapping configured</li>
                 <li><strong>Source Language Verification:</strong> Verifies that the mapped language matches the source language (e.g., <code>en-GB → en</code>)</li>
                 <li><strong>Success:</strong> If mapping matches source language, returns the source texts as translations</li>
-                <li><strong>Error:</strong> If no mapping configured, throws an error with instructions to configure it</li>
+                <li><strong>No Mapping:</strong> If no mapping configured, returns empty translations</li>
                 <li><strong>Auto-fill:</strong> Dialects get "translations" (source texts) automatically, perfect for language variants</li>
             </ol>
             
@@ -146,7 +146,7 @@
                 if (languageMapping[targetLanguage] === sourceLanguage) {<br>
                 &nbsp;&nbsp;return strings.map(string => extractSourceText(string));<br>
                 }<br>
-                throw new Error("No language mapping configured...");
+                return strings.map(() => '');
             </div>
         </div>
 
@@ -157,7 +157,7 @@
                 <li>Mapping is applied at the <strong>organization level</strong> for all projects</li>
                 <li>Target language must map to the actual source language of the project</li>
                 <li>Source texts will be returned as translations for mapped language pairs</li>
-                <li>If no mapping is configured, an error will be shown to configure the mapping</li>
+                <li>If no mapping is configured, empty translations will be returned</li>
                 <li>Ideal for language dialects where the text doesn't need modification (e.g., <code>en → en-GB</code>)</li>
             </ul>
 
@@ -188,7 +188,7 @@
                 • Translation function receives strings with context and metadata<br>
                 • Checks if target language mapping matches source language<br>
                 • Returns source texts as translations for matching mappings<br>
-                • Throws an informative error when no mapping is configured
+                • Returns empty translations when no mapping is configured
             </div>
 
             <h4>Next Steps:</h4>
