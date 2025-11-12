@@ -1,12 +1,14 @@
 # Usage
 
 ## Overview
-Crowdin app with Project Tools module for project-specific functionality.
+Crowdin app with Custom MT (Machine Translation), Profile Resources Menu and Organization Menu modules for connecting external machine translation engines.
 - Backend: TypeScript with Express.js and Crowdin Apps SDK
 - Frontend: Modular HTML/CSS/JavaScript with Crowdin Apps JS API
 - Authentication: JWT tokens from Crowdin with automatic user context
-- Module: Project Tools (appears in project menu)
-- Features: Responsive design, error handling, empty states, accessibility
+- Module: Custom MT (provides translation engine for Crowdin Editor and pre-translation)
+- Module: Profile Resources Menu (appears in user profile menu)
+- Module: Organization Menu (appears in organization navigation)
+- Features: Language mapping for dialects, source text mirroring, organization-level configuration
 
 ## Tech Stack
 - **Crowdin Apps JS API** (AP object for context/events) for frontend integration
@@ -19,21 +21,25 @@ Crowdin app with Project Tools module for project-specific functionality.
 
 ## Development Restrictions
 - **Authentication**: Always use JWT tokens from Crowdin for API requests
-- **Project Tools Configuration**: Don't modify the projectTools configuration structure
+- **Custom MT Configuration**: Don't modify the customMT configuration structure
+- **Profile Resources Menu Configuration**: Don't modify the profileResourcesMenu configuration structure
+- **Organization Menu Configuration**: Don't modify the organizationMenu configuration structure
 - **Scopes**: Ensure your app has appropriate project-level API scopes
 - **Storage Keys**: Always include organizationId in metadata keys to isolate data per organization
+- **Return Values**: translate function must return array of strings matching input length
+- **Error Handling**: Always throw descriptive error messages for missing configuration or errors
 
 ## Project Structure
 
 ### Backend Structure
-- `worker/app.ts` - TypeScript backend with Project Tools configuration
+- `worker/app.ts` - TypeScript backend with Custom MT and Profile Resources Menu configuration
 - `worker/index.ts` - Entry point for Cloudflare Worker
 - `public/` - Static files served to the browser
 
 ### Frontend Structure
-- `public/tools/index.html` - Main HTML interface with demo UI
-- `public/tools/app.js` - JavaScript with Crowdin Apps JS API integration
-- `public/tools/styles.css` - Responsive CSS with accessibility support
+- `public/menu/index.html` - Main HTML interface with demo UI
+- `public/menu/app.js` - JavaScript with Crowdin Apps JS API integration
+- `public/menu/styles.css` - Responsive CSS with accessibility support
 
 ## Backend Development
 
@@ -51,9 +57,9 @@ const configuration = {
 ```
 
 **Guidelines:**
-- **identifier**: Must be unique across all Crowdin apps. Format: `company-project-tools`
-- **name**: User-friendly display name (e.g., "Project Analyzer")
-- **description**: Brief explanation of what your app does
+- **identifier**: Must be unique across all Crowdin apps. Format: `company-custom-mt`
+- **name**: User-friendly display name (e.g., "Company MT Engine")
+- **description**: Brief explanation of what your MT engine does
 
 #### Required Scopes
 
@@ -105,17 +111,466 @@ const configuration = {
 }
 ```
 
-### Project Tools Module Configuration
+### Custom MT Module Configuration
 
-Configure the Project Tools module in `worker/app.ts`:
+Configure the Custom MT module in `worker/app.ts`:
+
+```typescript
+import { Client } from '@crowdin/crowdin-api-client';
+import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
+import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
+
+const configuration = {
+    // ... other configuration ...
+
+    customMT: {
+        // When true, strings will be received as objects with context
+        withContext: true,
+
+        // The maximum quantity of strings that can be sent to the Custom MT app in one request
+        batchSize: 100,
+        
+        // Main translation function (required)
+        translate: async (
+            client: Client,
+            context: CrowdinContextInfo,
+            projectId: number,
+            sourceLanguage: string,
+            targetLanguage: string,
+            strings: CustomMtString[]
+        ): Promise<string[]> => {
+            // Your translation logic here
+            const translations = strings.map(string => {
+                // Extract and translate text
+                return translatedText;
+            });
+            
+            return translations; // Must return array of strings in same order
+        },
+    }
+}
+```
+
+#### Common Examples
+
+**Integration with External MT API:**
+```typescript
+import { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
+import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
+import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
+
+// Helper function to extract source text from CustomMtString
+function extractSourceText(string: CustomMtString): string {
+    if (typeof string === 'string') {
+        return string;
+    }
+    
+    const text = string.text;
+    if (typeof text === 'string') {
+        return text;
+    }
+    
+    // Handle plural forms
+    if (string.pluralForm && text[string.pluralForm as keyof SourceStringsModel.PluralText]) {
+        return text[string.pluralForm as keyof SourceStringsModel.PluralText] as string;
+    }
+    
+    return '';
+}
+
+const configuration = {
+    // ... other configuration ...
+
+    customMT: {
+        withContext: true,
+        batchSize: 50,
+
+        translate: async (
+            client: Client,
+            context: CrowdinContextInfo,
+            projectId: number,
+            sourceLanguage: string,
+            targetLanguage: string,
+            strings: CustomMtString[]
+        ): Promise<string[]> => {
+            const translations = await Promise.all(
+                strings.map(async (string: CustomMtString) => {
+                    const sourceText = extractSourceText(string);
+
+                    // Call your external MT API
+                    const response = await fetch('https://your-mt-api.com/translate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            text: sourceText,
+                            source: sourceLanguage,
+                            target: targetLanguage
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`MT API failed: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    return result.translation;
+                })
+            );
+
+            return translations;
+        }
+    }
+}
+```
+
+#### Translation Parameters
+
+The translate function receives these parameters:
+
+```typescript
+import { Client } from '@crowdin/crowdin-api-client';
+import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
+
+interface TranslateFunction {
+    /**
+     * Crowdin API client - use to make API calls
+     */
+    client: Client;
+    
+    /**
+     * Context information about the request
+     * Contains user_id, organization_id, project_id
+     */
+    context: CrowdinContextInfo;
+    
+    /**
+     * Project ID where translation is requested
+     */
+    projectId: number;
+    
+    /**
+     * Source language code (e.g., "en", "uk")
+     */
+    sourceLanguage: string;
+    
+    /**
+     * Target language code (e.g., "de", "fr")
+     */
+    targetLanguage: string;
+    
+    /**
+     * Array of strings to translate
+     * Can be simple strings or objects with metadata (depends on withContext setting)
+     */
+    strings: CustomMtString[];
+}
+```
+
+**CrowdinContextInfo Type:**
+
+```typescript
+interface CrowdinContextInfo {
+    jwtPayload: JwtPayload;
+    crowdinId: string;
+    clientId: string;
+    appIdentifier: string;
+}
+
+interface JwtPayload {
+    aud: string;
+    sub: string;
+    domain?: string;
+    module?: string;
+    context: JwtPayloadContext;
+    iat: number;
+    exp: number;
+}
+
+interface JwtPayloadContext {
+    project_id: number;
+    project_identifier?: string;
+    organization_id: number;
+    organization_domain?: string;
+    user_id: number;
+    user_login?: string;
+}
+```
+
+**CustomMtString Type:**
+
+```typescript
+import { SourceStringsModel } from '@crowdin/crowdin-api-client';
+
+type CustomMtString = 
+    | string  // When withContext: false
+    | {       // When withContext: true
+          id: number;                                    // String ID in Crowdin
+          projectId: number;                             // Project ID
+          fileId: number;                                // File ID
+          identifier: string;                            // String identifier/key
+          context: string;                               // String context (from Crowdin)
+          maxLength: number;                             // Maximum translation length
+          isHidden: boolean;                             // Whether string is hidden
+          text: string | SourceStringsModel.PluralText;  // String text (singular or plural)
+          isPlural: boolean;                             // Whether string is plural
+          pluralForm: string;                            // Specific plural form to translate
+      };
+```
+
+**When `withContext: true`:**
+- Strings are received as objects with full metadata
+- Access to string ID, context, identifiers, plural forms
+- Maximum length constraints available
+- Recommended for production use
+
+**When `withContext: false`:**
+- Strings are received as simple string array
+- No metadata available
+- Simpler but limited functionality
+
+**Handling Plural Forms:**
+
+When `isPlural: true`, the `text` field contains multiple plural forms. Extract the specific form using `pluralForm`:
+
+```typescript
+import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
+
+function extractSourceText(string: CustomMtString): string {
+    // Simple string
+    if (typeof string === 'string') {
+        return string;
+    }
+    
+    const text = string.text;
+    
+    // Singular string
+    if (typeof text === 'string') {
+        return text;
+    }
+    
+    // Plural string - extract specific form
+    if (string.pluralForm && text[string.pluralForm as keyof SourceStringsModel.PluralText]) {
+        return text[string.pluralForm as keyof SourceStringsModel.PluralText] as string;
+    }
+    
+    // Fallback to empty string
+    return '';
+}
+```
+
+#### Best Practices
+
+1. **Always return translations in the same order**
+   ```typescript
+   // ✅ CORRECT - maintains order
+   translate: async (
+        client: Client,
+        context: CrowdinContextInfo,
+        projectId: number,
+        sourceLanguage: string,
+        targetLanguage: string,
+        strings: CustomMtString[]
+    ): Promise<string[]> => {
+       return await Promise.all(
+           strings.map(string => translateString(string))
+       );
+   }
+   
+   // ❌ WRONG - order may change
+   translate: async (
+        client: Client,
+        context: CrowdinContextInfo,
+        projectId: number,
+        sourceLanguage: string,
+        targetLanguage: string,
+        strings: CustomMtString[]
+    ): Promise<string[]> => {
+       const translations = [];
+       for (const string of strings) {
+           translations.push(await translateString(string)); // Sequential, but order preserved
+       }
+       return translations;
+   }
+   ```
+
+2. **Handle plural forms correctly**
+   ```typescript
+   // ✅ CORRECT - extracts specific plural form using extractSourceText
+   translate: async (
+        client: Client,
+        context: CrowdinContextInfo,
+        projectId: number,
+        sourceLanguage: string,
+        targetLanguage: string,
+        strings: CustomMtString[]
+    ): Promise<string[]> => {
+        return strings.map((string: CustomMtString) => {
+            const sourceText = extractSourceText(string);
+            return translateText(sourceText);
+        });
+    }
+    
+    // ❌ WRONG - direct access without type casting and fallback
+    translate: async (
+        client: Client,
+        context: CrowdinContextInfo,
+        projectId: number,
+        sourceLanguage: string,
+        targetLanguage: string,
+        strings: CustomMtString[]
+    ): Promise<string[]> => {
+        return strings.map((string: CustomMtString) => {
+            if (typeof string === 'string') {
+                return translateText(string);
+            }
+            
+            // BAD: Direct access without keyof casting
+            const sourceText = typeof string.text === 'string' 
+                ? string.text 
+                : string.text[string.pluralForm]; // Type error! pluralForm is 'any'
+                
+            return translateText(sourceText);
+        });
+    }
+   ```
+
+3. **Throw errors instead of returning fallbacks**
+   ```typescript
+   // ✅ CORRECT - throws error to prevent caching bad translations
+   translate: async (
+       client: Client,
+       context: CrowdinContextInfo,
+       projectId: number,
+       sourceLanguage: string,
+       targetLanguage: string,
+       strings: CustomMtString[]
+   ): Promise<string[]> => {
+       const translations = await Promise.all(
+           strings.map(async (string: CustomMtString) => {
+               const sourceText = extractSourceText(string);
+               
+               // If MT API fails, throw error
+               const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage);
+               
+               if (!translation) {
+                   throw new Error(`Failed to translate: "${sourceText}"`);
+               }
+               
+               return translation;
+           })
+       );
+       
+       return translations;
+   }
+   
+   // ❌ WRONG - returns source text, which gets cached as translation
+   translate: async (
+       client: Client,
+       context: CrowdinContextInfo,
+       projectId: number,
+       sourceLanguage: string,
+       targetLanguage: string,
+       strings: CustomMtString[]
+   ): Promise<string[]> => {
+       return await Promise.all(
+           strings.map(async (string: CustomMtString) => {
+               try {
+                   const sourceText = extractSourceText(string);
+                   return await callMTAPI(sourceText, sourceLanguage, targetLanguage);
+               } catch (error) {
+                   // BAD: This will cache source text as translation!
+                   return extractSourceText(string);
+               }
+           })
+       );
+   }
+   ```
+
+4. **Use batchSize appropriately**
+   ```typescript
+   // ✅ CORRECT - reasonable batch size for API limits
+   customMT: {
+       withContext: true,
+       batchSize: 50, // Adjust based on your MT API limits
+       translate: async (
+            client: Client,
+            context: CrowdinContextInfo,
+            projectId: number,
+            sourceLanguage: string,
+            targetLanguage: string,
+            strings: CustomMtString[]
+        ): Promise<string[]> => {
+           // Process batch of up to 50 strings
+       }
+   }
+   
+   // ⚠️ PROBLEMATIC - too large, may timeout
+   customMT: {
+       withContext: true,
+       batchSize: 1000, // Too many strings at once
+       translate: async (
+            client: Client,
+            context: CrowdinContextInfo,
+            projectId: number,
+            sourceLanguage: string,
+            targetLanguage: string,
+            strings: CustomMtString[]
+        ): Promise<string[]> => {
+           // May exceed MT API limits or timeout
+       }
+   }
+   ```
+
+7. **Use context information for customization**
+   ```typescript
+   // ✅ CORRECT - uses context for per-organization settings
+   translate: async (
+        client: Client,
+        context: CrowdinContextInfo,
+        projectId: number,
+        sourceLanguage: string,
+        targetLanguage: string,
+        strings: CustomMtString[]
+    ): Promise<string[]> => {
+       const orgId = context.jwtPayload.context.organization_id;
+       
+       // Load organization-specific MT settings
+       const settings = await crowdinModule.metadataStore.getMetadata(`mt_settings_${orgId}`);
+       
+       // Apply organization-specific logic
+       return strings.map(string => {
+           const sourceText = extractSourceText(string);
+           return translateWithSettings(sourceText, settings);
+       });
+   }
+   ```
+
+### Profile Resources Menu Module Configuration
+
+Configure the Profile Resources Menu module in `worker/app.ts`:
 
 ```typescript
 const configuration = {
     // ... other configuration ...
 
-    projectTools: {
+    profileResourcesMenu: {
       fileName: 'index.html',
-      uiPath: '/tools' // Points to public/tools directory
+      uiPath: '/menu' // Points to public/menu directory
+    }
+}
+```
+
+### Organization Menu Module Configuration
+
+Configure the Organization Menu module in `worker/app.ts`:
+
+```typescript
+const configuration = {
+    // ... other configuration ...
+
+    organizationMenu: {
+      fileName: 'index.html',
+      uiPath: '/menu' // Points to public/menu directory
     }
 }
 ```
@@ -5551,11 +6006,11 @@ const configuration = {
 }
 ```
 
-**Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-project-tools`
+**Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-custom-mt`
 
 ### 2. Key Files to Modify
 
 - `worker/app.ts` - Add new API endpoints here
-- `public/tools/index.html` - Modify UI structure
-- `public/tools/app.js` - Add frontend logic
-- `public/tools/styles.css` - Customize styles
+- `public/menu/index.html` - Modify UI structure
+- `public/menu/app.js` - Add frontend logic
+- `public/menu/styles.css` - Customize styles

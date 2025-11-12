@@ -14,10 +14,12 @@ Avoid when:
 - Building organization-wide tools (use Organization Menu instead)
 - Creating user profile tools (use Profile Resources Menu instead)
 - Building project management tools (use Project Tools instead)
+- Building machine translation integrations (use Custom MT instead)
 
 Built with:
-- Crowdin Apps JS API (AP.editor for translation interactions)
+- Crowdin Apps JS API
 - Crowdin Apps SDK (@crowdin/app-project-module)
 - TypeScript
-- Express.js (minimal backend - mostly frontend-focused)
+- Express.js
+- Cloudflare Workers
 - HTML/CSS/JavaScript (modular structure)

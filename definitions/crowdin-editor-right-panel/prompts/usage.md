@@ -13,14 +13,17 @@ Crowdin app with Editor Right Panel module for translation editor extensions.
 - **Crowdin Apps SDK** (@crowdin/app-project-module) for backend
 - **TypeScript** for type-safe backend development
 - **Express.js** for server and API endpoints
+- **Metadata Storage** - Built-in key-value storage for user data
 - **Modular Frontend** - Separate HTML, CSS (styles.css), JS (app.js) files
 - **Compact CSS** - Optimized for narrow sidebar panel (300-400px)
 
 ## Development Restrictions
 - **Panel Width**: Design for 300-400px width (sidebar constraint)
 - **Frontend-Focused**: Most functionality should be in frontend using AP.editor
-- **Module Configuration**: Don't modify the editorRightPanel configuration structure
+- **Editor Right Panel Configuration**: Don't modify the editorRightPanel configuration structure
 - **Editor Modes**: Panel appears only in specified editor modes (comfortable, side-by-side, multilingual, review, assets)
+- **Scopes**: Ensure your app has appropriate project-level API scopes
+- **Storage Keys**: Always include organizationId in metadata keys to isolate data per organization
 - **Event Handling**: Listen to editor events for real-time updates
 
 ## Project Structure
@@ -105,16 +108,20 @@ const configuration = {
 }
 ```
 
-### Module Configuration
+### Editor Right Panel Module Configuration
 
 Configure the Editor Right Panel module in `worker/app.ts`:
 
 ```typescript
-editorRightPanel: {
-  fileName: 'index.html',
-  uiPath: '/editor-panels', // Points to public/editor-panels directory
-  modes: [EditorMode.COMFORTABLE, EditorMode.SIDE_BY_SIDE], // Specify editor modes where panel appears
-  supportsMultipleStrings: true // Handle multiple string selection
+const configuration = {
+    // ... other configuration ...
+
+    editorRightPanel: {
+      fileName: 'index.html',
+      uiPath: '/editor-panels', // Points to public/editor-panels directory
+      modes: [EditorMode.COMFORTABLE, EditorMode.SIDE_BY_SIDE], // Specify editor modes where panel appears
+      supportsMultipleStrings: true // Handle multiple string selection
+    }
 }
 ```
 
@@ -1739,6 +1746,7 @@ export declare namespace ProjectsGroupsModel {
         hiddenStringsProofreadersAccess?: boolean;
         useGlobalTm?: boolean;
         showTmSuggestionsDialects?: boolean;
+        tmApprovedSuggestionsOnly?: boolean;
         skipUntranslatedStrings?: boolean;
         exportApprovedOnly?: boolean;
         qaCheckIsActive?: boolean;
@@ -1782,6 +1790,7 @@ export declare namespace ProjectsGroupsModel {
         taskReviewerIds?: number[];
         autoSubstitution?: boolean;
         showTmSuggestionsDialects?: boolean;
+        tmApprovedSuggestionsOnly?: boolean;
         autoTranslateDialects?: boolean;
         publicDownloads?: boolean;
         hiddenStringsProofreadersAccess?: boolean;
@@ -1830,6 +1839,7 @@ export declare namespace ProjectsGroupsModel {
         autoTranslateDialects: boolean;
         useGlobalTm: boolean;
         showTmSuggestionsDialects: boolean;
+        tmApprovedSuggestionsOnly: boolean;
         isSuspended: boolean;
         qaCheckIsActive: boolean;
         qaCheckCategories: CheckCategories;
@@ -2738,6 +2748,10 @@ export declare class SourceFiles extends CrowdinApi {
     editFile(projectId: number, fileId: number, request: PatchRequest[]): Promise<ResponseObject<SourceFilesModel.File>>;
     downloadFilePreview(projectId: number, fileId: number): Promise<ResponseObject<DownloadLink>>;
     downloadFile(projectId: number, fileId: number): Promise<ResponseObject<DownloadLink>>;
+    listAssetReferences(projectId: number, fileId: number, options?: PaginationOptions): Promise<ResponseList<SourceFilesModel.AssetReference>>;
+    getAssetReference(projectId: number, fileId: number, referenceId: number): Promise<ResponseObject<SourceFilesModel.AssetReference>>;
+    addAssetReference(projectId: number, fileId: number, request: SourceFilesModel.AssetReferenceRequest): Promise<ResponseObject<SourceFilesModel.AssetReference>>;
+    deleteAssetReference(projectId: number, fileId: number, referenceId: number): Promise<void>;
     listFileRevisions(projectId: number, fileId: number, options?: PaginationOptions): Promise<ResponseList<SourceFilesModel.FileRevision>>;
     listFileRevisions(projectId: number, fileId: number, limit?: number, offset?: number): Promise<ResponseList<SourceFilesModel.FileRevision>>;
     getFileRevision(projectId: number, fileId: number, revisionId: number): Promise<ResponseObject<SourceFilesModel.FileRevision>>;
@@ -2771,11 +2785,13 @@ export declare namespace SourceFilesModel {
     interface MergeBranchRequest {
         deleteAfterMerge?: boolean;
         sourceBranchId: number;
+        acceptSourceChanges?: boolean;
         dryRun?: boolean;
     }
     interface MergeBranchAttributes {
         sourceBranchId: number;
         deleteAfterMerge: boolean;
+        acceptSourceChanges?: boolean;
     }
     interface MergeBranchSummary {
         status: string;
@@ -3017,6 +3033,23 @@ export declare namespace SourceFilesModel {
     }
     interface ListReviewedSourceFilesBuildOptions extends PaginationOptions {
         branchId?: number;
+    }
+    interface User {
+        id: number;
+        username: string;
+        fullName: string;
+        avatarUrl: string;
+    }
+    interface AssetReference {
+        id: number;
+        name: string;
+        user: User;
+        createdAt: string;
+        mimeType: string;
+    }
+    interface AssetReferenceRequest {
+        storageId: number;
+        name: string;
     }
 }
 ```
@@ -3776,6 +3809,9 @@ export declare namespace TasksModel {
 import { CrowdinApi, Pagination, PaginationOptions, PatchRequest, ProjectRole, ProjectRoles, ResponseList, ResponseObject } from '../core';
 import { ProjectsGroupsModel } from '../projectsGroups';
 export declare class Teams extends CrowdinApi {
+    listGroupTeams(groupId: number, options?: TeamsModel.ListGroupTeamsOptions): Promise<ResponseList<TeamsModel.TeamGroup>>;
+    updateGroupTeams(groupId: number, request: PatchRequest[]): Promise<ResponseList<TeamsModel.TeamGroup>>;
+    getGroupTeam(groupId: number, teamId: number): Promise<ResponseObject<TeamsModel.TeamGroup>>;
     listTeamProjectPermissions(teamId: number, options?: PaginationOptions): Promise<ResponseList<TeamsModel.ProjectPermissions>>;
     editTeamProjectPermissions(teamId: number, request: PatchRequest[]): Promise<ResponseList<TeamsModel.ProjectPermissions>>;
     addTeamToProject(projectId: number, request: TeamsModel.AddTeamToProjectRequest): Promise<TeamsModel.ProjectTeamResources>;
@@ -3792,6 +3828,9 @@ export declare class Teams extends CrowdinApi {
     deleteTeamMember(teamId: number, memberId: number): Promise<void>;
 }
 export declare namespace TeamsModel {
+    interface ListGroupTeamsOptions extends PaginationOptions {
+        orderBy?: string;
+    }
     interface ProjectPermissions {
         id: number;
         roles: ProjectRole[];
@@ -3837,6 +3876,10 @@ export declare namespace TeamsModel {
         webUrl: string;
         createdAt: string;
         updatedAt: string;
+    }
+    interface TeamGroup {
+        id: number;
+        team: Team;
     }
     interface AddTeamRequest {
         name: string;
@@ -4282,6 +4325,9 @@ import { CrowdinApi, Pagination, PaginationOptions, PatchRequest, ProjectRole, P
 import { ProjectsGroupsModel } from '../projectsGroups';
 import { TeamsModel } from '../teams';
 export declare class Users extends CrowdinApi {
+    listGroupManagers(groupId: number, options?: UsersModel.ListGroupManagersOptions): Promise<ResponseList<UsersModel.GroupManager>>;
+    updateGroupManagers(groupId: number, request: PatchRequest[]): Promise<ResponseList<UsersModel.GroupManager>>;
+    getGroupManager(groupId: number, userId: number): Promise<ResponseObject<UsersModel.GroupManager>>;
     listProjectMembers(projectId: number, options?: UsersModel.ListProjectMembersOptions): Promise<ResponseList<UsersModel.ProjectMember | UsersModel.EnterpriseProjectMember>>;
     listProjectMembers(projectId: number, search?: string, role?: UsersModel.Role, languageId?: string, limit?: number, offset?: number): Promise<ResponseList<UsersModel.ProjectMember | UsersModel.EnterpriseProjectMember>>;
     addProjectMember(projectId: number, request: UsersModel.AddProjectMemberRequest): Promise<UsersModel.AddProjectMemberResponse>;
@@ -4301,6 +4347,10 @@ export declare class Users extends CrowdinApi {
     listUserProjectContributions(userId: number, options?: PaginationOptions): Promise<ResponseList<UsersModel.ProjectPermissions>>;
 }
 export declare namespace UsersModel {
+    interface ListGroupManagersOptions extends PaginationOptions {
+        teamIds?: number[];
+        orderBy?: string;
+    }
     interface ListProjectMembersOptions extends PaginationOptions {
         search?: string;
         role?: Role;
@@ -4348,6 +4398,11 @@ export declare namespace UsersModel {
     type Status = 'active' | 'pending' | 'blocked';
     type TwoFactor = 'enabled' | 'disabled';
     type OrganizationRoles = 'admin' | 'manager' | 'vendor' | 'client';
+    interface GroupManager {
+        id: number;
+        user: User;
+        teams: TeamsModel.Team[];
+    }
     interface ProjectMember {
         id: number;
         username: string;
@@ -4493,7 +4548,7 @@ export declare namespace WebhooksModel {
 ##### workflows/index.d.ts
 
 ```typescript
-import { CrowdinApi, PaginationOptions, ResponseList, ResponseObject } from '../core';
+import { CrowdinApi, PaginationOptions, PatchRequest, ResponseList, ResponseObject } from '../core';
 import { SourceStringsModel } from '../sourceStrings';
 export declare class Workflows extends CrowdinApi {
     listWorkflowSteps(projectId: number, options?: PaginationOptions): Promise<ResponseList<WorkflowModel.WorkflowStep>>;
@@ -4503,6 +4558,8 @@ export declare class Workflows extends CrowdinApi {
     listWorkflowTemplates(options?: WorkflowModel.ListWorkflowTemplatesOptions): Promise<ResponseList<WorkflowModel.Workflow>>;
     listWorkflowTemplates(groupId?: number, limit?: number, offset?: number): Promise<ResponseList<WorkflowModel.Workflow>>;
     getWorkflowTemplateInfo(templateId: number): Promise<ResponseObject<WorkflowModel.Workflow>>;
+    updateWorkflowStepStringStatus(projectId: number, stepId: number, languageId: string, request: PatchRequest[]): Promise<ResponseList<WorkflowModel.WorkflowStepStringStatus>>;
+    getWorkflowStepStringStatus(projectId: number, stepId: number, languageId: string, options?: PaginationOptions): Promise<ResponseList<WorkflowModel.WorkflowStepStringStatus>>;
 }
 export declare namespace WorkflowModel {
     interface WorkflowStep {
@@ -4542,6 +4599,13 @@ export declare namespace WorkflowModel {
             };
             mtId: number;
         }[];
+    }
+    interface WorkflowStepStringStatus {
+        stringId: number;
+        languageId: string;
+        stepId: number;
+        status: string;
+        output: string;
     }
 }
 ```

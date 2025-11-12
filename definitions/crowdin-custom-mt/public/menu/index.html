@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom MT Configuration</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.crowdin.com/apps/dist/iframe.js" defer></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="container" role="main">
+        <h1>🌐 Custom MT Language Mapping</h1>
+        
+        <!-- Introduction Section -->
+        <div class="tool-section">
+            <h3>🚀 Welcome to Crowdin Custom MT Template</h3>
+            <p>This template demonstrates a fully functional Crowdin app with <strong>Custom MT (Machine Translation)</strong> module integration.</p>
+            
+            <div class="context-info">
+                <strong>📌 About Custom MT Module:</strong><br>
+                Custom MT apps provide translation services with language mapping support. This template demonstrates language dialect mapping where source texts are returned as translations for configured language pairs.
+            </div>
+            
+            <h4>What's Included in This Template:</h4>
+            <ul class="feature-list">
+                <li><strong>Custom MT Module</strong> - Translation service with language mapping</li>
+                <li><strong>Source Text Mirroring</strong> - Returns source texts as translations for dialects</li>
+                <li><strong>Language Mapping</strong> - Configure which target languages receive source texts (e.g., en-GB → en)</li>
+                <li><strong>Organization-level Config</strong> - Settings applied across all projects</li>
+                <li><strong>TypeScript Support</strong> - Type-safe backend development</li>
+                <li><strong>Cloudflare Workers Ready</strong> - Optimized for edge deployment</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>💡 Getting Started:</strong><br>
+                1. Configure language mappings below<br>
+                2. Save your configuration<br>
+                3. The MT engine will use mapped languages automatically<br>
+                4. Check <code>worker/app.ts</code> to customize MT logic
+            </div>
+        </div>
+
+        <!-- Language Mapping Configuration Section -->
+        <div class="tool-section" role="region" aria-labelledby="mapping-heading">
+            <h3 id="mapping-heading">🗺️ Language Mapping Configuration</h3>
+            <p>Define how dialect languages should map to their base languages for translation:</p>
+            
+            <div id="mappingList" class="mapping-list"></div>
+            
+            <div class="add-mapping-form">
+                <h4>Add New Mapping</h4>
+                <div class="mapping-row">
+                    <input 
+                        type="text" 
+                        id="fromLanguage" 
+                        class="form-input" 
+                        placeholder="From (e.g., en-GB, pt-BR)"
+                        aria-label="Source language code"
+                    >
+                    <span class="arrow">→</span>
+                    <input 
+                        type="text" 
+                        id="toLanguage" 
+                        class="form-input" 
+                        placeholder="To (e.g., en, pt)"
+                        aria-label="Target language code"
+                    >
+                    <button 
+                        type="button" 
+                        class="btn btn-add" 
+                        onclick="addMapping()"
+                        aria-label="Add language mapping">
+                        ➕ Add
+                    </button>
+                </div>
+            </div>
+            
+            <div class="code-snippet">
+                <strong>📝 Common Examples:</strong><br>
+                • <code>en-GB → en</code> - British English uses English translations<br>
+                • <code>pt-BR → pt</code> - Brazilian Portuguese uses Portuguese translations<br>
+                • <code>es-MX → es</code> - Mexican Spanish uses Spanish translations<br>
+                • <code>fr-CA → fr</code> - Canadian French uses French translations
+            </div>
+        </div>
+
+        <!-- Save Configuration Section -->
+        <div class="tool-section" role="region" aria-labelledby="save-heading">
+            <h3 id="save-heading">💾 Save Configuration</h3>
+            <p>Apply your language mapping configuration to the organization:</p>
+            
+            <div style="margin: 20px 0;" role="group" aria-label="Configuration actions">
+                <button class="action-button" 
+                        onclick="saveConfiguration()" 
+                        aria-label="Save configuration">
+                    💾 Save Configuration
+                </button>
+                <button class="action-button" 
+                        onclick="loadConfiguration()" 
+                        aria-label="Reload configuration">
+                    🔄 Reload
+                </button>
+            </div>
+            
+            <div id="saveResult" role="status" aria-live="polite"></div>
+            
+            <div class="code-snippet">
+                <strong>Backend Code (worker/app.ts):</strong><br>
+                const metadataKey = `mt_config_${organizationId}`;<br>
+                await crowdinModule.metadataStore.saveMetadata(metadataKey, { languageMapping });<br>
+                // Configuration is saved at organization level
+            </div>
+        </div>
+
+        <!-- Current Status Section -->
+        <div class="tool-section" role="region" aria-labelledby="status-heading">
+            <h3 id="status-heading">📊 Current Status</h3>
+            <p>View your current MT configuration and organization context:</p>
+            <div id="statusInfo" class="loading" role="status" aria-live="polite">Loading configuration...</div>
+            
+            <div class="code-snippet">
+                <strong>Code Example:</strong><br>
+                const config = await crowdinModule.metadataStore.getMetadata(metadataKey);<br>
+                const languageMapping = config?.languageMapping || {};
+            </div>
+        </div>
+
+        <!-- How It Works Section -->
+        <div class="tool-section" role="region" aria-labelledby="workflow-heading">
+            <h3 id="workflow-heading">🔧 How It Works</h3>
+            
+            <h4>Translation Workflow:</h4>
+            <ol class="feature-list">
+                <li><strong>Translation Request:</strong> Crowdin requests translation for target language (e.g., <code>en-GB</code>)</li>
+                <li><strong>Language Mapping Check:</strong> System checks if <code>en-GB</code> has a mapping configured</li>
+                <li><strong>Source Language Verification:</strong> Verifies that the mapped language matches the source language (e.g., <code>en-GB → en</code>)</li>
+                <li><strong>Success:</strong> If mapping matches source language, returns the source texts as translations</li>
+                <li><strong>Error:</strong> If no mapping configured, throws an error with instructions to configure it</li>
+                <li><strong>Auto-fill:</strong> Dialects get "translations" (source texts) automatically, perfect for language variants</li>
+            </ol>
+            
+            <div class="code-snippet">
+                <strong>Translation Function (worker/app.ts):</strong><br>
+                if (languageMapping[targetLanguage] === sourceLanguage) {<br>
+                &nbsp;&nbsp;return strings.map(string => extractSourceText(string));<br>
+                }<br>
+                throw new Error("No language mapping configured...");
+            </div>
+        </div>
+
+        <!-- Important Notes Section -->
+        <div class="tool-section">
+            <h3>⚠️ Important Notes</h3>
+            <ul class="feature-list">
+                <li>Mapping is applied at the <strong>organization level</strong> for all projects</li>
+                <li>Target language must map to the actual source language of the project</li>
+                <li>Source texts will be returned as translations for mapped language pairs</li>
+                <li>If no mapping is configured, an error will be shown to configure the mapping</li>
+                <li>Ideal for language dialects where the text doesn't need modification (e.g., <code>en → en-GB</code>)</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>🎯 Pro Tips:</strong><br>
+                • Use this for language dialects that share the same text (e.g., American vs British English)<br>
+                • Map dialect languages to their base language to auto-fill translations<br>
+                • Test with sample strings before applying to production<br>
+                • For actual translations, integrate an external MT provider instead of returning source text
+            </div>
+        </div>
+
+        <!-- Implementation Guide -->
+        <div class="tool-section">
+            <h3>📚 Implementation Guide</h3>
+            
+            <h4>Frontend (app.js):</h4>
+            <div class="code-snippet">
+                • Use <code>AP.getContext()</code> to get organization information<br>
+                • Use <code>AP.getJwtToken()</code> to authenticate API calls<br>
+                • Make requests to <code>/api/mt-config</code> to manage configuration<br>
+                • Update UI based on saved configuration
+            </div>
+
+            <h4>Backend (worker/app.ts):</h4>
+            <div class="code-snippet">
+                • Custom MT module configured with <code>withContext: true</code><br>
+                • Translation function receives strings with context and metadata<br>
+                • Checks if target language mapping matches source language<br>
+                • Returns source texts as translations for matching mappings<br>
+                • Throws an informative error when no mapping is configured
+            </div>
+
+            <h4>Next Steps:</h4>
+            <ul class="feature-list">
+                <li>Configure your language mappings using the form above</li>
+                <li>Test with your actual language pairs (e.g., <code>en</code> source, <code>en-GB</code> target)</li>
+                <li>Optionally integrate an external MT provider for actual translations</li>
+                <li>Add additional configuration options as needed</li>
+                <li>Deploy to Cloudflare Workers and install in your Crowdin account</li>
+            </ul>
+        </div>
+
+        <!-- Documentation Link -->
+        <div class="tool-section">
+            <h3>📖 Documentation & Resources</h3>
+            <p>
+                <strong>Custom MT Module Documentation:</strong><br>
+                <a href="https://crowdin.github.io/app-project-module/tools/custom-mt/" target="_blank" rel="noopener">
+                    https://crowdin.github.io/app-project-module/tools/custom-mt/
+                </a>
+            </p>
+            <p>
+                <strong>Crowdin API Client:</strong><br>
+                <a href="https://github.com/crowdin/crowdin-api-client-js" target="_blank" rel="noopener">
+                    https://github.com/crowdin/crowdin-api-client-js
+                </a>
+            </p>
+            <p>
+                <strong>Crowdin Apps Platform:</strong><br>
+                <a href="https://developer.crowdin.com/crowdin-apps-about/" target="_blank" rel="noopener">
+                    https://developer.crowdin.com/crowdin-apps-about/
+                </a>
+            </p>
+        </div>
+
+    </div>
+</body>
+</html>

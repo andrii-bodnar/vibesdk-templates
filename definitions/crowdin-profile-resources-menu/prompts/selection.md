@@ -14,6 +14,7 @@ Avoid when:
 - Building organization-wide tools (use Organization Menu instead)
 - Creating project-specific tools (use Project Tools instead)
 - Building editor extensions (use Editor Right Panel instead)
+- Building machine translation integrations (use Custom MT instead)
 
 Built with:
 - Crowdin Apps JS API
