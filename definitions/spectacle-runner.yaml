@@ -10,7 +10,6 @@ excludes:
   - "src/components/ThemeToggle.tsx"
   - "src/components/RouteErrorBoundary.tsx"
   - "src/components/ErrorFallback.tsx"
-  - "src/components/ErrorBoundary.tsx"
   - "src/pages/**"
   - "src/assets/**"
   - "src/App.css"
@@ -19,4 +18,3 @@ excludes:
   - "src/lib/utils.ts"
   - "src/lib/errorReporter.ts"
   - "components.json"
-  - "eslint.config.js"

@@ -21,6 +21,10 @@ import {
 	Stepper
 } from 'spectacle';
 
+/*
+* Demo Presentation using spectacle.
+*/
+
 export default function Presentation() {
 	return (
 		<>
@@ -88,9 +92,7 @@ export default function Presentation() {
 						</Text>
 						<CodePane
 							language="typescript"
-							theme="dracula"
 							showLineNumbers={false}
-							fontSize={18}
 						>
 							{`function greet(name: string): string {
   return \`Hello, \${name}!\`;
@@ -105,9 +107,7 @@ const message = greet("World");`}
 						</Text>
 						<CodePane
 							language="python"
-							theme="nightOwl"
 							showLineNumbers={false}
-							fontSize={18}
 						>
 							{`def greet(name):
     return f"Hello, {name}!"
@@ -298,10 +298,8 @@ message = greet("World")`}
 				<Heading fontSize="h2" color="primary" margin="0 0 40px">
 					Markdown Support
 				</Heading>
-				<Markdown
-					fontSize="24px"
-					color="secondary"
-				>{`
+				<Box fontSize="24px" color="secondary">
+					<Markdown>{`
 Write slides in **Markdown** for simplicity:
 
 - Use standard markdown syntax
@@ -310,7 +308,8 @@ Write slides in **Markdown** for simplicity:
 - Include \`inline code\`
 
 Perfect for quick content creation!
-				`}</Markdown>
+					`}</Markdown>
+				</Box>
 			</Slide>
 
 			{/* Slide 8: Interactive Stepper */}
@@ -321,7 +320,8 @@ Perfect for quick content creation!
 					</Heading>
 					<Stepper
 						values={['Concept', 'Design', 'Build', 'Deploy']}
-						render={({ step, value }) => (
+					>
+						{(value: string, step: number) => (
 							<Box>
 								<Text fontSize="36px" color="secondary" margin="0 0 30px">
 									Step {step + 1} of 4
@@ -331,7 +331,7 @@ Perfect for quick content creation!
 								</Heading>
 							</Box>
 						)}
-					/>
+					</Stepper>
 					<Text fontSize="24px" color="quinary" margin="60px 0 0">
 						Press → to advance through steps
 					</Text>

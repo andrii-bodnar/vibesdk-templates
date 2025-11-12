@@ -214,10 +214,8 @@ Syntax-highlighted code blocks using Prism.
 ```tsx
 <CodePane
   language="typescript"
-  theme="dracula"
   showLineNumbers={false}
   highlightRanges={[[1, 3], [5]]}
-  fontSize={18}
 >
   {`const code = "here";`}
 </CodePane>
@@ -226,15 +224,10 @@ Syntax-highlighted code blocks using Prism.
 **Supported Languages:**
 typescript, javascript, jsx, tsx, python, java, c, cpp, csharp, go, rust, ruby, php, html, css, scss, json, yaml, sql, bash, markdown, graphql
 
-**Prism Themes:**
-dracula, nightOwl, oceanicNext, vsDark, vs, funky, okaidia, twilight, coy, solarizedlight, tomorrow
-
 **Props:**
-- `language` - Code language
-- `theme` - Prism theme name
+- `language` - Code language (required)
 - `showLineNumbers` - Boolean for line numbers
 - `highlightRanges` - Array of [start, end] line ranges to highlight
-- `fontSize` - Font size in pixels
 
 ### CodeSpan
 Inline code snippets.
@@ -269,20 +262,19 @@ Progressive reveal with fade animation.
 Multi-step content with state control.
 
 ```tsx
-<Stepper
-  values={['Step 1', 'Step 2', 'Step 3']}
-  render={({ step, value }) => (
+<Stepper values={['Step 1', 'Step 2', 'Step 3']}>
+  {(value, step) => (
     <Box>
       <Heading>Current: {value}</Heading>
       <Text>Step {step + 1} of 3</Text>
     </Box>
   )}
-/>
+</Stepper>
 ```
 
 **Props:**
 - `values` - Array of step values
-- `render` - Function receiving `{step, value}` returning JSX
+- `children` - Function receiving `(value, step)` returning JSX
 
 ### useSteps Hook
 Custom step-based animations.
@@ -309,19 +301,23 @@ function CustomStepper() {
 Inline markdown rendering.
 
 ```tsx
-<Markdown fontSize="24px" color="secondary">
-  {`
-  # Heading
+<Box fontSize="24px" color="secondary">
+  <Markdown>
+    {`
+    # Heading
 
-  - Bullet 1
-  - Bullet 2
+    - Bullet 1
+    - Bullet 2
 
-  **Bold** and *italic* text
+    **Bold** and *italic* text
 
-  [Link](https://example.com)
-  `}
-</Markdown>
+    [Link](https://example.com)
+    `}
+  </Markdown>
+</Box>
 ```
+
+**Note:** Wrap Markdown in a Box component to apply fontSize and color styling.
 
 ### MarkdownSlideSet
 Generate multiple slides from markdown.
