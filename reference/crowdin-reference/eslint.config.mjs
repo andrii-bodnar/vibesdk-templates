@@ -16,6 +16,7 @@ export default [
       globals: {
         console: 'readonly',
         globalThis: 'readonly',
+        fetch: 'readonly',
         // Cloudflare Workers globals
         ExportedHandler: 'readonly',
         CloudflareEnv: 'readonly',

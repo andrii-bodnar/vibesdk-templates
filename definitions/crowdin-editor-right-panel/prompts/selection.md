@@ -15,6 +15,7 @@ Avoid when:
 - Creating user profile tools (use Profile Resources Menu instead)
 - Building project management tools (use Project Tools instead)
 - Building machine translation integrations (use Custom MT instead)
+- Integrating custom AI providers (use AI Provider instead)
 
 Built with:
 - Crowdin Apps JS API

@@ -10,11 +10,11 @@ Use when:
 - Implementing specialized translation engines for technical content
 
 Avoid when:
-- Building non-translation tools (use other module types)
 - Building editor extensions (use Editor Right Panel instead)
 - Building organization-wide tools (use Organization Menu instead)
 - Creating project-specific tools (use Project Tools instead)
 - Creating user profile tools (use Profile Resources Menu instead)
+- Integrating custom AI providers (use AI Provider instead)
 
 Built with:
 - Crowdin Apps JS API

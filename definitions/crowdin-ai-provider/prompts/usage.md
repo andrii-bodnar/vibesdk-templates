@@ -1,14 +1,12 @@
 # Usage
 
 ## Overview
-Crowdin app with Custom MT (Machine Translation), Profile Resources Menu and Organization Menu modules for connecting external machine translation engines.
+Crowdin app with AI Provider module for integrating custom AI models into Crowdin AI features.
 - Backend: TypeScript with Express.js and Crowdin Apps SDK
 - Frontend: Modular HTML/CSS/JavaScript with Crowdin Apps JS API
 - Authentication: JWT tokens from Crowdin with automatic user context
-- Module: Custom MT (provides translation engine for Crowdin Editor and pre-translation)
-- Module: Profile Resources Menu (appears in user profile menu)
-- Module: Organization Menu (appears in organization navigation)
-- Features: Language mapping for dialects, source text mirroring, organization-level configuration
+- Module: AI Provider (provides custom AI models for translations, content generation, and AI-powered features)
+- Features: Dynamic model discovery from OpenAI API, organization-level configuration, rate limit handling
 
 ## Tech Stack
 - **Crowdin Apps JS API** (AP object for context/events) for frontend integration
@@ -21,26 +19,24 @@ Crowdin app with Custom MT (Machine Translation), Profile Resources Menu and Org
 
 ## Development Restrictions
 - **Authentication**: Always use JWT tokens from Crowdin for API requests
-- **Custom MT Configuration**: Don't modify the customMT configuration structure
-- **Profile Resources Menu Configuration**: Don't modify the profileResourcesMenu configuration structure
-- **Organization Menu Configuration**: Don't modify the organizationMenu configuration structure
+- **AI Provider Configuration**: Don't modify the aiProvider module configuration structure
 - **Scopes**: Ensure your app has appropriate project-level API scopes
 - **Storage Keys**: Always include organizationId in metadata keys to isolate data per organization
-- **Return Values**: translate function must return array of strings matching input length
-- **Error Handling**: Return empty strings for failed translations instead of throwing errors to avoid failing entire batches
-- **Critical Errors**: Throw errors for critical configuration issues (missing API keys, invalid credentials) that prevent the entire translation service from working
+- **Streaming Support**: Add streaming implementation if you need real-time response delivery (set supportsStreaming: true and implement sendEvent callback)
+- **Rate Limits**: Use RateLimitError for 429 status codes from AI provider
+- **Critical Errors**: Throw errors for critical configuration issues (missing API keys, invalid credentials) that prevent the AI service from working
 
 ## Project Structure
 
 ### Backend Structure
-- `worker/app.ts` - TypeScript backend with Custom MT and Profile Resources Menu configuration
+- `worker/app.ts` - TypeScript backend with AI Provider module configuration
 - `worker/index.ts` - Entry point for Cloudflare Worker
 - `public/` - Static files served to the browser
 
 ### Frontend Structure
-- `public/menu/index.html` - Main HTML interface with demo UI
-- `public/menu/app.js` - JavaScript with Crowdin Apps JS API integration
-- `public/menu/styles.css` - Responsive CSS with accessibility support
+- `public/settings/index.html` - Main HTML interface for AI provider configuration
+- `public/settings/app.js` - JavaScript with Crowdin Apps JS API integration
+- `public/settings/styles.css` - Responsive CSS with accessibility support
 
 ## Backend Development
 
@@ -58,9 +54,9 @@ const configuration = {
 ```
 
 **Guidelines:**
-- **identifier**: Must be unique across all Crowdin apps. Format: `company-custom-mt`
-- **name**: User-friendly display name (e.g., "Company MT Engine")
-- **description**: Brief explanation of what your MT engine does
+- **identifier**: Must be unique across all Crowdin apps. Format: `company-ai-provider`
+- **name**: User-friendly display name (e.g., "Company AI Provider")
+- **description**: Brief explanation of what your AI Provider does
 
 #### Required Scopes
 
@@ -112,41 +108,92 @@ const configuration = {
 }
 ```
 
-### Custom MT Module Configuration
+### AI Provider Module Configuration
 
-Configure the Custom MT module in `worker/app.ts`:
+Configure the AI Provider module in `worker/app.ts`:
 
 ```typescript
 import { Client } from '@crowdin/crowdin-api-client';
-import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
-import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
+import { CrowdinContextInfo, CrowdinClientRequest } from '@crowdin/app-project-module/out/types';
+import { 
+    ChatCompletionMessage, 
+    SupportedModels, 
+    ChatCompletionResponseMessage,
+    ChatCompletionTool,
+    ChatCompletionChunkMessage,
+    AiToolChoice
+} from '@crowdin/app-project-module/out/modules/ai-provider/types';
+import { ExtendedResult } from '@crowdin/app-project-module/out/modules/integration/types';
 
 const configuration = {
     // ... other configuration ...
 
-    customMT: {
-        // When true, strings will be received as objects with context
-        withContext: true,
+    aiProvider: {
+        // Settings UI module configuration
+        settingsUiModule: {
+            fileName: 'index.html',
+            uiPath: '/settings'
+        },
 
-        // The maximum quantity of strings that can be sent to the Custom MT app in one request
-        batchSize: 100,
+        // Get list of available AI models (required)
+        getModelsList: async ({ client, context }: { client: Client; context: CrowdinContextInfo }): Promise<SupportedModels[]> => {
+            // Fetch models from API
+            // Return array of models with capabilities
+            return [
+                {
+                    id: 'gpt-4o',
+                    supportsJsonMode: true,
+                    supportsFunctionCalling: true,
+                    supportsStreaming: true,
+                    supportsVision: true,
+                    contextWindowLimit: 128000,
+                    outputLimit: 16384,
+                }
+            ];
+        },
         
-        // Main translation function (required)
-        translate: async (
-            client: Client,
-            context: CrowdinContextInfo,
-            projectId: number,
-            sourceLanguage: string,
-            targetLanguage: string,
-            strings: CustomMtString[]
-        ): Promise<string[]> => {
-            // Your translation logic here
-            const translations = strings.map(string => {
-                // Extract and translate text
-                return translatedText;
+        // Handle chat completion requests (required)
+        chatCompletions: async ({
+                messages,
+                model,
+                action,
+                responseFormat,
+                client,
+                context,
+                req,
+                isStream,
+                sendEvent,
+                tools,
+                toolChoice,
+            }: {
+                messages: ChatCompletionMessage[];
+                model: string;
+                action: string;
+                responseFormat: string;
+                client: Client;
+                context: CrowdinContextInfo;
+                req: CrowdinClientRequest;
+                isStream: boolean;
+                sendEvent: (chunk: ChatCompletionChunkMessage) => Promise<void>;
+                tools?: ChatCompletionTool[];
+                toolChoice?: string | AiToolChoice;
+            }): Promise<ChatCompletionResponseMessage[] | ExtendedResult<ChatCompletionResponseMessage[]> | void> => {
+            // Your AI integration logic here
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({ model, messages }),
             });
             
-            return translations; // Must return array of strings in same order
+            const data = await response.json();
+            
+            return [{
+                role: 'assistant',
+                content: data.choices[0].message.content,
+            }];
         },
     }
 }
@@ -154,75 +201,170 @@ const configuration = {
 
 #### Common Examples
 
-**Integration with External MT API:**
+**Dynamic Model Discovery from OpenAI API:**
 ```typescript
-import { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
+import { Client } from '@crowdin/crowdin-api-client';
 import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
-import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
-
-// Helper function to extract source text from CustomMtString
-function extractSourceText(string: CustomMtString): string {
-    if (typeof string === 'string') {
-        return string;
-    }
-    
-    const text = string.text;
-    if (typeof text === 'string') {
-        return text;
-    }
-    
-    // Handle plural forms
-    if (string.pluralForm && text[string.pluralForm as keyof SourceStringsModel.PluralText]) {
-        return text[string.pluralForm as keyof SourceStringsModel.PluralText] as string;
-    }
-    
-    return '';
-}
+import { SupportedModels } from '@crowdin/app-project-module/out/modules/ai-provider/types';
 
 const configuration = {
     // ... other configuration ...
 
-    customMT: {
-        withContext: true,
-        batchSize: 50,
+    getModelsList: async ({ client, context }: { client: Client; context: CrowdinContextInfo }): Promise<SupportedModels[]> => {
+        const organizationId = context.jwtPayload.context.organization_id;
+        const configKey = `ai_provider_config_org_${organizationId}`;
+        const config = await crowdinModule.metadataStore.getMetadata(configKey) || {};
 
-        translate: async (
-            client: Client,
-            context: CrowdinContextInfo,
-            projectId: number,
-            sourceLanguage: string,
-            targetLanguage: string,
-            strings: CustomMtString[]
-        ): Promise<string[]> => {
-            return await Promise.all(
-                strings.map(async (string: CustomMtString) => {
-                    try {
-                        const sourceText = extractSourceText(string);
+        if (!config.apiKey) {
+            return []; // No API key - return empty list
+        }
 
-                        // Call your external MT API
-                        const response = await fetch('https://your-mt-api.com/translate', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                text: sourceText,
-                                source: sourceLanguage,
-                                target: targetLanguage
-                            })
-                        });
+        const apiEndpoint = config.apiEndpoint || 'https://api.openai.com/v1';
 
-                        if (!response.ok) {
-                            console.error(`MT API failed: ${response.statusText}`);
-                            return '';
-                        }
+        try {
+            const response = await fetch(`${apiEndpoint}/models`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${config.apiKey}`,
+                },
+            });
 
-                        const result = await response.json();
-                        return result.translation || '';
-                    } catch (error) {
-                        console.error('Translation failed:', error);
-                        return '';
-                    }
-                })
-            );
+            if (!response.ok) {
+                return []; // Fallback to empty list on error
+            }
+
+            const data = await response.json();
+
+            // Map models with capabilities
+            return data.data.map(model => ({
+                id: model.id,
+                supportsJsonMode: true,
+                supportsFunctionCalling: true,
+                supportsStreaming: true,
+                supportsVision: true,
+                contextWindowLimit: 128000,
+                outputLimit: 16384,
+            }));
+        } catch (error) {
+            console.error('Error fetching models:', error);
+            throw error;
+        }
+    }
+}
+```
+
+**Chat Completions with OpenAI:**
+```typescript
+import { Client } from '@crowdin/crowdin-api-client';
+import { CrowdinContextInfo, CrowdinClientRequest } from '@crowdin/app-project-module/out/types';
+import { 
+    ChatCompletionMessage, 
+    ChatCompletionResponseMessage,
+    ChatCompletionTool,
+    ChatCompletionChunkMessage,
+    AiToolChoice
+} from '@crowdin/app-project-module/out/modules/ai-provider/types';
+import { ExtendedResult } from '@crowdin/app-project-module/out/modules/integration/types';
+
+const configuration = {
+    // ... other configuration ...
+
+    chatCompletions: async ({
+        messages,
+        model,
+        action,
+        responseFormat,
+        client,
+        context,
+        req,
+        isStream,
+        sendEvent,
+        tools,
+        toolChoice,
+    }: {
+        messages: ChatCompletionMessage[];
+        model: string;
+        action: string;
+        responseFormat: string;
+        client: Client;
+        context: CrowdinContextInfo;
+        req: CrowdinClientRequest;
+        isStream: boolean;
+        sendEvent: (chunk: ChatCompletionChunkMessage) => Promise<void>;
+        tools?: ChatCompletionTool[];
+        toolChoice?: string | AiToolChoice;
+    }): Promise<ChatCompletionResponseMessage[] | ExtendedResult<ChatCompletionResponseMessage[]> | void> => {
+        const organizationId = context.jwtPayload.context.organization_id;
+        const configKey = `ai_provider_config_org_${organizationId}`;
+        const config = await crowdinModule.metadataStore.getMetadata(configKey) || {};
+
+        if (!config.apiKey) {
+            throw new Error('OpenAI API key is not configured.');
+        }
+
+        const apiEndpoint = config.apiEndpoint || 'https://api.openai.com/v1';
+
+        // Prepare request body
+        const requestBody: any = {
+            model,
+            messages,
+            stream: isStream,
+        };
+
+        // Add optional parameters
+        if (responseFormat) {
+            requestBody.response_format = { type: responseFormat };
+        }
+        if (tools && tools.length > 0) {
+            requestBody.tools = tools;
+        }
+        if (toolChoice) {
+            requestBody.tool_choice = toolChoice;
+        }
+
+        // Note: Streaming support
+        // If you need real-time response delivery, implement streaming:
+        // 1. Set supportsStreaming: true in model capabilities
+        // 2. Check if (isStream && sendEvent) here
+        // 3. Parse SSE stream and call sendEvent({ content: chunk }) for each chunk
+        // 4. Return early without returning a value
+
+        try {
+            const response = await fetch(`${apiEndpoint}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${config.apiKey}`,
+                },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                if (response.status === 429) {
+                    throw new RateLimitError({
+                        message: 'OpenAI API rate limit reached. Please try again later.',
+                        error: new Error(errorText)
+                    });
+                }
+                throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+            }
+
+            const data = await response.json();
+            const message = data.choices?.[0]?.message;
+
+            if (!message) {
+                throw new Error('No message in OpenAI response');
+            }
+
+            return [{
+                role: 'assistant',
+                content: message.content || '',
+                tool_calls: message.tool_calls,
+            }];
+        } catch (error) {
+            console.error('Error in chat completion:', error);
+            throw error;
         }
     }
 }
@@ -230,264 +372,355 @@ const configuration = {
 
 #### Best Practices
 
-1. **Always return translations in the same order**
+1. **Handle rate limits with RateLimitError**
    ```typescript
-   // ✅ CORRECT - maintains order
-   translate: async (
-        client: Client,
-        context: CrowdinContextInfo,
-        projectId: number,
-        sourceLanguage: string,
-        targetLanguage: string,
-        strings: CustomMtString[]
-    ): Promise<string[]> => {
-       return await Promise.all(
-           strings.map(string => translateString(string))
-       );
-   }
-   
-   // ❌ WRONG - order may change
-   translate: async (
-        client: Client,
-        context: CrowdinContextInfo,
-        projectId: number,
-        sourceLanguage: string,
-        targetLanguage: string,
-        strings: CustomMtString[]
-    ): Promise<string[]> => {
-       const translations = [];
-       for (const string of strings) {
-           translations.push(await translateString(string)); // Sequential, but order preserved
-       }
-       return translations;
-   }
-   ```
-
-2. **Handle plural forms correctly**
-   ```typescript
-   // ✅ CORRECT - extracts specific plural form using extractSourceText
-   translate: async (
-        client: Client,
-        context: CrowdinContextInfo,
-        projectId: number,
-        sourceLanguage: string,
-        targetLanguage: string,
-        strings: CustomMtString[]
-    ): Promise<string[]> => {
-        return strings.map((string: CustomMtString) => {
-            const sourceText = extractSourceText(string);
-            return translateText(sourceText);
-        });
-    }
-    
-    // ❌ WRONG - direct access without type casting and fallback
-    translate: async (
-        client: Client,
-        context: CrowdinContextInfo,
-        projectId: number,
-        sourceLanguage: string,
-        targetLanguage: string,
-        strings: CustomMtString[]
-    ): Promise<string[]> => {
-        return strings.map((string: CustomMtString) => {
-            if (typeof string === 'string') {
-                return translateText(string);
-            }
-            
-            // BAD: Direct access without keyof casting
-            const sourceText = typeof string.text === 'string' 
-                ? string.text 
-                : string.text[string.pluralForm]; // Type error! pluralForm is 'any'
-                
-            return translateText(sourceText);
-        });
-    }
-   ```
-
-3. **Return empty string for failed translations instead of throwing errors**
-   ```typescript
-   // ✅ CORRECT - returns empty string for failed translations, doesn't fail entire batch
-   translate: async (
-       client: Client,
-       context: CrowdinContextInfo,
-       projectId: number,
-       sourceLanguage: string,
-       targetLanguage: string,
-       strings: CustomMtString[]
-   ): Promise<string[]> => {
-       return await Promise.all(
-           strings.map(async (string: CustomMtString) => {
-               try {
-                   const sourceText = extractSourceText(string);
-                   const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage);
-                   
-                   // If translation failed, return empty string
-                   return translation || '';
-               } catch (error) {
-                   // Return empty string instead of failing entire batch
-                   console.error('Translation failed:', error);
-                   return '';
-               }
-           })
-       );
-   }
-   
-   // ❌ WRONG - throws error and fails entire batch when 1 string fails
-   translate: async (
-       client: Client,
-       context: CrowdinContextInfo,
-       projectId: number,
-       sourceLanguage: string,
-       targetLanguage: string,
-       strings: CustomMtString[]
-   ): Promise<string[]> => {
-       const translations = await Promise.all(
-           strings.map(async (string: CustomMtString) => {
-               const sourceText = extractSourceText(string);
-               const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage);
-               
-               if (!translation) {
-                   // BAD: This fails entire batch of 100 strings if 1 fails!
-                   throw new Error(`Failed to translate: "${sourceText}"`);
-               }
-               
-               return translation;
-           })
-       );
+   // ✅ CORRECT - uses RateLimitError for 429 status
+   chatCompletions: async ({
+        messages,
+        model,
+        action,
+        responseFormat,
+        client,
+        context,
+        req,
+        isStream,
+        sendEvent,
+        tools,
+        toolChoice,
+    }: {
+        messages: ChatCompletionMessage[];
+        model: string;
+        action: string;
+        responseFormat: string;
+        client: Client;
+        context: CrowdinContextInfo;
+        req: CrowdinClientRequest;
+        isStream: boolean;
+        sendEvent: (chunk: ChatCompletionChunkMessage) => Promise<void>;
+        tools?: ChatCompletionTool[];
+        toolChoice?: string | AiToolChoice;
+    }): Promise<ChatCompletionResponseMessage[] | ExtendedResult<ChatCompletionResponseMessage[]> | void> => {
+       const response = await fetch(`${apiEndpoint}/chat/completions`, {...});
        
-       return translations;
+       if (!response.ok) {
+           if (response.status === 429) {
+               const errorText = await response.text();
+               throw new RateLimitError({
+                   message: 'OpenAI API rate limit reached. Please try again later.',
+                   error: new Error(errorText)
+               });
+           }
+           throw new Error(`API error: ${response.status}`);
+       }
+       
+       // Process response...
+   }
+   
+   // ❌ WRONG - generic error for rate limits
+   chatCompletions: async ({
+        messages,
+        model,
+        action,
+        responseFormat,
+        client,
+        context,
+        req,
+        isStream,
+        sendEvent,
+        tools,
+        toolChoice,
+    }: {
+        messages: ChatCompletionMessage[];
+        model: string;
+        action: string;
+        responseFormat: string;
+        client: Client;
+        context: CrowdinContextInfo;
+        req: CrowdinClientRequest;
+        isStream: boolean;
+        sendEvent: (chunk: ChatCompletionChunkMessage) => Promise<void>;
+        tools?: ChatCompletionTool[];
+        toolChoice?: string | AiToolChoice;
+    }): Promise<ChatCompletionResponseMessage[] | ExtendedResult<ChatCompletionResponseMessage[]> | void> => {
+       const response = await fetch(`${apiEndpoint}/chat/completions`, {...});
+       
+       if (!response.ok) {
+           // BAD: Doesn't distinguish rate limit errors
+           throw new Error(`API error: ${response.status}`);
+       }
    }
    ```
 
-4. **Throw errors for critical configuration issues**
+2. **Always return proper response format**
    ```typescript
-   // ✅ CORRECT - throws error for missing critical configuration
-   translate: async (
-       client: Client,
-       context: CrowdinContextInfo,
-       projectId: number,
-       sourceLanguage: string,
-       targetLanguage: string,
-       strings: CustomMtString[]
-   ): Promise<string[]> => {
-       // Load organization-specific configuration
+   // ✅ CORRECT - returns array of ChatCompletionResponseMessage
+   chatCompletions: async ({
+        messages,
+        model,
+        action,
+        responseFormat,
+        client,
+        context,
+        req,
+        isStream,
+        sendEvent,
+        tools,
+        toolChoice,
+    }: {
+        messages: ChatCompletionMessage[];
+        model: string;
+        action: string;
+        responseFormat: string;
+        client: Client;
+        context: CrowdinContextInfo;
+        req: CrowdinClientRequest;
+        isStream: boolean;
+        sendEvent: (chunk: ChatCompletionChunkMessage) => Promise<void>;
+        tools?: ChatCompletionTool[];
+        toolChoice?: string | AiToolChoice;
+    }): Promise<ChatCompletionResponseMessage[] | ExtendedResult<ChatCompletionResponseMessage[]> | void> => {
+       const data = await response.json();
+       const message = data.choices?.[0]?.message;
+       
+       return [{
+           role: 'assistant',
+           content: message.content || '',
+           tool_calls: message.tool_calls,
+       }];
+   }
+   
+   // ❌ WRONG - returns raw string instead of proper message object
+   chatCompletions: async ({
+        messages,
+        model,
+        action,
+        responseFormat,
+        client,
+        context,
+        req,
+        isStream,
+        sendEvent,
+        tools,
+        toolChoice,
+    }: {
+        messages: ChatCompletionMessage[];
+        model: string;
+        action: string;
+        responseFormat: string;
+        client: Client;
+        context: CrowdinContextInfo;
+        req: CrowdinClientRequest;
+        isStream: boolean;
+        sendEvent: (chunk: ChatCompletionChunkMessage) => Promise<void>;
+        tools?: ChatCompletionTool[];
+        toolChoice?: string | AiToolChoice;
+    }): Promise<ChatCompletionResponseMessage[] | ExtendedResult<ChatCompletionResponseMessage[]> | void> => {
+       const data = await response.json();
+       
+       // BAD: Wrong return format
+       return data.choices[0].message.content;
+   }
+   ```
+
+3. **Throw errors for critical configuration issues**
+   ```typescript
+   // ✅ CORRECT - checks API key at the start
+   chatCompletions: async ({
+        messages,
+        model,
+        action,
+        responseFormat,
+        client,
+        context,
+        req,
+        isStream,
+        sendEvent,
+        tools,
+        toolChoice,
+    }: {
+        messages: ChatCompletionMessage[];
+        model: string;
+        action: string;
+        responseFormat: string;
+        client: Client;
+        context: CrowdinContextInfo;
+        req: CrowdinClientRequest;
+        isStream: boolean;
+        sendEvent: (chunk: ChatCompletionChunkMessage) => Promise<void>;
+        tools?: ChatCompletionTool[];
+        toolChoice?: string | AiToolChoice;
+    }): Promise<ChatCompletionResponseMessage[] | ExtendedResult<ChatCompletionResponseMessage[]> | void> => {
        const organizationId = context.jwtPayload.context.organization_id;
-       const configKey = `mt_config_org_${organizationId}`;
-       const config = await crowdinModule.metadataStore.getMetadata(configKey);
+       const configKey = `ai_provider_config_org_${organizationId}`;
+       const config = await crowdinModule.metadataStore.getMetadata(configKey) || {};
        
-       // Check for critical configuration at the start
-       if (!config) {
-           throw new Error('MT service is not configured. Please configure the MT service in app settings.');
-       }
-       
+       // Check for critical configuration
        if (!config.apiKey) {
-           throw new Error('MT API key is missing. Please add your API key in the app configuration.');
+           throw new Error('OpenAI API key is not configured. Please configure it in the app settings.');
        }
        
-       if (!config.apiUrl) {
-           throw new Error('MT API URL is missing. Please add your API URL in the app configuration.');
-       }
-       
-       // Process translations - return empty strings for individual failures
-       return await Promise.all(
-           strings.map(async (string: CustomMtString) => {
-               try {
-                   const sourceText = extractSourceText(string);
-                   const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage, config.apiKey, config.apiUrl);
-                   return translation || '';
-               } catch (error) {
-                   console.error('Translation failed for individual string:', error);
-                   return ''; // Individual failure - return empty string
-               }
-           })
-       );
+       // Proceed with API call
+       const response = await fetch(`${apiEndpoint}/chat/completions`, {...});
+       // ... process response
    }
    
-   // ❌ WRONG - doesn't check critical configuration, fails silently
-   translate: async (
-       client: Client,
-       context: CrowdinContextInfo,
-       projectId: number,
-       sourceLanguage: string,
-       targetLanguage: string,
-       strings: CustomMtString[]
-   ): Promise<string[]> => {
-       // BAD: No check for configuration, will fail for all requests
-       const organizationId = context.jwtPayload.context.organization_id;
-       const configKey = `mt_config_org_${organizationId}`;
-       const config = await crowdinModule.metadataStore.getMetadata(configKey);
+   // ❌ WRONG - doesn't check configuration, fails silently
+   chatCompletions: async ({
+        messages,
+        model,
+        action,
+        responseFormat,
+        client,
+        context,
+        req,
+        isStream,
+        sendEvent,
+        tools,
+        toolChoice,
+    }: {
+        messages: ChatCompletionMessage[];
+        model: string;
+        action: string;
+        responseFormat: string;
+        client: Client;
+        context: CrowdinContextInfo;
+        req: CrowdinClientRequest;
+        isStream: boolean;
+        sendEvent: (chunk: ChatCompletionChunkMessage) => Promise<void>;
+        tools?: ChatCompletionTool[];
+        toolChoice?: string | AiToolChoice;
+    }): Promise<ChatCompletionResponseMessage[] | ExtendedResult<ChatCompletionResponseMessage[]> | void> => {
+       const config = await crowdinModule.metadataStore.getMetadata(configKey) || {};
        
-       return await Promise.all(
-           strings.map(async (string: CustomMtString) => {
-               try {
-                   const sourceText = extractSourceText(string);
-                   // BAD: Using config without checking if it exists
-                   const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage, config?.apiKey, config?.apiUrl);
-                   return translation || '';
-               } catch (error) {
-                   // Silently returns empty strings even when service is misconfigured
-                   return '';
-               }
-           })
-       );
+       // BAD: Uses config without checking if apiKey exists
+       const response = await fetch(`${apiEndpoint}/chat/completions`, {
+           headers: {
+               'Authorization': `Bearer ${config.apiKey}`, // May be undefined!
+           }
+       });
    }
    ```
 
-5. **Use batchSize appropriately**
+4. **Use MODEL_CAPABILITIES for known models**
    ```typescript
-   // ✅ CORRECT - reasonable batch size for API limits
-   customMT: {
-       withContext: true,
-       batchSize: 50, // Adjust based on your MT API limits
-       translate: async (
-            client: Client,
-            context: CrowdinContextInfo,
-            projectId: number,
-            sourceLanguage: string,
-            targetLanguage: string,
-            strings: CustomMtString[]
-        ): Promise<string[]> => {
-           // Process batch of up to 50 strings
-       }
+   // ✅ CORRECT - provides capabilities for known models, defaults for others
+   const MODEL_CAPABILITIES: Record<string, Partial<SupportedModels>> = {
+       'gpt-4o': {
+           supportsJsonMode: true,
+           supportsFunctionCalling: true,
+           supportsStreaming: false,
+           supportsVision: true,
+           contextWindowLimit: 128000,
+           outputLimit: 16384,
+       },
+       // ... other known models
+   };
+   
+   getModelsList: async ({ client, context }: { client: Client; context: CrowdinContextInfo }): Promise<SupportedModels[]> => {
+       const data = await response.json();
+       
+       return data.data.map(model => {
+           // Use predefined capabilities or defaults
+           const capabilities = MODEL_CAPABILITIES[model.id] || {
+               supportsJsonMode: false,
+               supportsFunctionCalling: false,
+               supportsStreaming: false,
+               supportsVision: false,
+               contextWindowLimit: 4096,
+               outputLimit: 4096,
+           };
+           
+           return { id: model.id, ...capabilities };
+       });
    }
    
-   // ⚠️ PROBLEMATIC - too large, may timeout
-   customMT: {
-       withContext: true,
-       batchSize: 1000, // Too many strings at once
-       translate: async (
-            client: Client,
-            context: CrowdinContextInfo,
-            projectId: number,
-            sourceLanguage: string,
-            targetLanguage: string,
-            strings: CustomMtString[]
-        ): Promise<string[]> => {
-           // May exceed MT API limits or timeout
-       }
+   // ❌ WRONG - hardcodes models, doesn't fetch from API
+   getModelsList: async ({ client, context }: { client: Client; context: CrowdinContextInfo }): Promise<SupportedModels[]> => {
+       // BAD: Static list, won't include new models from OpenAI
+       return [
+           { id: 'gpt-4o', supportsJsonMode: true, ... },
+           { id: 'gpt-4', supportsJsonMode: true, ... },
+       ];
    }
    ```
 
-6. **Use context information for customization**
+5. **Use context information for organization-specific settings**
    ```typescript
-   // ✅ CORRECT - uses context for per-organization settings
-   translate: async (
-        client: Client,
-        context: CrowdinContextInfo,
-        projectId: number,
-        sourceLanguage: string,
-        targetLanguage: string,
-        strings: CustomMtString[]
-    ): Promise<string[]> => {
+   // ✅ CORRECT - loads organization-specific configuration
+   chatCompletions: async ({
+        messages,
+        model,
+        action,
+        responseFormat,
+        client,
+        context,
+        req,
+        isStream,
+        sendEvent,
+        tools,
+        toolChoice,
+    }: {
+        messages: ChatCompletionMessage[];
+        model: string;
+        action: string;
+        responseFormat: string;
+        client: Client;
+        context: CrowdinContextInfo;
+        req: CrowdinClientRequest;
+        isStream: boolean;
+        sendEvent: (chunk: ChatCompletionChunkMessage) => Promise<void>;
+        tools?: ChatCompletionTool[];
+        toolChoice?: string | AiToolChoice;
+    }): Promise<ChatCompletionResponseMessage[] | ExtendedResult<ChatCompletionResponseMessage[]> | void> => {
        const orgId = context.jwtPayload.context.organization_id;
        
-       // Load organization-specific MT settings
-       const settings = await crowdinModule.metadataStore.getMetadata(`mt_settings_${orgId}`);
+       // Load organization-specific AI provider settings
+       const configKey = `ai_provider_config_org_${orgId}`;
+       const config = await crowdinModule.metadataStore.getMetadata(configKey) || {};
        
-       // Apply organization-specific logic
-       return strings.map(string => {
-           const sourceText = extractSourceText(string);
-           return translateWithSettings(sourceText, settings);
+       // Use organization's custom endpoint or default
+       const apiEndpoint = config.apiEndpoint || 'https://api.openai.com/v1';
+       
+       // Make request with organization's API key
+       const response = await fetch(`${apiEndpoint}/chat/completions`, {
+           headers: {
+               'Authorization': `Bearer ${config.apiKey}`,
+           },
+           // ...
+       });
+   }
+   
+   // ❌ WRONG - uses hardcoded configuration
+   chatCompletions: async ({
+        messages,
+        model,
+        action,
+        responseFormat,
+        client,
+        context,
+        req,
+        isStream,
+        sendEvent,
+        tools,
+        toolChoice,
+    }: {
+        messages: ChatCompletionMessage[];
+        model: string;
+        action: string;
+        responseFormat: string;
+        client: Client;
+        context: CrowdinContextInfo;
+        req: CrowdinClientRequest;
+        isStream: boolean;
+        sendEvent: (chunk: ChatCompletionChunkMessage) => Promise<void>;
+        tools?: ChatCompletionTool[];
+        toolChoice?: string | AiToolChoice;
+    }): Promise<ChatCompletionResponseMessage[] | ExtendedResult<ChatCompletionResponseMessage[]> | void> => {
+       // BAD: Hardcoded API key and endpoint
+       const response = await fetch('https://api.openai.com/v1/chat/completions', {
+           headers: {
+               'Authorization': 'Bearer sk-hardcoded-key',
+           },
        });
    }
    ```
@@ -532,78 +765,165 @@ export interface JwtPayloadContext {
 // See @crowdin/app-project-module/out/types.d.ts for complete type definitions
 ```
 
-<!-- CUSTOM_MT_TYPES_START -->
-##### out/custom-mt/types.d.ts
+<!-- AI_PROVIDER_TYPES_START -->
+##### out/modules/ai-provider/types.d.ts
 
 ```typescript
-import Crowdin, { SourceStringsModel } from '@crowdin/crowdin-api-client';
-import { CrowdinContextInfo, ModuleKey } from '../../types';
+import { CrowdinClientRequest, CrowdinContextInfo, Environments, ModuleKey, UiModule } from '../../types';
+import Crowdin from '@crowdin/crowdin-api-client';
+import { ExtendedResult } from '../integration/types';
 
-export interface CustomMTLogic extends ModuleKey {
-    withContext?: boolean;
-    batchSize?: number;
-    maskEntities?: boolean;
-    translate: (
-        client: Crowdin,
-        context: CrowdinContextInfo,
-        projectId: number,
-        source: string,
-        target: string,
-        strings: CustomMtString[],
-    ) => Promise<string[]>;
-    validate?: (client: Crowdin) => Promise<void>;
+export interface AiProviderModule extends Environments, ModuleKey {
+    name?: string;
+    description?: string;
+    settingsUiModule?: UiModule;
+    chatCompletions: ({
+        messages,
+        model,
+        action,
+        responseFormat,
+        client,
+        context,
+        req,
+        isStream,
+        sendEvent,
+        tools,
+        toolChoice,
+    }: {
+        messages: ChatCompletionMessage[];
+        model: string;
+        action: string;
+        responseFormat: string;
+        client: Crowdin;
+        context: CrowdinContextInfo;
+        req: CrowdinClientRequest;
+        isStream: boolean;
+        sendEvent: (chunk: ChatCompletionChunkMessage) => Promise<void>;
+        tools?: ChatCompletionTool[];
+        toolChoice?: string | AiToolChoice;
+    }) => Promise<ChatCompletionResponseMessage[] | ExtendedResult<ChatCompletionResponseMessage[]> | void>;
+    getModelsList: ({
+        client,
+        context,
+    }: {
+        client: Crowdin;
+        context: CrowdinContextInfo;
+    }) => Promise<SupportedModels[]>;
 }
 
-export interface CustomMTRequest {
-    strings: CustomMtString[];
+export interface SupportedModels {
+    id: string;
+    supportsJsonMode?: boolean;
+    supportsFunctionCalling?: boolean;
+    supportsStreaming?: boolean;
+    supportsVision?: boolean;
+    contextWindowLimit?: number;
+    outputLimit?: number;
 }
 
-export type CustomMtString =
-    | string
-    | {
-          id: number;
-          projectId: number;
-          fileId: number;
-          identifier: string;
-          context: string;
-          maxLength: number;
-          isHidden: boolean;
-          text: string | SourceStringsModel.PluralText;
-          isPlural: boolean;
-          pluralForm: any;
-      };
+export interface ChatCompletionTool {
+    type: 'function';
+    function: ChatCompletionToolFunctionDeclaration;
+}
+
+export interface ChatCompletionToolFunctionDeclaration {
+    name: string;
+    description?: string;
+    parameters?: object;
+}
+
+export interface AiToolChoice {
+    type: 'function';
+    function: {
+        name: string;
+    };
+}
+
+export type ChatCompletionMessage =
+    | ChatCompletionSystemMessage
+    | ChatCompletionUserMessage
+    | ChatCompletionAssistantMessage
+    | ChatCompletionToolMessage;
+
+export interface ChatCompletionSystemMessage {
+    role: 'system';
+    content: string | ChatCompletionContentPartText[];
+}
+
+export interface ChatCompletionUserMessage {
+    role?: 'user';
+    content: string | ChatCompletionContentPart[];
+}
+
+export type ChatCompletionResponseMessage = ChatCompletionAssistantMessage;
+
+export interface ChatCompletionAssistantMessage {
+    role?: 'assistant';
+    content?: string | ChatCompletionContentPartText[] | null;
+    tool_calls?: ChatCompletionMessageToolCall[] | null;
+}
+
+export interface ChatCompletionChunkMessage {
+    role?: ROLES;
+    content?: string | null;
+    tool_calls?: ChatCompletionDeltaMessageToolCall[];
+}
+
+export interface ChatCompletionToolMessage {
+    content: string | ChatCompletionContentPartText[];
+    role: 'tool';
+    tool_call_id: string;
+}
+
+export type ROLES = 'user' | 'assistant' | 'system' | 'tool';
+
+export type ChatCompletionContentPart = ChatCompletionContentPartText | ChatCompletionContentPartImage;
+
+export type ChatCompletionContentPartText = {
+    type: 'text';
+    text: string;
+};
+
+export type ChatCompletionContentPartImage = {
+    type: 'image_url';
+    image_url: {
+        url: string;
+    };
+};
+
+export interface ChatCompletionMessageToolCall {
+    id: string;
+    type: 'function';
+    function: {
+        arguments?: string;
+        name: string;
+    };
+}
+
+export interface ChatCompletionDeltaMessageToolCall {
+    index: number;
+    id?: string;
+    type?: 'function';
+    function?: {
+        arguments?: string;
+        name?: string;
+    };
+}
+
+export interface InputMessage {
+    role?: ROLES;
+    content: string | InputContentPart[];
+}
+
+export type InputContentPart = ChatCompletionContentPartText | InputChatCompletionContentPartImage;
+
+export type InputChatCompletionContentPartImage = {
+    type: 'image';
+    mimeType: string;
+    url: string;
+};
 ```
-<!-- CUSTOM_MT_TYPES_END -->
-
-### Profile Resources Menu Module Configuration
-
-Configure the Profile Resources Menu module in `worker/app.ts`:
-
-```typescript
-const configuration = {
-    // ... other configuration ...
-
-    profileResourcesMenu: {
-      fileName: 'index.html',
-      uiPath: '/menu' // Points to public/menu directory
-    }
-}
-```
-
-### Organization Menu Module Configuration
-
-Configure the Organization Menu module in `worker/app.ts`:
-
-```typescript
-const configuration = {
-    // ... other configuration ...
-
-    organizationMenu: {
-      fileName: 'index.html',
-      uiPath: '/menu' // Points to public/menu directory
-    }
-}
-```
+<!-- AI_PROVIDER_TYPES_END -->
 
 ### Crowdin API Client
 
@@ -6036,11 +6356,11 @@ const configuration = {
 }
 ```
 
-**Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-custom-mt`
+**Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-ai-provider`
 
 ### 2. Key Files to Modify
 
 - `worker/app.ts` - Add new API endpoints here
-- `public/menu/index.html` - Modify UI structure
-- `public/menu/app.js` - Add frontend logic
-- `public/menu/styles.css` - Customize styles
+- `public/settings/index.html` - Modify UI structure
+- `public/settings/app.js` - Add frontend logic
+- `public/settings/styles.css` - Customize styles

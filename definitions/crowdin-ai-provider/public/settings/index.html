@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Provider Configuration</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.crowdin.com/apps/dist/iframe.js" defer></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="container" role="main">
+        <h1>🤖 AI Provider Configuration</h1>
+        
+        <!-- Introduction Section -->
+        <div class="tool-section">
+            <h3>🚀 Welcome to Crowdin AI Provider Template</h3>
+            <p>This template demonstrates a fully functional Crowdin app with <strong>AI Provider</strong> module integration.</p>
+            
+            <div class="context-info">
+                <strong>📌 About AI Provider Module:</strong><br>
+                AI Provider apps integrate custom AI models into Crowdin. Use this to connect OpenAI, Azure OpenAI, Anthropic, Google Gemini, or any other AI service to power translations, suggestions, and AI-powered features.
+            </div>
+            
+            <h4>What's Included in This Template:</h4>
+            <ul class="feature-list">
+                <li><strong>AI Provider Module</strong> - Integration point for custom AI models</li>
+                <li><strong>Model List Configuration</strong> - Define available AI models with capabilities</li>
+                <li><strong>Chat Completions Handler</strong> - Process AI requests and responses</li>
+                <li><strong>Organization-level Config</strong> - Settings applied across all projects</li>
+                <li><strong>TypeScript Support</strong> - Type-safe backend development</li>
+                <li><strong>Cloudflare Workers Ready</strong> - Optimized for edge deployment</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>💡 Getting Started:</strong><br>
+                1. Configure your AI provider settings below<br>
+                2. Save your configuration<br>
+                3. The AI models will be available in Crowdin AI features<br>
+                4. Check <code>worker/app.ts</code> to customize AI integration logic
+            </div>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="tool-section" role="region" aria-labelledby="config-heading">
+            <h3 id="config-heading">⚙️ AI Provider Settings</h3>
+            <p>Configure your AI provider credentials and settings:</p>
+            
+            <div class="config-form">
+                <div class="form-group">
+                    <label for="apiKey" class="form-label">
+                        <strong>API Key</strong>
+                        <span class="hint">Your AI provider API key (OpenAI, Azure, etc.)</span>
+                    </label>
+                    <input 
+                        type="password" 
+                        id="apiKey" 
+                        class="form-input" 
+                        placeholder="sk-..."
+                        aria-label="API Key"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="apiEndpoint" class="form-label">
+                        <strong>API Endpoint (Optional)</strong>
+                        <span class="hint">Custom API endpoint URL (leave empty for OpenAI default)</span>
+                    </label>
+                    <input 
+                        type="url" 
+                        id="apiEndpoint" 
+                        class="form-input" 
+                        placeholder="https://api.openai.com/v1"
+                        aria-label="API Endpoint"
+                    >
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <strong>📝 Model Support:</strong><br>
+                This provider automatically fetches and supports all available models from OpenAI API. Models with known capabilities (GPT-5, GPT-4.1, GPT-4o, O4 Mini) use optimized settings, while other models use default configurations. Custom endpoints (Azure OpenAI, etc.) are also supported.
+            </div>
+        </div>
+
+        <!-- Available Models Section -->
+        <div class="tool-section" role="region" aria-labelledby="models-heading">
+            <h3 id="models-heading">🎯 Dynamic Model Support</h3>
+            <p>This AI Provider dynamically fetches all available models from OpenAI API and makes them available in Crowdin.</p>
+            
+            <div class="context-info">
+                <strong>How it works:</strong><br>
+                • Models are fetched directly from <code>/v1/models</code> endpoint<br>
+                • Known models (GPT-5, GPT-4.1, GPT-4o, O4 Mini) get optimized capabilities<br>
+                • Unknown models use default capabilities (basic features, 4K context)<br>
+                • New models from OpenAI appear automatically without code changes
+            </div>
+
+            <h4>Optimized Models:</h4>
+            <div class="models-list">
+                <div class="model-card">
+                    <div class="model-header">
+                        <strong>GPT-5</strong>
+                        <span class="model-badge model-badge-premium">Optimized</span>
+                    </div>
+                    <ul class="model-features">
+                        <li>400K context, 128K output</li>
+                        <li>JSON Mode, Function Calling, Vision</li>
+                    </ul>
+                </div>
+
+                <div class="model-card">
+                    <div class="model-header">
+                        <strong>GPT-4.1</strong>
+                        <span class="model-badge model-badge-advanced">Optimized</span>
+                    </div>
+                    <ul class="model-features">
+                        <li>1M context, 32K output</li>
+                        <li>JSON Mode, Function Calling, Vision</li>
+                    </ul>
+                </div>
+
+                <div class="model-card">
+                    <div class="model-header">
+                        <strong>GPT-4o</strong>
+                        <span class="model-badge">Optimized</span>
+                    </div>
+                    <ul class="model-features">
+                        <li>128K context, 16K output</li>
+                        <li>JSON Mode, Function Calling, Vision</li>
+                    </ul>
+                </div>
+
+                <div class="model-card">
+                    <div class="model-header">
+                        <strong>O4 Mini</strong>
+                        <span class="model-badge model-badge-reasoning">Optimized</span>
+                    </div>
+                    <ul class="model-features">
+                        <li>200K context, 100K output</li>
+                        <li>JSON Mode, Function Calling, Vision</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="code-snippet">
+                <strong>Model Configuration (worker/app.ts):</strong><br>
+                // Fetch models from OpenAI API<br>
+                const response = await fetch(`${apiEndpoint}/models`);<br>
+                const data = await response.json();<br>
+                // Map with capabilities from MODEL_CAPABILITIES or defaults
+            </div>
+        </div>
+
+        <!-- Save Configuration Section -->
+        <div class="tool-section" role="region" aria-labelledby="save-heading">
+            <h3 id="save-heading">💾 Save Configuration</h3>
+            <p>Apply your AI provider configuration to the organization:</p>
+            
+            <div style="margin: 20px 0;" role="group" aria-label="Configuration actions">
+                <button class="action-button" 
+                        onclick="saveConfiguration()" 
+                        aria-label="Save configuration">
+                    💾 Save Configuration
+                </button>
+                <button class="action-button" 
+                        onclick="loadConfiguration()" 
+                        aria-label="Reload configuration">
+                    🔄 Reload
+                </button>
+            </div>
+            
+            <div id="saveResult" role="status" aria-live="polite"></div>
+            
+            <div class="code-snippet">
+                <strong>Backend Code (worker/app.ts):</strong><br>
+                const configKey = `ai_provider_config_org_${organizationId}`;<br>
+                await crowdinModule.metadataStore.saveMetadata(configKey, { apiKey, apiEndpoint });<br>
+                // Configuration is saved at organization level
+            </div>
+        </div>
+
+        <!-- Current Status Section -->
+        <div class="tool-section" role="region" aria-labelledby="status-heading">
+            <h3 id="status-heading">📊 Current Status</h3>
+            <p>View your current AI provider configuration and organization context:</p>
+            <div id="statusInfo" class="loading" role="status" aria-live="polite">Loading configuration...</div>
+            
+            <div class="code-snippet">
+                <strong>Code Example:</strong><br>
+                const config = await crowdinModule.metadataStore.getMetadata(configKey);<br>
+                const apiKey = config?.apiKey || '';
+            </div>
+        </div>
+
+        <!-- How It Works Section -->
+        <div class="tool-section" role="region" aria-labelledby="workflow-heading">
+            <h3 id="workflow-heading">🔧 How It Works</h3>
+            
+            <h4>AI Provider Workflow:</h4>
+            <ol class="feature-list">
+                <li><strong>Model Discovery:</strong> Crowdin calls <code>getModelsList()</code> to discover available models</li>
+                <li><strong>AI Request:</strong> When user triggers AI feature, Crowdin sends request to your provider</li>
+                <li><strong>Chat Completion:</strong> <code>chatCompletions()</code> function processes the request</li>
+                <li><strong>AI Integration:</strong> Your code calls external AI service (OpenAI, Azure, etc.)</li>
+                <li><strong>Response:</strong> AI response is returned to Crowdin and displayed to user</li>
+            </ol>
+            
+            <div class="code-snippet">
+                <strong>Chat Completions Handler (worker/app.ts):</strong><br>
+                chatCompletions: async ({ messages, model }) => {<br>
+                &nbsp;&nbsp;// Call your AI provider here<br>
+                &nbsp;&nbsp;const response = await fetch(`${apiEndpoint}/chat/completions`, { ... });<br>
+                &nbsp;&nbsp;const data = await response.json();<br>
+                &nbsp;&nbsp;return [{ role: 'assistant', content: data.choices[0].message.content }];<br>
+                }
+            </div>
+        </div>
+
+        <!-- Important Notes Section -->
+        <div class="tool-section">
+            <h3>⚠️ Important Notes</h3>
+            <ul class="feature-list">
+                <li>Configuration is applied at the <strong>organization level</strong> for all projects</li>
+                <li>API keys are stored securely in Crowdin metadata storage</li>
+                <li>Simple non-streaming implementation for easier understanding and modification</li>
+                <li>Models can have different capabilities (JSON mode, vision, function calling)</li>
+                <li>All models from OpenAI API are automatically available without code changes</li>
+                <li>Rate limit handling (429 errors) is built-in for better reliability</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>🎯 Pro Tips:</strong><br>
+                • Configure model capabilities accurately for better Crowdin integration<br>
+                • Test with sample prompts before deploying to production<br>
+                • Monitor your AI provider's usage and costs<br>
+                • Consider using Azure OpenAI for enterprise scenarios<br>
+                • You can add streaming support later if needed for better UX
+            </div>
+        </div>
+
+        <!-- Implementation Guide -->
+        <div class="tool-section">
+            <h3>📚 Implementation Guide</h3>
+            
+            <h4>Frontend (app.js):</h4>
+            <div class="code-snippet">
+                • Use <code>AP.getContext()</code> to get organization information<br>
+                • Use <code>AP.getJwtToken()</code> to authenticate API calls<br>
+                • Make requests to <code>/api/ai-config</code> to manage configuration<br>
+                • Update UI based on saved configuration
+            </div>
+
+            <h4>Backend (worker/app.ts):</h4>
+            <div class="code-snippet">
+                • AI Provider module configured with <code>getModelsList</code> and <code>chatCompletions</code><br>
+                • <code>getModelsList()</code> dynamically fetches models from OpenAI API<br>
+                • <code>chatCompletions()</code> processes AI requests and calls external provider<br>
+                • Simple non-streaming implementation for clarity<br>
+                • Rate limit handling with <code>RateLimitError</code> for 429 status codes<br>
+                • Error handling with try-catch blocks for robustness
+            </div>
+
+            <h4>Next Steps:</h4>
+            <ul class="feature-list">
+                <li>Configure your AI provider API key and endpoint above</li>
+                <li>Customize the model list in <code>worker/app.ts</code> based on your provider</li>
+                <li>Deploy to Cloudflare Workers and install in your Crowdin account</li>
+                <li>Test AI features in Crowdin with your custom provider</li>
+            </ul>
+        </div>
+
+        <!-- Documentation Link -->
+        <div class="tool-section">
+            <h3>📖 Documentation & Resources</h3>
+            <p>
+                <strong>AI Provider Module Documentation:</strong><br>
+                <a href="https://crowdin.github.io/app-project-module/tools/ai-provider/" target="_blank" rel="noopener">
+                    https://crowdin.github.io/app-project-module/tools/ai-provider/
+                </a>
+            </p>
+            <p>
+                <strong>OpenAI API Documentation:</strong><br>
+                <a href="https://platform.openai.com/docs/api-reference" target="_blank" rel="noopener">
+                    https://platform.openai.com/docs/api-reference
+                </a>
+            </p>
+            <p>
+                <strong>Crowdin Apps Platform:</strong><br>
+                <a href="https://developer.crowdin.com/crowdin-apps-about/" target="_blank" rel="noopener">
+                    https://developer.crowdin.com/crowdin-apps-about/
+                </a>
+            </p>
+        </div>
+
+    </div>
+</body>
+</html>
+
