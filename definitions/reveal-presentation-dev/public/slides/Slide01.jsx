@@ -1,3 +1,4 @@
+// [DEMO SLIDE], REPLACE OR REMOVE
 // TitleSlide example - showcases opening slide with icon and gradient backdrop
 import { Sparkles } from 'lucide-react'
 import { TitleSlide } from '/slides-library.jsx'

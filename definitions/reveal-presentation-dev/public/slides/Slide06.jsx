@@ -1,3 +1,4 @@
+// [DEMO SLIDE], REPLACE OR REMOVE
 // CodeSlide example - displays code with syntax highlighting
 import { CodeSlide } from '/slides-library.jsx'
 

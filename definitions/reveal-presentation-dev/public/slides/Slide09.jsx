@@ -1,3 +1,4 @@
+// [DEMO SLIDE], REPLACE OR REMOVE
 // Fragment animations & Recharts example - demonstrates animations and data visualization
 import { TwoColumnSlide } from '/slides-library.jsx'
 import { Fragment } from '/slides-library.jsx'

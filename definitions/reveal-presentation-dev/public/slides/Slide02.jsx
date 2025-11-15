@@ -1,3 +1,4 @@
+// [DEMO SLIDE], REPLACE OR REMOVE
 // ContentSlide example - simple content layout with centered text
 import { ContentSlide, GradientText } from '/slides-library.jsx'
 

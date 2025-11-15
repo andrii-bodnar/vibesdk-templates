@@ -1,3 +1,4 @@
+// [DEMO SLIDE], REPLACE OR REMOVE
 // TwoColumnSlide example - side-by-side content with custom components
 import { Rocket, Target, Zap, Sparkles } from 'lucide-react'
 import { TwoColumnSlide, GradientText } from '/slides-library.jsx'

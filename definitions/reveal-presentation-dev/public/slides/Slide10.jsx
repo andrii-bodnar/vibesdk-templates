@@ -1,3 +1,4 @@
+// [DEMO SLIDE], REPLACE OR REMOVE
 // CallToActionSlide example - demonstrates CTA slide with button
 import { Rocket } from 'lucide-react'
 import { CallToActionSlide } from '/slides-library.jsx'

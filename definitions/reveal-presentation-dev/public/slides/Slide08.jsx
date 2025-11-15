@@ -1,3 +1,4 @@
+// [DEMO SLIDE], REPLACE OR REMOVE
 // SectionSlide example - section divider with gradient backdrop
 import { SectionSlide } from '/slides-library.jsx'
 import { Zap } from 'lucide-react'

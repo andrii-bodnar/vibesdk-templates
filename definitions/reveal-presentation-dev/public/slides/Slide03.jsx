@@ -1,3 +1,4 @@
+// [DEMO SLIDE], REPLACE OR REMOVE
 // ListSlide example - bullet points with icons and glass cards
 import { ListSlide } from '/slides-library.jsx'
 

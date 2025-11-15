@@ -1,3 +1,4 @@
+// [DEMO SLIDE], REPLACE OR REMOVE
 // TimelineSlide example - demonstrates timeline component
 import { TimelineSlide } from '/slides-library.jsx'
 import { Lightbulb, Code, Rocket, Trophy } from 'lucide-react'

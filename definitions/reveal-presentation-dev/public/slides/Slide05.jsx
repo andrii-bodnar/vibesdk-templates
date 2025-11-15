@@ -1,3 +1,4 @@
+// [DEMO SLIDE], REPLACE OR REMOVE
 // QuoteSlide example - quote with attribution and gradient styling
 import { QuoteSlide } from '/slides-library.jsx'
 

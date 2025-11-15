@@ -1,3 +1,4 @@
+// [DEMO SLIDE], REPLACE OR REMOVE
 // StatsSlide example - grid of statistics with gradient colors
 import { StatsSlide } from '/slides-library.jsx'
 
