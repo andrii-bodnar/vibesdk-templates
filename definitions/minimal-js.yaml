@@ -1,0 +1,8 @@
+name: "minimal-js"
+description: "Vanilla HTML/CSS/JS single-page template served by Cloudflare Workers"
+base_reference: "minimal-js-reference"
+projectType: app
+
+package_patches:
+  name: "minimal-js"
+
