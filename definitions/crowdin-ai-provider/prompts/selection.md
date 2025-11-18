@@ -13,10 +13,12 @@ Use when:
 - Need to support multiple AI models with different capabilities
 
 Avoid when:
-- Building organization-wide tools (use Organization Menu instead)
-- Creating user profile tools (use Profile Resources Menu instead)
-- Building editor extensions (use Editor Right Panel instead)
 - Building machine translation integrations (use Custom MT instead)
+- Transforming files during import/export (use File Processing instead)
+- Building editor extensions (use Editor Right Panel instead)
+- Building organization-wide tools (use Organization Menu instead)
+- Building user profile tools (use Profile Resources Menu instead)
+- Building project-specific tools (use Project Tools instead)
 
 Built with:
 - Crowdin Apps JS API
@@ -25,4 +27,3 @@ Built with:
 - Express.js
 - Cloudflare Workers
 - HTML/CSS/JavaScript (modular structure)
-

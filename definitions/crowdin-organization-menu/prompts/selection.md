@@ -11,11 +11,12 @@ Use when:
 - Managing organization members and permissions
 
 Avoid when:
-- Building project-specific tools (use Project Tools instead)
-- Creating user profile tools (use Profile Resources Menu instead)
-- Building editor extensions (use Editor Right Panel instead)
-- Building machine translation integrations (use Custom MT instead)
 - Integrating custom AI providers (use AI Provider instead)
+- Building machine translation integrations (use Custom MT instead)
+- Building editor extensions (use Editor Right Panel instead)
+- Transforming files during import/export (use File Processing instead)
+- Building user profile tools (use Profile Resources Menu instead)
+- Building project-specific tools (use Project Tools instead)
 
 Built with:
 - Crowdin Apps JS API

@@ -3,6 +3,8 @@ import { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
 import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
 import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
 import { Request, Response } from 'express';
+import { Buffer } from 'node:buffer';
+import crypto from 'node:crypto';
 
 function determineMtConfigKey(organizationId: number): string {
     return `mt_config_org_${organizationId}`;
@@ -84,6 +86,23 @@ export function createApp(env: CloudflareEnv) {
         },
         d1Config: {
             database: env.DB,
+        },
+        fileStore: {
+            getFile: async (fileId: string): Promise<Buffer> => {
+                const data = await env.KVStore.get(fileId, 'arrayBuffer');
+                if (!data) {
+                    throw new Error(`File not found: ${fileId}`);
+                }
+                return Buffer.from(data);
+            },
+            storeFile: async (content: Buffer): Promise<string> => {
+                const fileId = `file_${crypto.randomUUID()}`;
+                await env.KVStore.put(fileId, content, { expirationTtl: 86400 });
+                return fileId;
+            },
+            deleteFile: async (fileId: string): Promise<void> => {
+                await env.KVStore.delete(fileId);
+            }
         },
         imagePath: '/logo.png',
         

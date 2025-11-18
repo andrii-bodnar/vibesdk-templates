@@ -11,11 +11,12 @@ Use when:
 - Creating personal analytics and statistics tools
 
 Avoid when:
-- Building organization-wide tools (use Organization Menu instead)
-- Creating project-specific tools (use Project Tools instead)
-- Building editor extensions (use Editor Right Panel instead)
-- Building machine translation integrations (use Custom MT instead)
 - Integrating custom AI providers (use AI Provider instead)
+- Building machine translation integrations (use Custom MT instead)
+- Building editor extensions (use Editor Right Panel instead)
+- Transforming files during import/export (use File Processing instead)
+- Building organization-wide tools (use Organization Menu instead)
+- Building project-specific tools (use Project Tools instead)
 
 Built with:
 - Crowdin Apps JS API

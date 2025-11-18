@@ -1,14 +1,17 @@
 # Usage
 
 ## Overview
-Crowdin app with Custom MT (Machine Translation), Profile Resources Menu and Organization Menu modules for connecting external machine translation engines.
+Crowdin app with File Processing modules (Pre-Import, Post-Import, Pre-Export, Post-Export), Profile Resources Menu and Organization Menu modules for transforming files and strings during localization workflows.
 - Backend: TypeScript with Express.js and Crowdin Apps SDK
 - Frontend: Modular HTML/CSS/JavaScript with Crowdin Apps JS API
 - Authentication: JWT tokens from Crowdin with automatic user context
-- Module: Custom MT (provides translation engine for Crowdin Editor and pre-translation)
+- Module: File Pre-Import (transforms raw files before Crowdin parses them)
+- Module: File Post-Import (transforms parsed strings before storage)
+- Module: File Pre-Export (transforms translations before file generation)
+- Module: File Post-Export (transforms generated files before delivery)
 - Module: Profile Resources Menu (appears in user profile menu)
 - Module: Organization Menu (appears in organization navigation)
-- Features: Language mapping for dialects, source text mirroring, organization-level configuration
+- Features: Regex-based text replacement, organization-level configuration
 
 ## Tech Stack
 - **Crowdin Apps JS API** (AP object for context/events) for frontend integration
@@ -21,19 +24,21 @@ Crowdin app with Custom MT (Machine Translation), Profile Resources Menu and Org
 
 ## Development Restrictions
 - **Authentication**: Always use JWT tokens from Crowdin for API requests
-- **Custom MT Configuration**: Don't modify the customMT configuration structure
+- **File Processing Configuration**: Don't modify the filePreImport, filePostImport, filePreExport, filePostExport configuration structures
 - **Profile Resources Menu Configuration**: Don't modify the profileResourcesMenu configuration structure
 - **Organization Menu Configuration**: Don't modify the organizationMenu configuration structure
 - **Scopes**: Ensure your app has appropriate project-level API scopes
 - **Storage Keys**: Always include organizationId in metadata keys to isolate data per organization
-- **Return Values**: translate function must return array of strings matching input length
-- **Error Handling**: Return empty strings for failed translations instead of throwing errors to avoid failing entire batches
-- **Critical Errors**: Throw errors for critical configuration issues (missing API keys, invalid credentials) that prevent the entire translation service from working
+- **Return Values**: fileProcess functions must return correct response types (ContentFileResponse or StringsFileResponse)
+- **Buffer Handling**: Always handle Buffer ↔ string conversions properly for file content
+- **Plural Forms**: Process all plural forms (zero, one, two, few, many, other) when transforming string text
+- **Error Handling**: Return error property instead of throwing to prevent file operation failures
+- **Type Safety**: Use ProcessFileString type for strings array and proper type assertions for content
 
 ## Project Structure
 
 ### Backend Structure
-- `worker/app.ts` - TypeScript backend with Custom MT module configuration
+- `worker/app.ts` - TypeScript backend with File Processing module configuration
 - `worker/index.ts` - Entry point for Cloudflare Worker
 - `public/` - Static files served to the browser
 
@@ -58,9 +63,9 @@ const configuration = {
 ```
 
 **Guidelines:**
-- **identifier**: Must be unique across all Crowdin apps. Format: `company-custom-mt`
-- **name**: User-friendly display name (e.g., "Company MT Engine")
-- **description**: Brief explanation of what your MT engine does
+- **identifier**: Must be unique across all Crowdin apps. Format: `company-file-processor`
+- **name**: User-friendly display name (e.g., "Company File Processor")
+- **description**: Brief explanation of what your file processor does
 
 #### Required Scopes
 
@@ -112,383 +117,711 @@ const configuration = {
 }
 ```
 
-### Custom MT Module Configuration
+### File Processing Modules Configuration
 
-Configure the Custom MT module in `worker/app.ts`:
+Configure the File Processing modules in `worker/app.ts`:
 
 ```typescript
-import { Client } from '@crowdin/crowdin-api-client';
+import { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
 import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
-import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
+import { 
+    ContentFileResponse, 
+    FileImportExportContent, 
+    ProcessFileRequest, 
+    ProcessFileString, 
+    StringsFileResponse 
+} from '@crowdin/app-project-module/out/modules/file-processing/types';
 
 const configuration = {
     // ... other configuration ...
 
-    customMT: {
-        // When true, strings will be received as objects with context
-        withContext: true,
-
-        // The maximum quantity of strings that can be sent to the Custom MT app in one request
-        batchSize: 100,
-        
-        // Main translation function (required)
-        translate: async (
+    // Pre-Import: Transform raw file content before parsing
+    filePreImport: {
+        signaturePatterns: {
+            fileName: "^.+\\..+$",      // Regex to match file names
+            fileContent: ".*"            // Regex to match file content
+        },
+        fileProcess: async (
+            req: ProcessFileRequest,
+            content: FileImportExportContent,
             client: Client,
             context: CrowdinContextInfo,
-            projectId: number,
-            sourceLanguage: string,
-            targetLanguage: string,
-            strings: CustomMtString[]
-        ): Promise<string[]> => {
-            // Your translation logic here
-            const translations = strings.map(string => {
-                // Extract and translate text
-                return translatedText;
+            projectId: number
+        ): Promise<ContentFileResponse> => {
+            const contentBuffer = content as Buffer;
+            let contentString = contentBuffer.toString('utf-8');
+            
+            // Your transformation logic here
+            contentString = contentString.replace(/pattern/g, 'replacement');
+            
+            return { 
+                contentFile: Buffer.from(contentString, 'utf-8')
+            };
+        }
+    },
+
+    // Post-Import: Transform parsed strings before storage
+    filePostImport: {
+        signaturePatterns: {
+            fileName: "^.+\\..+$",
+            fileContent: ".*"
+        },
+        fileProcess: async (
+            req: ProcessFileRequest,
+            content: FileImportExportContent,
+            client: Client,
+            context: CrowdinContextInfo,
+            projectId: number
+        ): Promise<StringsFileResponse> => {
+            const strings = content as ProcessFileString[];
+            
+            // Your transformation logic here
+            const modifiedStrings = strings.map(str => {
+                const modified: ProcessFileString = { ...str };
+                
+                // Early return if no text
+                if (!str.text) {
+                    return modified;
+                }
+                
+                // Simple string - apply rules
+                if (typeof str.text === 'string') {
+                    modified.text = str.text.replace(/pattern/g, 'replacement');
+                    return modified;
+                }
+                
+                // Plural text - apply rules to each plural form
+                const pluralText = { ...str.text };
+                for (const key in pluralText) {
+                    const pluralKey = key as keyof SourceStringsModel.PluralText;
+                    if (pluralText[pluralKey]) {
+                        pluralText[pluralKey] = pluralText[pluralKey]!.replace(/pattern/g, 'replacement');
+                    }
+                }
+                modified.text = pluralText;
+                
+                return modified;
             });
             
-            return translations; // Must return array of strings in same order
+            return { strings: modifiedStrings };
+        }
+    },
+
+    // Pre-Export: Transform translations before file generation
+    filePreExport: {
+        signaturePatterns: {
+            fileName: "^.+\\..+$",
+            fileContent: ".*"
         },
+        fileProcess: async (
+            req: ProcessFileRequest,
+            content: FileImportExportContent,
+            client: Client,
+            context: CrowdinContextInfo,
+            projectId: number
+        ): Promise<StringsFileResponse> => {
+            const strings = content as ProcessFileString[];
+            
+            // Transform translations for all languages
+            const modifiedStrings = strings.map(str => {
+                const modified: ProcessFileString = { ...str };
+                
+                // Early return if no translations
+                if (!str.translations) {
+                    return modified;
+                }
+                
+                const modifiedTranslations = { ...str.translations };
+                
+                // Process each language
+                for (const lang in modifiedTranslations) {
+                    const translation = modifiedTranslations[lang];
+                    
+                    // Skip if no text
+                    if (!translation.text) {
+                        continue;
+                    }
+                    
+                    // Simple string - apply rules
+                    if (typeof translation.text === 'string') {
+                        translation.text = translation.text.replace(/pattern/g, 'replacement');
+                        continue;
+                    }
+                    
+                    // Plural text - apply rules to each plural form
+                    const pluralText = { ...translation.text };
+                    for (const key in pluralText) {
+                        const pluralKey = key as keyof SourceStringsModel.PluralText;
+                        if (pluralText[pluralKey]) {
+                            pluralText[pluralKey] = pluralText[pluralKey]!.replace(/pattern/g, 'replacement');
+                        }
+                    }
+                    translation.text = pluralText;
+                }
+                
+                modified.translations = modifiedTranslations;
+                return modified;
+            });
+            
+            return { strings: modifiedStrings };
+        }
+    },
+
+    // Post-Export: Transform generated file before delivery
+    filePostExport: {
+        signaturePatterns: {
+            fileName: "^.+\\..+$",
+            fileContent: ".*"
+        },
+        fileProcess: async (
+            req: ProcessFileRequest,
+            content: FileImportExportContent,
+            client: Client,
+            context: CrowdinContextInfo,
+            projectId: number
+        ): Promise<ContentFileResponse> => {
+            const contentBuffer = content as Buffer;
+            let contentString = contentBuffer.toString('utf-8');
+            
+            // Your transformation logic here
+            contentString = contentString.replace(/pattern/g, 'replacement');
+            
+            return { 
+                contentFile: Buffer.from(contentString, 'utf-8')
+            };
+        }
     }
 }
 ```
 
 #### Common Examples
 
-**Integration with External MT API:**
+**Using Configuration for Dynamic Rules**
 ```typescript
 import { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
 import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
-import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
+import { 
+    ContentFileResponse, 
+    FileImportExportContent, 
+    ProcessFileRequest, 
+    ProcessFileString, 
+    StringsFileResponse 
+} from '@crowdin/app-project-module/out/modules/file-processing/types';
 
-// Helper function to extract source text from CustomMtString
-function extractSourceText(string: CustomMtString): string {
-    if (typeof string === 'string') {
-        return string;
+// Helper function to apply replacement rules
+function applyReplaceRules(text: string, rules: Array<{ find: string; replace: string }>): string {
+    let result = text;
+    for (const rule of rules) {
+        if (rule.find && rule.replace !== undefined) {
+            try {
+                const regex = new RegExp(rule.find, 'g');
+                result = result.replace(regex, rule.replace);
+            } catch (e) {
+                console.error('Invalid regex pattern:', rule.find, e);
+            }
+        }
     }
-    
-    const text = string.text;
-    if (typeof text === 'string') {
-        return text;
-    }
-    
-    // Handle plural forms
-    if (string.pluralForm && text[string.pluralForm as keyof SourceStringsModel.PluralText]) {
-        return text[string.pluralForm as keyof SourceStringsModel.PluralText] as string;
-    }
-    
-    return '';
+    return result;
+}
+
+// Helper function to get configuration
+async function getConfig(organizationId: number) {
+    const configKey = `file_processor_config_${organizationId}`;
+    const config = await crowdinModule.metadataStore.getMetadata(configKey);
+    return config || { modules: {}, preImport: { replaceRules: [] } };
 }
 
 const configuration = {
     // ... other configuration ...
 
-    customMT: {
-        withContext: true,
-        batchSize: 50,
-
-        translate: async (
+    filePreImport: {
+        signaturePatterns: {
+            fileName: "^.+\\..+$",
+            fileContent: ".*"
+        },
+        fileProcess: async (
+            req: ProcessFileRequest,
+            content: FileImportExportContent,
             client: Client,
             context: CrowdinContextInfo,
-            projectId: number,
-            sourceLanguage: string,
-            targetLanguage: string,
-            strings: CustomMtString[]
-        ): Promise<string[]> => {
-            return await Promise.all(
-                strings.map(async (string: CustomMtString) => {
-                    try {
-                        const sourceText = extractSourceText(string);
-
-                        // Call your external MT API
-                        const response = await fetch('https://your-mt-api.com/translate', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                text: sourceText,
-                                source: sourceLanguage,
-                                target: targetLanguage
-                            })
-                        });
-
-                        if (!response.ok) {
-                            console.error(`MT API failed: ${response.statusText}`);
-                            return '';
-                        }
-
-                        const result = await response.json();
-                        return result.translation || '';
-                    } catch (error) {
-                        console.error('Translation failed:', error);
-                        return '';
-                    }
-                })
-            );
+            projectId: number
+        ): Promise<ContentFileResponse> => {
+            try {
+                // Get organization configuration
+                const organizationId = context.jwtPayload.context.organization_id;
+                const config = await getConfig(organizationId);
+                
+                // Early return if module disabled or no content
+                if (!content || !config.modules.preImport) {
+                    return { contentFile: content as Buffer, notModified: true };
+                }
+                
+                // Early return if no rules
+                if (!config.preImport.replaceRules?.length) {
+                    return { contentFile: content as Buffer, notModified: true };
+                }
+                
+                // Apply transformations
+                let contentString = (content as Buffer).toString('utf-8');
+                contentString = applyReplaceRules(contentString, config.preImport.replaceRules);
+                
+                return { contentFile: Buffer.from(contentString, 'utf-8') };
+            } catch (error) {
+                console.error('Pre-import processing error:', error);
+                return {
+                    contentFile: content as Buffer,
+                    error: 'Failed to process file during pre-import'
+                };
+            }
         }
+    }
+}
+```
+
+**Processing Plural Forms in Post-Import**
+```typescript
+filePostImport: {
+    signaturePatterns: {
+        fileName: "^.+\\..+$",
+        fileContent: ".*"
+    },
+    fileProcess: async (
+        req: ProcessFileRequest,
+        content: FileImportExportContent,
+        client: Client,
+        context: CrowdinContextInfo,
+        projectId: number
+    ): Promise<StringsFileResponse> => {
+        const organizationId = context.jwtPayload.context.organization_id;
+        const config = await getConfig(organizationId);
+        
+        // Early returns
+        if (!config.modules.postImport || !config.postImport.replaceRules?.length) {
+            return { strings: content as ProcessFileString[], notModified: true };
+        }
+        
+        const strings = content as ProcessFileString[];
+        
+        // Apply rules to string text only
+        const modifiedStrings = strings.map(str => {
+            const modified: ProcessFileString = { ...str };
+            
+            // Early return if no text
+            if (!str.text) {
+                return modified;
+            }
+            
+            // Simple string - apply rules directly
+            if (typeof str.text === 'string') {
+                modified.text = applyReplaceRules(str.text, config.postImport.replaceRules);
+                return modified;
+            }
+            
+            // Plural text - apply rules to each plural form
+            const pluralText = { ...str.text };
+            for (const key in pluralText) {
+                const pluralKey = key as keyof SourceStringsModel.PluralText;
+                if (pluralText[pluralKey]) {
+                    pluralText[pluralKey] = applyReplaceRules(
+                        pluralText[pluralKey]!, 
+                        config.postImport.replaceRules
+                    );
+                }
+            }
+            modified.text = pluralText;
+            
+            return modified;
+        });
+        
+        return { strings: modifiedStrings };
+    }
+}
+```
+
+**Processing Translations in Pre-Export**
+```typescript
+filePreExport: {
+    signaturePatterns: {
+        fileName: "^.+\\..+$",
+        fileContent: ".*"
+    },
+    fileProcess: async (
+        req: ProcessFileRequest,
+        content: FileImportExportContent,
+        client: Client,
+        context: CrowdinContextInfo,
+        projectId: number
+    ): Promise<StringsFileResponse> => {
+        const organizationId = context.jwtPayload.context.organization_id;
+        const config = await getConfig(organizationId);
+        
+        // Early returns
+        if (!config.modules.preExport || !config.preExport.replaceRules?.length) {
+            return { strings: content as ProcessFileString[], notModified: true };
+        }
+        
+        const strings = content as ProcessFileString[];
+        
+        // Apply rules to translations
+        const modifiedStrings = strings.map(str => {
+            const modified: ProcessFileString = { ...str };
+            
+            // Early return if no translations
+            if (!str.translations) {
+                return modified;
+            }
+            
+            const modifiedTranslations = { ...str.translations };
+            
+            // Process each language
+            for (const lang in modifiedTranslations) {
+                const translation = modifiedTranslations[lang];
+                
+                // Skip if no text
+                if (!translation.text) {
+                    continue;
+                }
+                
+                // Simple string - apply rules directly
+                if (typeof translation.text === 'string') {
+                    translation.text = applyReplaceRules(translation.text, config.preExport.replaceRules);
+                    continue;
+                }
+                
+                // Plural text - apply rules to each plural form
+                const pluralText = { ...translation.text };
+                for (const key in pluralText) {
+                    const pluralKey = key as keyof SourceStringsModel.PluralText;
+                    if (pluralText[pluralKey]) {
+                        pluralText[pluralKey] = applyReplaceRules(
+                            pluralText[pluralKey]!, 
+                            config.preExport.replaceRules
+                        );
+                    }
+                }
+                translation.text = pluralText;
+            }
+            
+            modified.translations = modifiedTranslations;
+            return modified;
+        });
+        
+        return { strings: modifiedStrings };
     }
 }
 ```
 
 #### Best Practices
 
-1. **Always return translations in the same order**
+1. **Use early returns to reduce nesting**
    ```typescript
-   // ✅ CORRECT - maintains order
-   translate: async (
+   // ✅ CORRECT - clear flow with early returns
+   fileProcess: async (
+        req: ProcessFileRequest,
+        content: FileImportExportContent,
         client: Client,
         context: CrowdinContextInfo,
-        projectId: number,
-        sourceLanguage: string,
-        targetLanguage: string,
-        strings: CustomMtString[]
-    ): Promise<string[]> => {
-       return await Promise.all(
-           strings.map(string => translateString(string))
-       );
+        projectId: number
+    ): Promise<StringsFileResponse> => {
+       const strings = content as ProcessFileString[];
+       
+       const modifiedStrings = strings.map(str => {
+           const modified: ProcessFileString = { ...str };
+           
+           // Early return if no text
+           if (!str.text) {
+               return modified;
+           }
+           
+           // Early return for simple string
+           if (typeof str.text === 'string') {
+               modified.text = transformText(str.text);
+               return modified;
+           }
+           
+           // Handle plurals
+           modified.text = transformPluralText(str.text);
+           return modified;
+       });
+       
+       return { strings: modifiedStrings };
    }
    
-   // ❌ WRONG - order may change
-   translate: async (
+   // ❌ WRONG - deep nesting
+   fileProcess: async (
+        req: ProcessFileRequest,
+        content: FileImportExportContent,
         client: Client,
         context: CrowdinContextInfo,
-        projectId: number,
-        sourceLanguage: string,
-        targetLanguage: string,
-        strings: CustomMtString[]
-    ): Promise<string[]> => {
-       const translations = [];
-       for (const string of strings) {
-           translations.push(await translateString(string)); // Sequential, but order preserved
-       }
-       return translations;
+        projectId: number
+    ): Promise<StringsFileResponse> => {
+       const strings = content as ProcessFileString[];
+       
+       const modifiedStrings = strings.map(str => {
+           const modified: ProcessFileString = { ...str };
+           
+           if (str.text) {
+               if (typeof str.text === 'string') {
+                   modified.text = transformText(str.text);
+               } else {
+                   // Deep nesting makes code hard to read
+                   modified.text = transformPluralText(str.text);
+               }
+           }
+           
+           return modified;
+       });
+       
+       return { strings: modifiedStrings };
    }
    ```
 
 2. **Handle plural forms correctly**
    ```typescript
-   // ✅ CORRECT - extracts specific plural form using extractSourceText
-   translate: async (
-        client: Client,
-        context: CrowdinContextInfo,
-        projectId: number,
-        sourceLanguage: string,
-        targetLanguage: string,
-        strings: CustomMtString[]
-    ): Promise<string[]> => {
-        return strings.map((string: CustomMtString) => {
-            const sourceText = extractSourceText(string);
-            return translateText(sourceText);
-        });
-    }
-    
-    // ❌ WRONG - direct access without type casting and fallback
-    translate: async (
-        client: Client,
-        context: CrowdinContextInfo,
-        projectId: number,
-        sourceLanguage: string,
-        targetLanguage: string,
-        strings: CustomMtString[]
-    ): Promise<string[]> => {
-        return strings.map((string: CustomMtString) => {
-            if (typeof string === 'string') {
-                return translateText(string);
-            }
-            
-            // BAD: Direct access without keyof casting
-            const sourceText = typeof string.text === 'string' 
-                ? string.text 
-                : string.text[string.pluralForm]; // Type error! pluralForm is 'any'
-                
-            return translateText(sourceText);
-        });
-    }
+   // ✅ CORRECT - processes each plural form with proper typing
+   const modifiedStrings = strings.map(str => {
+       const modified: ProcessFileString = { ...str };
+       
+       if (!str.text) return modified;
+       
+       if (typeof str.text === 'string') {
+           modified.text = applyRules(str.text);
+           return modified;
+       }
+       
+       // Plural text - process each form
+       const pluralText = { ...str.text };
+       for (const key in pluralText) {
+           const pluralKey = key as keyof SourceStringsModel.PluralText;
+           if (pluralText[pluralKey]) {
+               pluralText[pluralKey] = applyRules(pluralText[pluralKey]!);
+           }
+       }
+       modified.text = pluralText;
+       
+       return modified;
+   });
+   
+   // ❌ WRONG - doesn't handle plurals, loses plural forms
+   const modifiedStrings = strings.map(str => {
+       const modified: ProcessFileString = { ...str };
+       
+       // BAD: Only processes simple strings, ignores plurals
+       if (typeof str.text === 'string') {
+           modified.text = applyRules(str.text);
+       }
+       // Plural forms are not processed!
+       
+       return modified;
+   });
    ```
 
-3. **Return empty string for failed translations instead of throwing errors**
+3. **Return error property instead of throwing errors**
    ```typescript
-   // ✅ CORRECT - returns empty string for failed translations, doesn't fail entire batch
-   translate: async (
+   // ✅ CORRECT - returns error property for file operation failures
+   fileProcess: async (
+       req: ProcessFileRequest,
+       content: FileImportExportContent,
        client: Client,
        context: CrowdinContextInfo,
-       projectId: number,
-       sourceLanguage: string,
-       targetLanguage: string,
-       strings: CustomMtString[]
-   ): Promise<string[]> => {
-       return await Promise.all(
-           strings.map(async (string: CustomMtString) => {
-               try {
-                   const sourceText = extractSourceText(string);
-                   const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage);
-                   
-                   // If translation failed, return empty string
-                   return translation || '';
-               } catch (error) {
-                   // Return empty string instead of failing entire batch
-                   console.error('Translation failed:', error);
-                   return '';
-               }
-           })
-       );
+       projectId: number
+   ): Promise<ContentFileResponse> => {
+       try {
+           if (!content) {
+               return { contentFile: Buffer.from(''), error: 'No content provided' };
+           }
+           
+           const contentBuffer = content as Buffer;
+           let contentString = contentBuffer.toString('utf-8');
+           
+           // Apply transformations
+           contentString = applyTransformations(contentString);
+           
+           return { contentFile: Buffer.from(contentString, 'utf-8') };
+       } catch (error) {
+           console.error('Processing error:', error);
+           // Return error property instead of throwing
+           return {
+               contentFile: content as Buffer,
+               error: 'Failed to process file'
+           };
+       }
    }
    
-   // ❌ WRONG - throws error and fails entire batch when 1 string fails
-   translate: async (
+   // ❌ WRONG - throws error and fails entire file operation
+   fileProcess: async (
+       req: ProcessFileRequest,
+       content: FileImportExportContent,
        client: Client,
        context: CrowdinContextInfo,
-       projectId: number,
-       sourceLanguage: string,
-       targetLanguage: string,
-       strings: CustomMtString[]
-   ): Promise<string[]> => {
-       const translations = await Promise.all(
-           strings.map(async (string: CustomMtString) => {
-               const sourceText = extractSourceText(string);
-               const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage);
-               
-               if (!translation) {
-                   // BAD: This fails entire batch of 100 strings if 1 fails!
-                   throw new Error(`Failed to translate: "${sourceText}"`);
-               }
-               
-               return translation;
-           })
-       );
+       projectId: number
+   ): Promise<ContentFileResponse> => {
+       const contentBuffer = content as Buffer;
+       let contentString = contentBuffer.toString('utf-8');
        
-       return translations;
+       // BAD: Throws error instead of returning error property
+       if (!contentString) {
+           throw new Error('Empty content');
+       }
+       
+       contentString = applyTransformations(contentString);
+       
+       return { contentFile: Buffer.from(contentString, 'utf-8') };
    }
    ```
 
-4. **Throw errors for critical configuration issues**
+4. **Properly handle Buffer ↔ string conversions**
    ```typescript
-   // ✅ CORRECT - throws error for missing critical configuration
-   translate: async (
+   // ✅ CORRECT - proper Buffer handling
+   fileProcess: async (
+       req: ProcessFileRequest,
+       content: FileImportExportContent,
        client: Client,
        context: CrowdinContextInfo,
-       projectId: number,
-       sourceLanguage: string,
-       targetLanguage: string,
-       strings: CustomMtString[]
-   ): Promise<string[]> => {
-       // Load organization-specific configuration
+       projectId: number
+   ): Promise<ContentFileResponse> => {
+       // Type assertion for Buffer
+       const contentBuffer = content as Buffer;
+       
+       // Convert to string with explicit encoding
+       let contentString = contentBuffer.toString('utf-8');
+       
+       // Apply transformations
+       contentString = applyTransformations(contentString);
+       
+       // Convert back to Buffer with explicit encoding
+       return { 
+           contentFile: Buffer.from(contentString, 'utf-8') 
+       };
+   }
+   
+   // ❌ WRONG - unsafe type handling
+   fileProcess: async (
+       req: ProcessFileRequest,
+       content: FileImportExportContent,
+       client: Client,
+       context: CrowdinContextInfo,
+       projectId: number
+   ): Promise<ContentFileResponse> => {
+       // BAD: No type checking, may fail if content is undefined
+       let contentString = content.toString(); // Missing encoding!
+       
+       contentString = applyTransformations(contentString);
+       
+       // BAD: Missing encoding parameter
+       return { contentFile: Buffer.from(contentString) };
+   }
+   ```
+
+5. **Use signaturePatterns to control which files are processed**
+   ```typescript
+   // ✅ CORRECT - specific patterns for targeted file types
+   filePreImport: {
+       signaturePatterns: {
+           fileName: "\\.xml$",        // Only XML files
+           fileContent: "^<\\?xml"     // Content starts with XML declaration
+       },
+       fileProcess: async (...) => {
+           // Process only XML files
+       }
+   }
+   
+   // ⚠️ TOO BROAD - processes all files
+   filePreImport: {
+       signaturePatterns: {
+           fileName: ".*",      // Matches any filename
+           fileContent: ".*"    // Matches any content
+       },
+       fileProcess: async (...) => {
+           // Processes ALL files - may not be desired
+       }
+   }
+   ```
+
+6. **Load configuration once per file operation**
+   ```typescript
+   // ✅ CORRECT - loads configuration once, uses for entire file
+   fileProcess: async (
+        req: ProcessFileRequest,
+        content: FileImportExportContent,
+        client: Client,
+        context: CrowdinContextInfo,
+        projectId: number
+    ): Promise<StringsFileResponse> => {
        const organizationId = context.jwtPayload.context.organization_id;
-       const configKey = `mt_config_org_${organizationId}`;
-       const config = await crowdinModule.metadataStore.getMetadata(configKey);
        
-       // Check for critical configuration at the start
-       if (!config) {
-           throw new Error('MT service is not configured. Please configure the MT service in app settings.');
+       // Load configuration once
+       const config = await getConfig(organizationId);
+       
+       // Early returns
+       if (!config.modules.postImport) {
+           return { strings: content as ProcessFileString[], notModified: true };
        }
        
-       if (!config.apiKey) {
-           throw new Error('MT API key is missing. Please add your API key in the app configuration.');
-       }
+       // Use config for all strings
+       const strings = content as ProcessFileString[];
+       const modifiedStrings = strings.map(str => transformString(str, config.postImport.replaceRules));
        
-       if (!config.apiUrl) {
-           throw new Error('MT API URL is missing. Please add your API URL in the app configuration.');
-       }
-       
-       // Process translations - return empty strings for individual failures
-       return await Promise.all(
-           strings.map(async (string: CustomMtString) => {
-               try {
-                   const sourceText = extractSourceText(string);
-                   const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage, config.apiKey, config.apiUrl);
-                   return translation || '';
-               } catch (error) {
-                   console.error('Translation failed for individual string:', error);
-                   return ''; // Individual failure - return empty string
-               }
-           })
-       );
+       return { strings: modifiedStrings };
    }
-   
-   // ❌ WRONG - doesn't check critical configuration, fails silently
-   translate: async (
+   ```
+
+7. **Use notModified flag when no changes are made**
+   ```typescript
+   // ✅ CORRECT - returns notModified when no processing needed
+   fileProcess: async (
+       req: ProcessFileRequest,
+       content: FileImportExportContent,
        client: Client,
        context: CrowdinContextInfo,
-       projectId: number,
-       sourceLanguage: string,
-       targetLanguage: string,
-       strings: CustomMtString[]
-   ): Promise<string[]> => {
-       // BAD: No check for configuration, will fail for all requests
+       projectId: number
+   ): Promise<ContentFileResponse> => {
        const organizationId = context.jwtPayload.context.organization_id;
-       const configKey = `mt_config_org_${organizationId}`;
-       const config = await crowdinModule.metadataStore.getMetadata(configKey);
+       const config = await getConfig(organizationId);
        
-       return await Promise.all(
-           strings.map(async (string: CustomMtString) => {
-               try {
-                   const sourceText = extractSourceText(string);
-                   // BAD: Using config without checking if it exists
-                   const translation = await callMTAPI(sourceText, sourceLanguage, targetLanguage, config?.apiKey, config?.apiUrl);
-                   return translation || '';
-               } catch (error) {
-                   // Silently returns empty strings even when service is misconfigured
-                   return '';
-               }
-           })
-       );
-   }
-   ```
-
-5. **Use batchSize appropriately**
-   ```typescript
-   // ✅ CORRECT - reasonable batch size for API limits
-   customMT: {
-       withContext: true,
-       batchSize: 50, // Adjust based on your MT API limits
-       translate: async (
-            client: Client,
-            context: CrowdinContextInfo,
-            projectId: number,
-            sourceLanguage: string,
-            targetLanguage: string,
-            strings: CustomMtString[]
-        ): Promise<string[]> => {
-           // Process batch of up to 50 strings
+       // Check if content exists
+       if (!content) {
+           return { contentFile: Buffer.from(''), error: 'No content provided' };
        }
+       
+       // Return notModified if module is disabled
+       if (!config.modules.preImport) {
+           return { contentFile: content as Buffer, notModified: true };
+       }
+       
+       // Return notModified if no rules configured
+       if (!config.preImport.replaceRules?.length) {
+           return { contentFile: content as Buffer, notModified: true };
+       }
+       
+       // Apply transformations only when needed
+       let contentString = (content as Buffer).toString('utf-8');
+       contentString = applyReplaceRules(contentString, config.preImport.replaceRules);
+       
+       return { contentFile: Buffer.from(contentString, 'utf-8') };
    }
    
-   // ⚠️ PROBLEMATIC - too large, may timeout
-   customMT: {
-       withContext: true,
-       batchSize: 1000, // Too many strings at once
-       translate: async (
-            client: Client,
-            context: CrowdinContextInfo,
-            projectId: number,
-            sourceLanguage: string,
-            targetLanguage: string,
-            strings: CustomMtString[]
-        ): Promise<string[]> => {
-           // May exceed MT API limits or timeout
+   // ❌ WRONG - always processes content even when no changes
+   fileProcess: async (
+       req: ProcessFileRequest,
+       content: FileImportExportContent,
+       client: Client,
+       context: CrowdinContextInfo,
+       projectId: number
+   ): Promise<ContentFileResponse> => {
+       const organizationId = context.jwtPayload.context.organization_id;
+       const config = await getConfig(organizationId);
+       
+       // BAD: Always converts to string and back to Buffer
+       let contentString = (content as Buffer).toString('utf-8');
+       
+       // BAD: Processes even when module is disabled or no rules
+       if (config.modules.preImport && config.preImport.replaceRules?.length) {
+           contentString = applyReplaceRules(contentString, config.preImport.replaceRules);
        }
-   }
-   ```
-
-6. **Use context information for customization**
-   ```typescript
-   // ✅ CORRECT - uses context for per-organization settings
-   translate: async (
-        client: Client,
-        context: CrowdinContextInfo,
-        projectId: number,
-        sourceLanguage: string,
-        targetLanguage: string,
-        strings: CustomMtString[]
-    ): Promise<string[]> => {
-       const orgId = context.jwtPayload.context.organization_id;
        
-       // Load organization-specific MT settings
-       const settings = await crowdinModule.metadataStore.getMetadata(`mt_settings_${orgId}`);
-       
-       // Apply organization-specific logic
-       return strings.map(string => {
-           const sourceText = extractSourceText(string);
-           return translateWithSettings(sourceText, settings);
-       });
+       // BAD: Unnecessary conversion, Crowdin re-processes unchanged content
+       return { contentFile: Buffer.from(contentString, 'utf-8') };
    }
    ```
 
@@ -528,52 +861,116 @@ export interface JwtPayloadContext {
     user_login?: string;
 }
 
+export interface SignaturePatterns {
+    fileName?: string;
+    fileContent?: string;
+}
+
 // ... other types (CrowdinClientRequest, Environments, ModuleKey, UiModule, etc.)
 // See @crowdin/app-project-module/out/types.d.ts for complete type definitions
 ```
 
-<!-- CUSTOM_MT_TYPES_START -->
-##### out/modules/custom-mt/types.d.ts
+<!-- FILE_PROCESSING_TYPES_START -->
+##### out/modules/file-processing/types.d.ts
 
 ```typescript
-import Crowdin, { SourceStringsModel } from '@crowdin/crowdin-api-client';
-import { CrowdinContextInfo, ModuleKey } from '../../types';
-
-export interface CustomMTLogic extends ModuleKey {
-    withContext?: boolean;
-    batchSize?: number;
-    maskEntities?: boolean;
-    translate: (
-        client: Crowdin,
-        context: CrowdinContextInfo,
-        projectId: number,
-        source: string,
-        target: string,
-        strings: CustomMtString[],
-    ) => Promise<string[]>;
-    validate?: (client: Crowdin) => Promise<void>;
+import Crowdin, { LanguagesModel, SourceStringsModel } from '@crowdin/crowdin-api-client';
+import { CrowdinContextInfo, ModuleKey, SignaturePatterns } from '../../types';
+export interface FileProcessLogic extends ModuleKey {
+    filesFolder?: string;
+    signaturePatterns?: SignaturePatterns;
+    storeFile?: (content: Buffer) => Promise<string>;
 }
-
-export interface CustomMTRequest {
-    strings: CustomMtString[];
+export interface CustomFileFormatLogic extends FileProcessLogic {
+    type: string;
+    multilingual?: boolean;
+    autoUploadTranslations?: boolean;
+    stringsExport?: boolean;
+    extensions?: string[];
+    customSrxSupported?: boolean;
+    multilingualExport?: boolean;
+    parseFile?: (fileContent: Buffer, req: Omit<ProcessFileRequest, 'jobType' | 'file'>, client: Crowdin, context: CrowdinContextInfo, projectId: number) => Promise<ParseFileResponse>;
+    buildFile?: (fileContent: Buffer, req: Omit<ProcessFileRequest, 'jobType' | 'file'>, strings: ProcessFileString[], client: Crowdin, context: CrowdinContextInfo, projectId: number) => Promise<BuildFileResponse>;
+    exportStrings?: (req: Omit<ProcessFileRequest, 'jobType'>, strings: ProcessFileString[], client: Crowdin, context: CrowdinContextInfo, projectId: number) => Promise<BuildFileResponse>;
 }
-
-export type CustomMtString =
-    | string
-    | {
-          id: number;
-          projectId: number;
-          fileId: number;
-          identifier: string;
-          context: string;
-          maxLength: number;
-          isHidden: boolean;
-          text: string | SourceStringsModel.PluralText;
-          isPlural: boolean;
-          pluralForm: any;
-      };
+export type FileImportExportLogic = FilePreImportLogic | FilePostImportLogic | FilePreExportLogic | FilePostExportLogic;
+export type FileImportExportContent = ProcessFileString[] | Buffer | undefined;
+export interface BaseFileProcessLogic<T> {
+    fileProcess: (req: ProcessFileRequest, content: FileImportExportContent, client: Crowdin, context: CrowdinContextInfo, projectId: number) => Promise<T>;
+}
+export interface FilePreImportLogic extends FileProcessLogic, BaseFileProcessLogic<ContentFileResponse> {
+    processAssets?: boolean;
+}
+export interface FilePostImportLogic extends FileProcessLogic, BaseFileProcessLogic<StringsFileResponse> {
+}
+export interface FilePreExportLogic extends FileProcessLogic, BaseFileProcessLogic<StringsFileResponse> {
+}
+export interface FilePostExportLogic extends FileProcessLogic, BaseFileProcessLogic<ContentFileResponse> {
+    processAssets?: boolean;
+}
+export interface ProcessFileRequest {
+    jobType: ProcessFileJobType;
+    file: ProcessFileRecord;
+    sourceLanguage: LanguagesModel.Language;
+    targetLanguages: LanguagesModel.Language[];
+    strings: ProcessFileString[];
+    stringsUrl: string;
+    getRawContent?: (encoding: BufferEncoding) => Promise<string | Buffer>;
+}
+export interface ProcessFileRecord {
+    content?: string;
+    contentUrl?: string;
+    path?: string;
+    id?: number;
+    name?: string;
+    type?: string;
+}
+export declare enum ProcessFileJobType {
+    PARSE_FILE = "parse-file",
+    BUILD_FILE = "build-file",
+    PRE_IMPORT = "pre-import-file",
+    POST_IMPORT = "post-import-file",
+    PRE_EXPORT = "pre-export-file",
+    POST_EXPORT = "post-export-file"
+}
+export interface ParseFileResponse {
+    previewFile?: Buffer;
+    strings?: ProcessFileString[];
+    error?: string;
+}
+export interface BuildFileResponse {
+    contentFile: Buffer;
+    error?: string;
+    fileName?: string;
+    fileType?: string;
+}
+export interface StringsFileResponse extends ParseFileResponse {
+    notModified?: boolean;
+}
+export interface ContentFileResponse extends BuildFileResponse {
+    notModified?: boolean;
+}
+export interface ProcessFileString {
+    previewId?: number;
+    id: number;
+    identifier: string;
+    context?: string;
+    customData?: string;
+    maxLength?: number;
+    isHidden?: boolean;
+    hasPlurals?: boolean;
+    labels?: string[];
+    text: string | SourceStringsModel.PluralText;
+    translations?: StringTranslations;
+    uniqId?: string;
+}
+export interface StringTranslations {
+    [language: string]: {
+        text: string | SourceStringsModel.PluralText;
+    };
+}
 ```
-<!-- CUSTOM_MT_TYPES_END -->
+<!-- FILE_PROCESSING_TYPES_END -->
 
 ### Profile Resources Menu Module Configuration
 
@@ -6036,7 +6433,7 @@ const configuration = {
 }
 ```
 
-**Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-custom-mt`
+**Note**: The `identifier` must be unique across all Crowdin apps. Use format like: `company-file-processor`
 
 ### 2. Key Files to Modify
 

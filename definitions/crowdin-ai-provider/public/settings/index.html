@@ -175,7 +175,7 @@
             <div class="code-snippet">
                 <strong>Backend Code (worker/app.ts):</strong><br>
                 const configKey = `ai_provider_config_org_${organizationId}`;<br>
-                await crowdinModule.metadataStore.saveMetadata(configKey, { apiKey, apiEndpoint });<br>
+                await crowdinModule.metadataStore.saveMetadata(configKey, { apiKey, apiEndpoint }, connection.context.crowdinId);<br>
                 // Configuration is saved at organization level
             </div>
         </div>

@@ -10,11 +10,12 @@ Use when:
 - Implementing specialized translation engines for technical content
 
 Avoid when:
+- Integrating custom AI providers (use AI Provider instead)
+- Transforming files during import/export (use File Processing instead)
 - Building editor extensions (use Editor Right Panel instead)
 - Building organization-wide tools (use Organization Menu instead)
-- Creating project-specific tools (use Project Tools instead)
-- Creating user profile tools (use Profile Resources Menu instead)
-- Integrating custom AI providers (use AI Provider instead)
+- Building user profile tools (use Profile Resources Menu instead)
+- Building project-specific tools (use Project Tools instead)
 
 Built with:
 - Crowdin Apps JS API

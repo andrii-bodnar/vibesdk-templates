@@ -11,11 +11,12 @@ Use when:
 - Adding glossary, terminology, or reference tools
 
 Avoid when:
-- Building organization-wide tools (use Organization Menu instead)
-- Creating user profile tools (use Profile Resources Menu instead)
-- Building project management tools (use Project Tools instead)
-- Building machine translation integrations (use Custom MT instead)
 - Integrating custom AI providers (use AI Provider instead)
+- Building machine translation integrations (use Custom MT instead)
+- Transforming files during import/export (use File Processing instead)
+- Building organization-wide tools (use Organization Menu instead)
+- Building user profile tools (use Profile Resources Menu instead)
+- Building project-specific tools (use Project Tools instead)
 
 Built with:
 - Crowdin Apps JS API
