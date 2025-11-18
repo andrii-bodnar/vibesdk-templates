@@ -105,6 +105,7 @@ export function createApp(env: CloudflareEnv) {
         d1Config: {
             database: env.DB,
         },
+        // ⚠️ Do not modify this configuration
         fileStore: {
             getFile: async (fileId: string): Promise<Buffer> => {
                 const data = await env.KVStore.get(fileId, 'arrayBuffer');
