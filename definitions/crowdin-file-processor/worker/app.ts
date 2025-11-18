@@ -2,9 +2,10 @@ import * as crowdinModule from '@crowdin/app-project-module';
 import { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
 import { ContentFileResponse, FileImportExportContent, ProcessFileRequest, ProcessFileString, StringsFileResponse } from '@crowdin/app-project-module/out/modules/file-processing/types';
 import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
+import { AssetsConfig, FileStore } from '@crowdin/app-project-module/out/types';
+import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 import { Request, Response } from 'express';
 import { Buffer } from 'node:buffer';
-import crypto from 'node:crypto';
 
 // Configuration interface
 interface FileProcessorConfig {
@@ -95,39 +96,31 @@ function applyReplaceRules(text: string, rules: Array<{ find: string; replace: s
     return result;
 }
 
-export function createApp(env: CloudflareEnv) {
+export function createApp({
+    clientId,
+    clientSecret,
+    assetsConfig,
+    d1Config,
+    fileStore
+}: {
+    clientId: string;
+    clientSecret: string;
+    assetsConfig: AssetsConfig;
+    d1Config: D1StorageConfig;
+    fileStore: FileStore;
+}) {
     const app = crowdinModule.express();
 
     const configuration = {
         name: "File Processor App",
         identifier: "file-processor-app",
         description: "A Crowdin app with configurable File Processing modules: Pre-Import, Post-Import, Pre-Export, and Post-Export",
-        clientId: env.CROWDIN_CLIENT_ID,
-        clientSecret: env.CROWDIN_CLIENT_SECRET,
+        clientId,
+        clientSecret,
         disableLogsFormatter: true,
-        assetsConfig: {
-            fetcher: env.ASSETS,
-        },
-        d1Config: {
-            database: env.DB,
-        },
-        fileStore: {
-            getFile: async (fileId: string): Promise<Buffer> => {
-                const data = await env.KVStore.get(fileId, 'arrayBuffer');
-                if (!data) {
-                    throw new Error(`File not found: ${fileId}`);
-                }
-                return Buffer.from(data);
-            },
-            storeFile: async (content: Buffer): Promise<string> => {
-                const fileId = `file_${crypto.randomUUID()}`;
-                await env.KVStore.put(fileId, content, { expirationTtl: 86400 });
-                return fileId;
-            },
-            deleteFile: async (fileId: string): Promise<void> => {
-                await env.KVStore.delete(fileId);
-            }
-        },
+        assetsConfig,
+        d1Config,
+        fileStore,
         imagePath: '/logo.png',
         
         // API scopes - define what your app can access
