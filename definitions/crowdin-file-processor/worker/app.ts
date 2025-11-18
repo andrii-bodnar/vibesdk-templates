@@ -111,7 +111,6 @@ export function createApp(env: CloudflareEnv) {
         d1Config: {
             database: env.DB,
         },
-        // ⚠️ Do not modify this configuration
         fileStore: {
             getFile: async (fileId: string): Promise<Buffer> => {
                 const data = await env.KVStore.get(fileId, 'arrayBuffer');
@@ -412,14 +411,12 @@ export function createApp(env: CloudflareEnv) {
         },
         
         // Organization Menu module configuration - for Enterprise configuration UI
-        // ⚠️ Do not modify this configuration
         organizationMenu: {
             fileName: 'index.html',
             uiPath: '/menu'
         },
 
         // Profile Resources Menu module configuration - for Crowdin configuration UI
-        // ⚠️ Do not modify this configuration
         profileResourcesMenu: {
             fileName: 'index.html',
             uiPath: '/menu'

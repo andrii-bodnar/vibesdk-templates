@@ -29,12 +29,6 @@
 			"0 0 * * *"
 		]
 	},
-	"kv_namespaces": [
-		{
-			"binding": "KVStore",
-			"id": "{{KV_ID}}"
-		}
-	],
 	"vars": {
 		"CROWDIN_CLIENT_ID": "{{CROWDIN_CLIENT_ID}}",
 		"CROWDIN_CLIENT_SECRET": "{{CROWDIN_CLIENT_SECRET}}"
