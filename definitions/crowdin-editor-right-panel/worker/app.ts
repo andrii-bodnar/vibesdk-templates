@@ -1,26 +1,33 @@
 import * as crowdinModule from '@crowdin/app-project-module';
-import { EditorMode } from '@crowdin/app-project-module/out/types';
+import { AssetsConfig, EditorMode, FileStore } from '@crowdin/app-project-module/out/types';
+import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 import { Request, Response } from 'express';
 
-export function createApp(env: CloudflareEnv) {
+export function createApp({
+    clientId,
+    clientSecret,
+    assetsConfig,
+    d1Config,
+    fileStore
+}: {
+    clientId: string;
+    clientSecret: string;
+    assetsConfig: AssetsConfig;
+    d1Config: D1StorageConfig;
+    fileStore: FileStore;
+}) {
     const app = crowdinModule.express();
 
     const configuration = {
         name: "Editor Right Panel App",
         identifier: "editor-right-panel-app",
         description: "A Crowdin app built with the SDK with Editor Right Panel module",
-        clientId: env.CROWDIN_CLIENT_ID,
-        clientSecret: env.CROWDIN_CLIENT_SECRET,
+        clientId,
+        clientSecret,
         disableLogsFormatter: true,
-        enableStatusPage: {
-            filesystem: false
-        },
-        assetsConfig: {
-            fetcher: env.ASSETS,
-        },
-        d1Config: {
-            database: env.DB,
-        },
+        assetsConfig,
+        d1Config,
+        fileStore,
         imagePath: '/logo.png',
         
         // API scopes - define what your app can access

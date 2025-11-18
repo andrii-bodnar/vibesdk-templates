@@ -1,6 +1,7 @@
 import * as crowdinModule from '@crowdin/app-project-module';
 import { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
-import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
+import { AssetsConfig, CrowdinContextInfo, FileStore } from '@crowdin/app-project-module/out/types';
+import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
 import { Request, Response } from 'express';
 
@@ -66,25 +67,31 @@ function extractSourceText(string: CustomMtString): string {
     return '';
 }
 
-export function createApp(env: CloudflareEnv) {
+export function createApp({
+    clientId,
+    clientSecret,
+    assetsConfig,
+    d1Config,
+    fileStore
+}: {
+    clientId: string;
+    clientSecret: string;
+    assetsConfig: AssetsConfig;
+    d1Config: D1StorageConfig;
+    fileStore: FileStore;
+}) {
     const app = crowdinModule.express();
 
     const configuration = {
         name: "Custom MT App",
         identifier: "custom-mt-app",
         description: "A Crowdin app with Custom MT engine and language mapping configuration",
-        clientId: env.CROWDIN_CLIENT_ID,
-        clientSecret: env.CROWDIN_CLIENT_SECRET,
+        clientId,
+        clientSecret,
         disableLogsFormatter: true,
-        enableStatusPage: {
-            filesystem: false
-        },
-        assetsConfig: {
-            fetcher: env.ASSETS,
-        },
-        d1Config: {
-            database: env.DB,
-        },
+        assetsConfig,
+        d1Config,
+        fileStore,
         imagePath: '/logo.png',
         
         // API scopes - define what your app can access

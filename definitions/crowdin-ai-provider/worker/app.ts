@@ -1,6 +1,7 @@
 import * as crowdinModule from '@crowdin/app-project-module';
 import { Client } from '@crowdin/crowdin-api-client';
-import { CrowdinContextInfo, CrowdinClientRequest } from '@crowdin/app-project-module/out/types';
+import { AssetsConfig, CrowdinContextInfo, CrowdinClientRequest, FileStore } from '@crowdin/app-project-module/out/types';
+import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 import { Request, Response } from 'express';
 import { AiToolChoice, ChatCompletionMessage, SupportedModels, ChatCompletionChunkMessage, ChatCompletionTool, ChatCompletionResponseMessage, ChatCompletionMessageToolCall } from '@crowdin/app-project-module/out/modules/ai-provider/types';
 import { ExtendedResult } from '@crowdin/app-project-module/out/modules/integration/types';
@@ -84,25 +85,31 @@ const MODEL_CAPABILITIES: Record<string, Partial<SupportedModels>> = {
     }
 };
 
-export function createApp(env: CloudflareEnv) {
+export function createApp({
+    clientId,
+    clientSecret,
+    assetsConfig,
+    d1Config,
+    fileStore
+}: {
+    clientId: string;
+    clientSecret: string;
+    assetsConfig: AssetsConfig;
+    d1Config: D1StorageConfig;
+    fileStore: FileStore;
+}) {
     const app = crowdinModule.express();
 
     const configuration = {
         name: "AI Provider App",
         identifier: "ai-provider-app",
         description: "A Crowdin app with AI Provider module for custom AI model integration",
-        clientId: env.CROWDIN_CLIENT_ID,
-        clientSecret: env.CROWDIN_CLIENT_SECRET,
+        clientId,
+        clientSecret,
         disableLogsFormatter: true,
-        enableStatusPage: {
-            filesystem: false
-        },
-        assetsConfig: {
-            fetcher: env.ASSETS,
-        },
-        d1Config: {
-            database: env.DB,
-        },
+        assetsConfig,
+        d1Config,
+        fileStore,
         imagePath: '/logo.png',
         
         // API scopes - define what your app can access

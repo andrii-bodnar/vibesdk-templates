@@ -1,4 +1,6 @@
 import { httpServerHandler } from 'cloudflare:node';
+import { Buffer } from 'node:buffer';
+import crypto from 'node:crypto';
 import { createApp } from './app';
 
 let handler: ExportedHandler | undefined;
@@ -9,7 +11,33 @@ function initializeApp(env: CloudflareEnv): ReturnType<typeof createApp> {
         return appInstance;
     }
 
-    appInstance = createApp(env);
+    appInstance = createApp({
+        clientId: env.CROWDIN_CLIENT_ID,
+        clientSecret: env.CROWDIN_CLIENT_SECRET,
+        assetsConfig: {
+            fetcher: env.ASSETS,
+        },
+        d1Config: {
+            database: env.DB,
+        },
+        fileStore: {
+            getFile: async (fileId: string): Promise<Buffer> => {
+                const data = await env.KVStore.get(fileId, 'arrayBuffer');
+                if (!data) {
+                    throw new Error(`File not found: ${fileId}`);
+                }
+                return Buffer.from(data);
+            },
+            storeFile: async (content: Buffer): Promise<string> => {
+                const fileId = `file_${crypto.randomUUID()}`;
+                await env.KVStore.put(fileId, content, { expirationTtl: 86400 });
+                return fileId;
+            },
+            deleteFile: async (fileId: string): Promise<void> => {
+                await env.KVStore.delete(fileId);
+            }
+        }
+    });
     return appInstance;
 }
 
