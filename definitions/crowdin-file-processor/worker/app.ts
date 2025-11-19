@@ -5,7 +5,6 @@ import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
 import { AssetsConfig, FileStore } from '@crowdin/app-project-module/out/types';
 import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 import { Request, Response } from 'express';
-import { Buffer } from 'node:buffer';
 
 // Configuration interface
 interface FileProcessorConfig {
