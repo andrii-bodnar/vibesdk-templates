@@ -577,6 +577,8 @@ export type CustomMtString =
 
 ### Profile Resources Menu Module Configuration
 
+**⚠️ IMPORTANT**: This module is **REQUIRED** and cannot be removed from the application. The Profile Resources Menu provides essential functionality for user profile integration.
+
 Configure the Profile Resources Menu module in `worker/app.ts`:
 
 ```typescript
@@ -590,7 +592,11 @@ const configuration = {
 }
 ```
 
+**Note**: While you can customize the UI and functionality, you must not remove this module configuration from your app.
+
 ### Organization Menu Module Configuration
+
+**⚠️ IMPORTANT**: This module is **REQUIRED** and cannot be removed from the application. The Organization Menu provides essential functionality for organization-level navigation and settings.
 
 Configure the Organization Menu module in `worker/app.ts`:
 
@@ -604,6 +610,8 @@ const configuration = {
     }
 }
 ```
+
+**Note**: While you can customize the UI and functionality, you must not remove this module configuration from your app.
 
 ### Crowdin API Client
 
