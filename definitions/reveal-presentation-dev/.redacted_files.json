@@ -21,9 +21,6 @@
   ".editorconfig",
   ".prettierrc",
   "eslint.config.js",
-  "tsconfig.json",
-  "wrangler.jsonc",
-  "package.json",
   "*.log",
   ".DS_Store",
   "*.local"

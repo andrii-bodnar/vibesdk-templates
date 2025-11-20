@@ -318,6 +318,7 @@ def process_template(template_dir: Path, definitions_dir: Path) -> Dict[str, Any
         "language": "typescript",
         "frameworks": frameworks,
         "projectType": metadata['projectType'],
+        "disabled": metadata.get('disabled', False),
         "description": {
             "selection": selection_content,
             "usage": usage_content

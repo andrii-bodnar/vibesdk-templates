@@ -1,7 +1,8 @@
 name: "minimal-vite"
 description: "Minimal Vite + TypeScript + Cloudflare Workers scaffolding for AI agents to build any kind of app"
 base_reference: "vite-reference"
-projectType: fullstack
+projectType: app
+disabled: true
 
 excludes:
   - "src/components/**"

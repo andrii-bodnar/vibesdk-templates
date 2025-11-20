@@ -2,4 +2,5 @@ name: "c-code-next-runner"
 description: "Next.js application with OpenNext for Cloudflare deployment"
 base_reference: "next-reference"
 projectType: app
+disabled: true
 
