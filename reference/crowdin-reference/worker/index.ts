@@ -1,8 +1,27 @@
 import { httpServerHandler } from 'cloudflare:node';
 import { createApp } from './app';
+import { Cron } from '@crowdin/app-project-module/out/types';
 
 let handler: ExportedHandler | undefined;
 let appInstance: ReturnType<typeof createApp> | undefined;
+
+class CloudflareCron implements Cron {
+    private handlers: Map<string, Array<() => Promise<void>>> = new Map();
+
+    schedule(expression: string, task: () => Promise<void>): void {
+        if (!this.handlers.has(expression)) {
+            this.handlers.set(expression, []);
+        }
+        this.handlers.get(expression)?.push(task);
+    }
+
+    async runScheduled(expression: string): Promise<void> {
+        const tasks = this.handlers.get(expression) || [];
+        await Promise.allSettled(tasks.map(task => task()));
+    }
+}
+
+const cron = new CloudflareCron();
 
 function initializeApp(env: CloudflareEnv): ReturnType<typeof createApp> {
     if (appInstance) {
@@ -34,7 +53,8 @@ function initializeApp(env: CloudflareEnv): ReturnType<typeof createApp> {
             deleteFile: async (fileId: string): Promise<void> => {
                 await env.KVStore.delete(fileId);
             }
-        }
+        },
+        cron
     });
     return appInstance;
 }
@@ -52,25 +72,13 @@ function initializeHandler(env: CloudflareEnv): ExportedHandler {
     return handler;
 }
 
-async function handleCronEvent(env: CloudflareEnv, cron: string): Promise<void> {
-    const { crowdinApp } = initializeApp(env);
-    const { cronExecutions = {} } = crowdinApp;
-    
-    const cronHandler = cronExecutions[cron];
-
-    if (!cronHandler) {
-        return;
-    }
-    
-    await cronHandler();
-}
-
 export default {
     async fetch(request: Request<unknown, IncomingRequestCfProperties>, env: CloudflareEnv, ctx: ExecutionContext) {
         return initializeHandler(env).fetch!(request, env, ctx);
     },
 
-    async scheduled(controller: ScheduledController, env: CloudflareEnv): Promise<void> {
-        await handleCronEvent(env, controller.cron);
+    async scheduled(controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext): Promise<void> {
+        initializeApp(env);
+        ctx.waitUntil(cron.runScheduled(controller.cron));
     }
 }

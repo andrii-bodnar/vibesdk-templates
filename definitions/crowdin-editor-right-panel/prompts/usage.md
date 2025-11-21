@@ -4870,6 +4870,187 @@ await crowdinModule.metadataStore.saveMetadata(key, updatedPrefs, connection.con
    };
    ```
 
+### Cron Scheduling
+
+#### Overview
+
+Cron Scheduling allows your app to execute background tasks at specified time intervals.
+
+#### Official Documentation
+
+**📚 Complete Documentation:** Refer to Crowdin Apps SDK documentation for cron scheduling
+
+**⚠️ CRITICAL**: Only specific cron intervals are supported. Using unsupported intervals will result in an error.
+
+#### Supported Intervals
+
+The following cron expressions are supported:
+
+| Cron Expression | Description | Frequency |
+|----------------|-------------|-----------|
+| `0 * * * *` | Every hour | Runs at minute 0 of every hour |
+| `0 */3 * * *` | Every 3 hours | Runs at minute 0 every 3 hours |
+| `0 */6 * * *` | Every 6 hours | Runs at minute 0 every 6 hours |
+| `0 */12 * * *` | Every 12 hours | Runs at minute 0 every 12 hours |
+| `0 0 * * *` | Daily | Runs at midnight (00:00) every day |
+| `0 0 * * 0` | Weekly | Runs at midnight (00:00) every Sunday |
+| `0 0 1 * *` | Monthly | Runs at midnight (00:00) on the 1st of each month |
+
+#### Common Examples
+
+**Simple Hourly Task:**
+```typescript
+// In worker/app.ts, after initializing crowdinApp
+const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
+
+// Register cron job - runs every hour
+crowdinApp.cron.schedule('0 * * * *', async () => {
+    try {
+        console.log('Hourly task started at', new Date().toISOString());
+        
+        // Perform your scheduled task
+        // Example: Check status, update cache, etc.
+        
+        console.log('Task completed');
+    } catch (error) {
+        console.error('Cron job error:', error);
+    }
+});
+```
+
+**Multiple Tasks for Same Schedule:**
+```typescript
+// In worker/app.ts, after initializing crowdinApp
+const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
+
+// Both tasks will run daily at midnight
+crowdinApp.cron.schedule('0 0 * * *', async () => {
+    try {
+        console.log('Daily cleanup started');
+        // Cleanup old data
+    } catch (error) {
+        console.error('Cleanup error:', error);
+    }
+});
+
+crowdinApp.cron.schedule('0 0 * * *', async () => {
+    try {
+        console.log('Daily report started');
+        // Generate reports
+    } catch (error) {
+        console.error('Report error:', error);
+    }
+});
+```
+
+#### Best Practices
+
+1. **Use appropriate intervals for your task**
+   ```typescript
+   // ✅ CORRECT - frequent checks for time-sensitive tasks
+   crowdinApp.cron.schedule('0 * * * *', async () => {
+       // Hourly notification checks
+   });
+   
+   // ✅ CORRECT - less frequent for resource-intensive tasks
+   crowdinApp.cron.schedule('0 0 * * *', async () => {
+       // Daily cleanup or report generation
+   });
+   
+   // ❌ WRONG - using unsupported interval
+   crowdinApp.cron.schedule('*/5 * * * *', async () => {
+       // Every 5 minutes - NOT SUPPORTED
+   });
+   ```
+
+2. **Handle errors gracefully**
+   ```typescript
+   // ✅ CORRECT - catch and log errors
+   crowdinApp.cron.schedule('0 * * * *', async () => {
+       try {
+           await performTask();
+       } catch (error) {
+           console.error('Cron job failed:', error);
+           // Log error but don't throw - let job complete
+       }
+   });
+   
+   // ❌ WRONG - unhandled errors
+   crowdinApp.cron.schedule('0 * * * *', async () => {
+       await performTask(); // May crash if it throws
+   });
+   ```
+
+3. **Keep cron jobs lightweight**
+   ```typescript
+   // ✅ CORRECT - efficient processing
+   crowdinApp.cron.schedule('0 0 * * *', async () => {
+       const startTime = Date.now();
+       console.log('Task started');
+       
+       // Perform lightweight operations
+       await quickCleanup();
+       
+       console.log(`Completed in ${Date.now() - startTime}ms`);
+   });
+   
+   // ❌ WRONG - heavy processing that may timeout
+   crowdinApp.cron.schedule('0 * * * *', async () => {
+       // Processing millions of records - may timeout
+       const allData = await fetchAllData();
+       await processAll(allData);
+   });
+   ```
+
+4. **Always await async operations**
+   ```typescript
+   // ✅ CORRECT - await all async operations
+   crowdinApp.cron.schedule('0 * * * *', async () => {
+       await saveData();
+       await processQueue();
+       console.log('All tasks completed');
+   });
+   
+   // ✅ CORRECT - setTimeout with proper promise wrapper
+   crowdinApp.cron.schedule('0 * * * *', async () => {
+       await new Promise((resolve) => {
+           setTimeout(async () => {
+               await processData();
+               resolve();
+           }, 1000);
+       });
+   });
+   
+   // ❌ WRONG - promise without await (will not complete)
+   crowdinApp.cron.schedule('0 * * * *', async () => {
+       saveData(); // This will NOT complete before cron job ends
+       console.log('Done'); // Logs immediately, but saveData is not finished
+   });
+   
+   // ❌ WRONG - setTimeout without proper promise wrapper
+   crowdinApp.cron.schedule('0 * * * *', async () => {
+       setTimeout(async () => {
+           await processData(); // This will NOT execute
+       }, 1000);
+   });
+   ```
+
+5. **Log execution for debugging**
+   ```typescript
+   // ✅ CORRECT - comprehensive logging
+   crowdinApp.cron.schedule('0 */6 * * *', async () => {
+       const startTime = Date.now();
+       console.log(`Cron job started at ${new Date().toISOString()}`);
+       
+       try {
+           await performTask();
+           console.log(`Completed in ${Date.now() - startTime}ms`);
+       } catch (error) {
+           console.error(`Failed after ${Date.now() - startTime}ms:`, error);
+       }
+   });
+   ```
+
 ### Webhooks
 
 #### Overview

@@ -1,5 +1,5 @@
 import * as crowdinModule from '@crowdin/app-project-module';
-import { AssetsConfig, FileStore } from '@crowdin/app-project-module/out/types';
+import { AssetsConfig, FileStore, Cron } from '@crowdin/app-project-module/out/types';
 import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 import { Request, Response } from 'express';
 
@@ -8,13 +8,15 @@ export function createApp({
     clientSecret,
     assetsConfig,
     d1Config,
-    fileStore
+    fileStore,
+    cron
 }: {
     clientId: string;
     clientSecret: string;
     assetsConfig: AssetsConfig;
     d1Config: D1StorageConfig;
     fileStore: FileStore;
+    cron: Cron;
 }) {
     const app = crowdinModule.express();
 
@@ -28,6 +30,7 @@ export function createApp({
         assetsConfig,
         d1Config,
         fileStore,
+        cron,
         imagePath: '/logo.png',
         // Default module configurations will be overridden by specific templates
     };

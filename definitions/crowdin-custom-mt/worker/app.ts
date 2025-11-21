@@ -1,6 +1,6 @@
 import * as crowdinModule from '@crowdin/app-project-module';
 import { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
-import { AssetsConfig, CrowdinContextInfo, FileStore } from '@crowdin/app-project-module/out/types';
+import { AssetsConfig, CrowdinContextInfo, FileStore, Cron } from '@crowdin/app-project-module/out/types';
 import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
 import { Request, Response } from 'express';
@@ -72,13 +72,15 @@ export function createApp({
     clientSecret,
     assetsConfig,
     d1Config,
-    fileStore
+    fileStore,
+    cron
 }: {
     clientId: string;
     clientSecret: string;
     assetsConfig: AssetsConfig;
     d1Config: D1StorageConfig;
     fileStore: FileStore;
+    cron: Cron;
 }) {
     const app = crowdinModule.express();
 
@@ -92,6 +94,7 @@ export function createApp({
         assetsConfig,
         d1Config,
         fileStore,
+        cron,
         imagePath: '/logo.png',
         
         // API scopes - define what your app can access

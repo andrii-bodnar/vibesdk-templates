@@ -1,6 +1,6 @@
 import * as crowdinModule from '@crowdin/app-project-module';
 import { Client } from '@crowdin/crowdin-api-client';
-import { AssetsConfig, CrowdinContextInfo, CrowdinClientRequest, FileStore } from '@crowdin/app-project-module/out/types';
+import { AssetsConfig, CrowdinContextInfo, CrowdinClientRequest, FileStore, Cron } from '@crowdin/app-project-module/out/types';
 import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 import { Request, Response } from 'express';
 import { AiToolChoice, ChatCompletionMessage, SupportedModels, ChatCompletionChunkMessage, ChatCompletionTool, ChatCompletionResponseMessage, ChatCompletionMessageToolCall } from '@crowdin/app-project-module/out/modules/ai-provider/types';
@@ -90,13 +90,15 @@ export function createApp({
     clientSecret,
     assetsConfig,
     d1Config,
-    fileStore
+    fileStore,
+    cron
 }: {
     clientId: string;
     clientSecret: string;
     assetsConfig: AssetsConfig;
     d1Config: D1StorageConfig;
     fileStore: FileStore;
+    cron: Cron;
 }) {
     const app = crowdinModule.express();
 
@@ -110,6 +112,7 @@ export function createApp({
         assetsConfig,
         d1Config,
         fileStore,
+        cron,
         imagePath: '/logo.png',
         
         // API scopes - define what your app can access
