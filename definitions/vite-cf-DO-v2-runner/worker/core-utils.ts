@@ -1,9 +1,9 @@
 /**
  * Core utilities for Multiple Entities sharing a single Durable Object class
- * DO NOT MODIFY THIS FILE - You may break the project functionality
+ * DO NOT MODIFY THIS FILE - You may break the project functionality. STRICTLY DO NOT TOUCH
  */
 import type { ApiResponse } from "@shared/types";
-import { DurableObject } from "cloudflare:workers";
+import { DurableObject } from "cloudflare:workers"; // DO NOT MODIFY THIS LINE
 import type { Context } from "hono";
 
 export interface Env {

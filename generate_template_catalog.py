@@ -250,6 +250,7 @@ def read_template_metadata_from_yaml(template_name: str, definitions_dir: Path) 
 
     default_metadata = {
         'projectType': 'app',
+        'disabled': False,
         'renderMode': None,
         'slideDirectory': None
     }
@@ -280,6 +281,7 @@ def read_template_metadata_from_yaml(template_name: str, definitions_dir: Path) 
 
         return {
             'projectType': project_type,
+            'disabled': yaml_data.get('disabled', False),
             'renderMode': render_mode,
             'slideDirectory': slide_directory
         }
@@ -384,6 +386,9 @@ def main() -> None:
         if is_valid_template(item):
             log_info(f"✓ Valid template found: {item.name}")
             template_data = process_template(item, definitions_dir)
+            if template_data['disabled']:
+                log_info(f"✗ Skipping disabled template: {item.name}")
+                continue
             templates.append(template_data)
             template_count += 1
         else:
