@@ -13,6 +13,35 @@ You never need to worry about how the platform loads or renders slides. Your job
 3. Create and refine slide JSON files and manifest.
 4. Adjust theme/layout when needed to create a coherent, beautiful experience.
 
+### Visual Design Checklist (CRITICAL)
+
+Every presentation MUST use these template features for maximum visual impact:
+
+**Typography (Required):**
+- `.slide-display` or `.slide-title-fluorescent` for main titles (never plain `text-5xl`)
+- `.slide-stat` for numbers/metrics (always with `.text-shadow-glow-white-md`)
+- `.slide-title`, `.slide-subtitle`, `.slide-heading` for proper hierarchy
+
+**Glass Variants (Required):**
+- Rotate between: `.glass-blue`, `.glass-purple`, `.glass-cyan`, `.glass-emerald`
+- Never use only `.glass` for all slides - variety is essential
+
+**Visual Elements (Required):**
+- Include lucide icons on every slide (1-3 per slide)
+- Use gradient text for emphasis: `.bg-gradient-to-r .from-color-X .to-color-Y .bg-clip-text .text-transparent`
+- Add `.hover-lift` to interactive cards for depth
+
+**Fragments (Required):**
+- Minimum 3 fragments per content slide (for progressive disclosure)
+- Use `data-fragment-index` to sequence reveals
+- Every key point should be a fragment
+
+**Forbidden:**
+- Plain headings without `.slide-title` classes
+- Numbers without `.slide-stat`
+- Text-only slides without visual elements
+- Slides without any icons
+
 ---
 
 ### 2. Files you control
@@ -42,32 +71,80 @@ Do **not** touch:
 
 Each `public/slides/slideNN.json` file looks like this:
 
+#### ❌ Avoid: Basic (underuses template)
+
 ```json
 {
   "id": "slide01",
-  "canvas": {
-    "width": 1920,
-    "height": 1080
-  },
   "root": {
     "type": "div",
-    "className": "relative w-full h-full flex flex-col items-center justify-center px-32 text-center",
+    "className": "w-full h-full flex flex-col items-center justify-center px-32",
     "children": [
       {
         "type": "h1",
-        "className": "text-8xl font-black text-white mb-6",
-        "text": "Beautiful Presentations"
+        "className": "text-5xl text-white mb-4",
+        "text": "Key Features"
       },
       {
-        "type": "p",
-        "className": "text-2xl text-gray-200 max-w-3xl",
-        "text": "A modern, glass-morphism reveal deck generated just for you."
+        "type": "div",
+        "className": "glass p-8 rounded-2xl",
+        "children": [{
+          "type": "p",
+          "className": "text-gray-200",
+          "text": "Feature description here"
+        }]
       }
     ]
-  },
-  "metadata": {
-    "title": "Title Slide",
-    "notes": "Opening slide: keep it bold and simple."
+  }
+}
+```
+
+#### ✅ Use: Premium (leverages template)
+
+```json
+{
+  "id": "slide01",
+  "root": {
+    "type": "div",
+    "className": "w-full h-full flex flex-col items-center justify-center px-32",
+    "children": [
+      {
+        "type": "h1",
+        "className": "slide-title text-shadow-glow-white-md mb-8",
+        "children": [{
+          "type": "span",
+          "className": "bg-gradient-to-r from-purple-300 to-pink-500 bg-clip-text text-transparent",
+          "text": "Key Features"
+        }]
+      },
+      {
+        "type": "div",
+        "className": "glass-purple p-8 rounded-2xl hover-lift",
+        "children": [
+          {
+            "type": "div",
+            "className": "flex items-center gap-4 mb-4",
+            "children": [
+              {
+                "type": "Icon",
+                "props": { "name": "Sparkles", "className": "w-8 h-8 text-purple-400" }
+              },
+              {
+                "type": "h3",
+                "className": "slide-heading text-white",
+                "text": "Amazing Feature"
+              }
+            ]
+          },
+          {
+            "type": "p",
+            "className": "fragment text-gray-200",
+            "data-fragment-index": 0,
+            "text": "Feature description here"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
