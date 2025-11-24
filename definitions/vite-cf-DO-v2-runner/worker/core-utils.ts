@@ -1,9 +1,10 @@
 /**
  * Core utilities for Multiple Entities sharing a single Durable Object class
  * DO NOT MODIFY THIS FILE - You may break the project functionality. STRICTLY DO NOT TOUCH
+ * Look at the \`worker/entities.ts\` file for examples on how to use this library
  */
 import type { ApiResponse } from "@shared/types";
-import { DurableObject } from "cloudflare:workers"; // DO NOT MODIFY THIS LINE
+import { DurableObject } from "cloudflare:workers"; // DO NOT MODIFY THIS LINE. This is always already installed and available
 import type { Context } from "hono";
 
 export interface Env {
