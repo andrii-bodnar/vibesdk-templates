@@ -498,9 +498,11 @@ export default function Presentation({
                         key={slide.id}
                         data-slide-id={slide.id}
                     >
-                        <SlideRenderer
-                            slide={slide}
-                        />
+                        {slide && slide.root && (
+                            <SlideRenderer
+                                slide={slide}
+                            />
+                        )}
                     </section>
                 ))}
             </div>

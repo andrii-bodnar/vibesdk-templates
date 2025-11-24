@@ -11,35 +11,66 @@ export class PresentationLoader {
     }
 
     async loadManifest() {
-        try {
-            const response = await fetch('/slides/manifest.json', { cache: 'no-store' })
-            if (response.ok) {
-                this.manifest = await response.json()
-                console.log('[PresentationLoader] Manifest loaded:', this.manifest)
-                return this.manifest
+        // Helper to load manifest from a path
+        const fetchManifest = async (path) => {
+            try {
+                const response = await fetch(path, { cache: 'no-store' });
+                if (response.ok) {
+                    const data = await response.json();
+                    return Array.isArray(data.slides) ? data : null;
+                }
+            } catch (error) {
+                console.warn(`[PresentationLoader] Could not load ${path}:`, error.message);
             }
-        } catch (error) {
-            console.warn('[PresentationLoader] No manifest.json found:', error.message)
-        }
-        return null
+            return null;
+        };
+
+        // Load both possible manifest locations
+        const [primaryManifest, fallbackManifest] = await Promise.all([
+            fetchManifest('/slides/manifest.json'),
+            fetchManifest('/manifest.json'),
+        ]);
+
+        // Merge and deduplicate slides from both manifests
+        const allSlides = [
+            ...(primaryManifest?.slides || []),
+            ...(fallbackManifest?.slides || []),
+        ];
+
+        const uniqueSlides = [...new Set(allSlides)]
+        const nonDemoSlides = uniqueSlides.filter((name) => !name.startsWith('demo-slide')); // Filter demo slides
+
+        this.manifest = {
+            slides: nonDemoSlides.length > 0 ? nonDemoSlides : uniqueSlides,
+            metadata: primaryManifest?.metadata || fallbackManifest?.metadata || {},
+        };
+
+        console.log('[PresentationLoader] Manifest loaded:', this.manifest);
+        return this.manifest;
     }
 
     async loadSlideJSON(filename) {
         try {
-            const response = await fetch(`/slides/${filename}`, { cache: 'no-store' })
+            const response = await fetch(`/slides/${filename}`, { cache: 'no-store' });
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
-            const slideData = await response.json()
-            const sanitized = validateAndFixSlide(slideData)
+            const slideData = await response.json();
 
-            console.log(`[PresentationLoader] Loaded slide: ${filename}`, sanitized)
-            return sanitized
+            // Use filename (without extension) as slide ID if not specified
+            if (!slideData.id) {
+                slideData.id = filename.replace(/\.(json|jsx|tsx)$/i, '');
+            }
+
+            const sanitized = validateAndFixSlide(slideData);
+
+            console.log(`[PresentationLoader] Loaded slide: ${filename}`, sanitized);
+            return sanitized;
         } catch (error) {
-            console.error(`[PresentationLoader] Error loading ${filename}:`, error)
-            throw error
+            console.error(`[PresentationLoader] Error loading ${filename}:`, error);
+            throw error;
         }
     }
 

@@ -22,7 +22,7 @@
             },
             {
                 "type": "div",
-                "className": "grid-2 max-w-6xl mx-auto gap-responsive-lg",
+                "className": "grid-2 gap-responsive-lg",
                 "children": [
                     {
                         "type": "StatCard",

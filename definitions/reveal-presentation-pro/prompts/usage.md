@@ -16,7 +16,8 @@ This template generates **Reveal.js presentations** using JSON slide definitions
 
 **Copy patterns from these examples** when building new slides - they show proper JSON structure, component usage, and styling techniques.
 
-**Delete/Replace** all example slides with your own slides.
+**CRITICAL: Delete/Replace** all example slides with your own slides. Remove all `public/slides/demo-slideNN.json` files.
+**CRITICAL: Update** `public/slides/manifest.json` to remove all example slides and replace with your own slides. The manifest file MUST live in the `public/slides` directory.
 
 ---
 

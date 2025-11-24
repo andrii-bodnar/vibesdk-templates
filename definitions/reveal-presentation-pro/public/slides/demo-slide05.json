@@ -17,7 +17,7 @@
             },
             {
                 "type": "div",
-                "className": "grid-2 h-full max-h-[500px]",
+                "className": "grid-2 gap-responsive-lg",
                 "children": [
                     {
                         "type": "div",

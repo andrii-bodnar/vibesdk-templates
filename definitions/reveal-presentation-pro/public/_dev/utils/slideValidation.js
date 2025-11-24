@@ -213,7 +213,47 @@ function autoFixLayout(slide) {
 
 // Export a wrapper that validates AND fixes
 export const validateAndFixSlide = (data) => {
-    const validated = slideValidator(data);
-    const sanitized = sanitizeSlideTree(validated);
-    return autoFixLayout(sanitized);
+    try {
+        const validated = slideValidator(data);
+        const sanitized = sanitizeSlideTree(validated);
+        return autoFixLayout(sanitized);
+    } catch (error) {
+        console.warn('[SlideValidation] Validation failed, attempting auto‑fix:', error);
+        // Try to coerce missing fields into sensible defaults before giving up
+        const attemptFix = (slide) => {
+            const fixed = { ...slide };
+            if (!fixed.root) fixed.root = {};
+            // Default missing type to 'div'
+            if (!fixed.root.type) fixed.root.type = 'div';
+            // If type is 'svg' but icon missing, provide a generic placeholder icon
+            if (fixed.root.type === 'svg' && !fixed.root.icon) fixed.root.icon = 'Placeholder';
+            return fixed;
+        };
+        try {
+            const coerced = attemptFix(data);
+            const revalidated = slideValidator(coerced);
+            const sanitized = sanitizeSlideTree(revalidated);
+            return autoFixLayout(sanitized);
+        } catch (e) {
+            console.warn('[SlideValidation] Auto‑fix also failed, falling back to safe placeholder:', e);
+            const placeholderId = data && data.id ? data.id : `fallback-${Date.now()}`;
+            const placeholderSlide = {
+                id: placeholderId,
+                canvas: { width: 1920, height: 1080 },
+                root: {
+                    type: 'div',
+                    className: 'flex items-center justify-center h-full w-full bg-gray-100',
+                    children: [
+                        {
+                            type: 'p',
+                            text: 'Invalid slide content',
+                            className: 'text-gray-500',
+                        },
+                    ],
+                },
+                metadata: {},
+            };
+            return autoFixLayout(placeholderSlide);
+        }
+    }
 };

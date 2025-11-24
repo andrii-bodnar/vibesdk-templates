@@ -26,12 +26,12 @@
                     {
                         "type": "h1",
                         "className": "slide-title text-gradient text-center max-w-5xl leading-tight mb-8",
-                        "text": "Your Presentation Title"
+                        "text": "Your Presentation is being made"
                     },
                     {
                         "type": "p",
                         "className": "slide-subtitle text-center max-w-2xl mx-auto mb-4",
-                        "text": "A compelling subtitle that describes your topic and engages your audience."
+                        "text": "We are building a beautiful presentation for you. Please hang tight!"
                     },
                     {
                         "type": "div",
@@ -105,7 +105,7 @@
                                 "children": [
                                     {
                                         "type": "span",
-                                        "text": "Primary Action"
+                                        "text": "Sample Action"
                                     },
                                     {
                                         "type": "svg",
