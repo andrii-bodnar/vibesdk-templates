@@ -124,3 +124,96 @@ export const sanitizeSlideTree = (slide) => {
 
     return sanitized;
 };
+
+/**
+ * AUTO-WRAP FEATURE (Load-time)
+ * Automatically injects wrapper divs for layout-* classes to fix common LLM-generated layout issues.
+ */
+const LAYOUT_CLASS_REGEX = /\b(layout-center|layout-split|layout-default)\b/;
+
+function autoFixLayout(slide) {
+    if (!slide || !slide.root) return slide;
+
+    const root = slide.root;
+    const layoutMatch = root.className?.match(LAYOUT_CLASS_REGEX);
+
+    if (!layoutMatch) return slide;
+
+    const layoutType = layoutMatch[0];
+    const children = root.children || [];
+
+    if (children.length === 0) return slide;
+
+    // Handle layout-center and layout-default
+    if (layoutType === 'layout-center' || layoutType === 'layout-default') {
+        if (children.length === 1) {
+            const child = children[0];
+            // Check if already properly wrapped
+            if (
+                child.type === 'div' &&
+                child.className?.includes('flex-col') &&
+                (child.className?.includes('flex-center') || child.className?.includes('justify-center')) &&
+                !child.text
+            ) {
+                return slide;
+            }
+        }
+
+        // Wrap all children in a single container
+        console.debug(`[AutoWrap] Fixing ${layoutType} for slide ${slide.id}`);
+        const wrapper = {
+            type: 'div',
+            className: 'flex-col flex-center gap-6',
+            children: children,
+            id: `${root.id || slide.id}-autowrap`
+        };
+
+        return {
+            ...slide,
+            root: {
+                ...root,
+                children: [wrapper]
+            }
+        };
+    }
+
+    // Handle layout-split
+    if (layoutType === 'layout-split') {
+        // If exactly 2 children, check if they are already columns
+        if (children.length === 2) {
+            const bothAreColumns = children.every(child =>
+                child.type === 'div' &&
+                !child.text &&
+                (child.children?.length > 0 || child.props)
+            );
+            if (bothAreColumns) return slide;
+        }
+
+        // Wrap each child in a column container
+        console.debug(`[AutoWrap] Fixing ${layoutType} for slide ${slide.id}`);
+
+        const newChildren = children.map((child, idx) => ({
+            type: 'div',
+            className: 'flex-col flex-center gap-6 w-full h-full',
+            children: [child],
+            id: `${root.id || slide.id}-col-${idx}`
+        }));
+
+        return {
+            ...slide,
+            root: {
+                ...root,
+                children: newChildren
+            }
+        };
+    }
+
+    return slide;
+}
+
+// Export a wrapper that validates AND fixes
+export const validateAndFixSlide = (data) => {
+    const validated = slideValidator(data);
+    const sanitized = sanitizeSlideTree(validated);
+    return autoFixLayout(sanitized);
+};

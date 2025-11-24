@@ -1,7 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { jsxImport } from '../compiler/index.js'
-import { slideValidator, sanitizeSlideTree } from '../utils/slideValidation.js'
+import { validateAndFixSlide } from '../utils/slideValidation.js'
 
 export class PresentationLoader {
     constructor() {
@@ -33,8 +33,7 @@ export class PresentationLoader {
             }
 
             const slideData = await response.json()
-            const validated = slideValidator(slideData)
-            const sanitized = sanitizeSlideTree(validated)
+            const sanitized = validateAndFixSlide(slideData)
 
             console.log(`[PresentationLoader] Loaded slide: ${filename}`, sanitized)
             return sanitized

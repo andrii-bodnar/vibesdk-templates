@@ -1,11 +1,11 @@
 {
     "slides": [
-        "slide01.json",
-        "slide02.json",
-        "slide03.json",
-        "slide04.json",
-        "slide05.json",
-        "slide06.json"
+        "demo-slide01.json",
+        "demo-slide02.json",
+        "demo-slide03.json",
+        "demo-slide04.json",
+        "demo-slide05.json",
+        "demo-slide06.json"
     ],
     "metadata": {
         "title": "Reveal Presentation Pro - Showcase",

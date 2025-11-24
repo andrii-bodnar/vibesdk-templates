@@ -1,25 +1,10 @@
 import React from 'react';
 import { SlideBackground } from './backgrounds/SlideBackground.jsx';
 
-/**
- * Renders a slide element (JSX-compatible JSON) to React
- */
+// Generate a unique ID if one doesn't exist
 export function renderSlideElement(element, key = 0, pathPrefix = '') {
     if (!element) return null;
 
-    // Standard HTML elements
-    const isHtmlElement = /^(div|section|article|aside|header|footer|h[1-6]|p|span|strong|em|ul|ol|li|button|a|img|code|pre|blockquote|svg)$/.test(element.type);
-
-    // Check if it's a registered component
-    const isRichComponent = window.Recharts?.[element.type] || window.SlideTemplates?.[element.type];
-    const isIcon = (element.type === 'svg' && element.icon && window.LucideReact?.[element.icon]) || (element.type === 'Icon');
-
-    if (!isHtmlElement && !isRichComponent && !isIcon) {
-        console.warn('Blocked or unknown element type', element.type);
-        return null;
-    }
-
-    // Generate a unique ID if one doesn't exist
     const elementId = element.id || `${pathPrefix}-${element.type}-${key}`;
 
     // Handle SVG icons (legacy format)

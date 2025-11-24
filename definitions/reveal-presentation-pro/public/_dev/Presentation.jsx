@@ -2,13 +2,14 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import Reveal from 'reveal.js';
 import { SlideRenderer } from './renderer/SlideRenderer.jsx';
 import { EditorOverlay } from './renderer/EditorOverlay.jsx';
-import { slideValidator, sanitizeSlideTree } from './utils/slideValidation.js';
+import { validateAndFixSlide } from './utils/slideValidation.js';
 import { StreamingBuffer } from './utils/streamingBuffer.js';
 
 import { useReveal } from './hooks/useReveal.js';
 
 export default function Presentation({
     slides,
+    manifest,
     theme = 'dark',
     transition = 'slide',
     controls = true,
@@ -70,29 +71,21 @@ export default function Presentation({
         return params.get('showAllFragments') === 'true';
     }, []);
 
-    // Inject CSS to show all fragments during streaming mode OR when showAllFragments param is present
+    // Configure fragments visibility based on mode
     useEffect(() => {
-        if (!isStreamingSlide && !showAllFragments) return;
+        if (!deck) return;
 
-        console.log(`[Presentation] ${showAllFragments ? 'showAllFragments param detected' : 'Entering streaming mode'} - showing all fragments`);
+        const shouldShowAllFragments = isStreamingSlide || showAllFragments;
 
-        const style = document.createElement('style');
-        style.id = 'streaming-mode-style';
-        style.textContent = `
-            .reveal .slides section .fragment {
-                visibility: visible !important;
-                opacity: 1 !important;
-            }
-        `;
-        document.head.appendChild(style);
+        // When streaming or showing all fragments, we disable the fragment system
+        // which causes all fragments to be visible immediately
+        deck.configure({
+            fragments: !shouldShowAllFragments
+        });
 
-        return () => {
-            if (!showAllFragments) {
-                console.log('[Presentation] Exiting streaming mode - restoring fragment system');
-                document.getElementById('streaming-mode-style')?.remove();
-            }
-        };
-    }, [isStreamingSlide, showAllFragments]);
+        console.debug(`[Presentation] Fragment system ${shouldShowAllFragments ? 'disabled (showing all)' : 'enabled'}`);
+
+    }, [deck, isStreamingSlide, showAllFragments]);
 
     // Sync when slides change AND handle auto-navigation
     useEffect(() => {
@@ -223,14 +216,14 @@ export default function Presentation({
                         break;
 
                     case 'RELOAD_SLIDE':
-                        const slideFile = message.data.slideId; // Assuming slideId is the filename e.g. "slide01.json"
+                        const slideFile = message.data.slideId;
                         console.log('[Presentation] Reloading slide:', slideFile);
 
                         fetch(`/slides/${slideFile}`, { cache: 'no-store' })
                             .then(res => res.json())
                             .then(data => {
-                                const parsed = slideValidator(data);
-                                const sanitized = sanitizeSlideTree(mergeWithBase(parsed));
+                                const parsed = validateAndFixSlide(data);
+                                const sanitized = mergeWithBase(parsed);
                                 // Update streamingSlides to force re-render with new data
                                 // We use the file path as key to match how streaming updates work
                                 setStreamingSlides(prev => ({
@@ -253,18 +246,24 @@ export default function Presentation({
                         if (message.path) {
                             console.log('[Presentation] File generating:', message.path);
                             buffersRef.current[message.path] = new StreamingBuffer();
-                            // Re-enable auto-navigation when new slide generation starts
                             setIsAutoNavigationEnabled(true);
+                            setIsStreamingSlide(true);
 
-                            // Extract slide ID from path (e.g., "slides/slide99.json" → "slide99")
-                            const match = message.path.match(/slides\/(.+)\.json$/);
-                            if (match) {
-                                const slideId = match[1];
-                                // Set pending navigation to show the slide being generated
+                            const filename = message.path.split('/').pop();
+
+                            // Try to find existing slide in manifest
+                            const slideIndex = manifest?.slides?.findIndex(s => s === filename);
+
+                            if (slideIndex !== -1 && slides[slideIndex]) {
+                                // Existing slide - navigate immediately
+                                const slideId = slides[slideIndex].id;
+                                console.log(`[Presentation] Identified existing streaming slide: ${filename} -> Index ${slideIndex}, ID ${slideId}`);
                                 setPendingNavigationSlideId(slideId);
-                                // Enter streaming mode
-                                setIsStreamingSlide(true);
                                 streamingSlideIdRef.current = slideId;
+                            } else {
+                                // New slide - will navigate on first successful parse
+                                console.log(`[Presentation] New streaming slide: ${filename} - will navigate on first parse`);
+                                streamingSlideIdRef.current = null;
                             }
                         }
                         break;
@@ -273,11 +272,18 @@ export default function Presentation({
                         if (message.path && buffersRef.current[message.path]) {
                             try {
                                 buffersRef.current[message.path].addChunk(message.chunk);
-                                const parsed = slideValidator(buffersRef.current[message.path].tryParse());
-                                const merged = sanitizeSlideTree(mergeWithBase(parsed));
+                                const parsed = validateAndFixSlide(buffersRef.current[message.path].tryParse());
+                                const merged = mergeWithBase(parsed);
                                 setStreamingSlides(prev => ({ ...prev, [message.path]: merged }));
+
+                                // For new slides, navigate on first successful parse
+                                if (streamingSlideIdRef.current === null && parsed.id) {
+                                    console.log(`[Presentation] First parse successful for new slide: ${parsed.id}`);
+                                    setPendingNavigationSlideId(parsed.id);
+                                    streamingSlideIdRef.current = parsed.id;
+                                }
                             } catch (error) {
-                                // Ignore until parse succeeds or buffer resets
+                                // Buffer incomplete, waiting for more chunks
                             }
                         }
                         break;
@@ -288,8 +294,8 @@ export default function Presentation({
                             delete buffersRef.current[message.path];
                             if (message.contents) {
                                 try {
-                                    const parsed = slideValidator(JSON.parse(message.contents));
-                                    const merged = sanitizeSlideTree(mergeWithBase(parsed));
+                                    const parsed = validateAndFixSlide(JSON.parse(message.contents));
+                                    const merged = mergeWithBase(parsed);
 
                                     setStreamingSlides(prev => ({
                                         ...prev,

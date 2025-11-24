@@ -68,6 +68,7 @@ export default function App() {
         return (
             <PresentationComponent
                 slides={slides}
+                manifest={manifest}
                 theme={manifest?.metadata?.theme || 'dark'}
                 transition={manifest?.metadata?.transition || 'slide'}
                 controls={true}

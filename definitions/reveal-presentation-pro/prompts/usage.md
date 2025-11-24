@@ -16,6 +16,8 @@ This template generates **Reveal.js presentations** using JSON slide definitions
 
 **Copy patterns from these examples** when building new slides - they show proper JSON structure, component usage, and styling techniques.
 
+**Delete/Replace** all example slides with your own slides.
+
 ---
 
 ### 2. Critical Constraints
@@ -57,37 +59,43 @@ Each `public/slides/slideNN.json` file:
 ```json
 {
   "id": "slide01",
-  "canvas": {"width": 1920, "height": 1080},
   "root": {
     "type": "div",
     "className": "layout-center",
     "children": [
       {
-        "type": "h1",
-        "className": "slide-title text-shadow-glow-white-md mb-8",
-        "children": [{
-          "type": "span",
-          "className": "bg-gradient-to-r from-purple-300 to-pink-500 bg-clip-text text-transparent",
-          "text": "Slide Title"
-        }]
-      },
-      {
         "type": "div",
-        "className": "glass-purple p-8 rounded-2xl",
+        "className": "flex-col flex-center gap-6",
         "children": [
           {
-            "type": "div",
-            "className": "flex items-center gap-4 mb-4",
-            "children": [
-              {"type": "svg", "icon": "Rocket", "size": 32, "className": "text-purple-400"},
-              {"type": "p", "className": "text-xl", "text": "Feature description"}
-            ]
+            "type": "h1",
+            "className": "slide-title text-gradient mb-8",
+            "text": "Slide Title"
           },
           {
             "type": "p",
-            "className": "fragment fade-in",
-            "data-fragment-index": 0,
-            "text": "This appears on click"
+            "className": "slide-subtitle mb-8",
+            "text": "A compelling subtitle for your slide"
+          },
+          {
+            "type": "div",
+            "className": "glass-panel p-8 rounded-2xl",
+            "children": [
+              {
+                "type": "div",
+                "className": "flex items-center gap-4 mb-4",
+                "children": [
+                  {"type": "svg", "icon": "Rocket", "size": 32, "className": "text-purple-400"},
+                  {"type": "p", "className": "text-xl", "text": "Feature description"}
+                ]
+              },
+              {
+                "type": "p",
+                "className": "fragment fade-in",
+                "data-fragment-index": 0,
+                "text": "This appears on click"
+              }
+            ]
           }
         ]
       }
@@ -104,6 +112,9 @@ Each `public/slides/slideNN.json` file:
   }
 }
 ```
+
+**IMPORTANT - Proper Layout Pattern:**
+Notice the wrapper `div` with `flex-col flex-center gap-6` immediately inside `layout-center`. This wrapper is **required** for proper spacing and alignment. Always include this wrapper pattern as shown in the example slides.
 
 #### Element Schema
 
@@ -170,6 +181,50 @@ Each `public/slides/slideNN.json` file:
 | **Layout** | layout-center, layout-split, layout-default, grid-2, grid-3 |
 | **Effects** | hover-lift, hover-glow, text-gradient, text-shadow-glow-white-md |
 | **Fragments** | fragment, fade-in, fade-in-then-semi-out |
+
+#### Layout Patterns (Simplified Approach)
+
+**Auto-Wrapping System:** The template automatically injects proper structural wrappers for layout classes. You do NOT need to add manual `flex-col flex-center` wrapper divs.
+
+**How to Use Layouts:**
+
+1. **layout-center** (Centered vertical content):
+   ```json
+   {
+     "className": "layout-center",
+     "children": [
+       {"type": "h1", "className": "slide-title", "text": "Title"},
+       {"type": "p", "className": "slide-subtitle", "text": "Subtitle"},
+       {"type": "div", "className": "glass-panel", "children": [...]}
+     ]
+   }
+   ```
+   Children added directly - system handles centering and spacing automatically.
+
+2. **layout-split** (Two-column layout):
+   ```json
+   {
+     "className": "layout-split",
+     "children": [
+       {"type": "div", "children": [/* left column content */]},
+       {"type": "div", "children": [/* right column content */]}
+     ]
+   }
+   ```
+   Add two direct children (left and right columns) - system handles column structure.
+
+3. **layout-default** (Full-height content):
+   ```json
+   {
+     "className": "layout-default",
+     "children": [
+       {"type": "div", "children": [/* header */]},
+       {"type": "div", "className": "grid-2", "children": [/* grid items */]}
+     ]
+   }
+   ```
+
+**Key Point:** Just add your content elements directly under the layout div. No need for wrapper divs with `flex-col`, `flex-center`, `justify-center`, etc. The system handles all structural requirements automatically.
 
 #### Backgrounds (metadata.background)
 
