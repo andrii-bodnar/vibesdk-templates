@@ -4955,7 +4955,7 @@ The following cron expressions are supported:
 | `0 */6 * * *` | Every 6 hours | Runs at minute 0 every 6 hours |
 | `0 */12 * * *` | Every 12 hours | Runs at minute 0 every 12 hours |
 | `0 0 * * *` | Daily | Runs at midnight (00:00) every day |
-| `0 0 * * 0` | Weekly | Runs at midnight (00:00) every Sunday |
+| `0 0 * * SUN` | Weekly | Runs at midnight (00:00) every Sunday |
 | `0 0 1 * *` | Monthly | Runs at midnight (00:00) on the 1st of each month |
 
 #### Common Examples
