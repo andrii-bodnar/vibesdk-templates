@@ -1,0 +1,522 @@
+{
+  "id": "slide05",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "root": {
+    "type": "div",
+    "className": "relative w-full h-full bg-slate-900",
+    "children": [
+      {
+        "type": "div",
+        "className": "flex flex-col h-full px-20 py-16 gap-12",
+        "children": [
+          {
+            "type": "h2",
+            "className": "slide-title",
+            "children": [
+              {
+                "type": "span",
+                "className": "bg-gradient-to-r from-purple-300 to-pink-500 bg-clip-text text-transparent",
+                "text": "Advanced Features"
+              }
+            ]
+          },
+          {
+            "type": "div",
+            "className": "flex-1 grid grid-cols-2 gap-8",
+            "children": [
+              {
+                "type": "div",
+                "className": "fragment fade-up",
+                "data-fragment-index": 0,
+                "children": [
+                  {
+                    "type": "div",
+                    "className": "glass-purple rounded-2xl p-10 h-full hover-glow flex flex-col justify-center",
+                    "children": [
+                      {
+                        "type": "div",
+                        "className": "flex items-center gap-4 mb-6",
+                        "children": [
+                          {
+                            "type": "div",
+                            "className": "w-14 h-14 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center shadow-elevation-md",
+                            "children": [
+                              {
+                                "type": "svg",
+                                "icon": "Quote",
+                                "size": 28,
+                                "className": "text-white"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "span",
+                            "className": "text-2xl font-semibold text-white/80",
+                            "text": "Design Philosophy"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "p",
+                        "className": "text-3xl leading-relaxed text-shadow-glow-blue-sm mb-6",
+                        "children": [
+                          {
+                            "type": "span",
+                            "className": "bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent font-medium",
+                            "text": "\"Beautiful presentations are clear, memorable, and captivate audiences with stunning visuals.\""
+                          }
+                        ]
+                      },
+                      {
+                        "type": "div",
+                        "className": "flex items-center gap-3",
+                        "children": [
+                          {
+                            "type": "div",
+                            "className": "w-24 h-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"
+                          },
+                          {
+                            "type": "span",
+                            "className": "glass-inline px-4 py-1.5 rounded-full text-sm text-white/70",
+                            "text": "UI Principles"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "div",
+                "className": "fragment fade-up",
+                "data-fragment-index": 1,
+                "children": [
+                  {
+                    "type": "div",
+                    "className": "glass-medium rounded-2xl p-10 h-full hover-glow",
+                    "children": [
+                      {
+                        "type": "div",
+                        "className": "flex items-center gap-3 mb-6",
+                        "children": [
+                          {
+                            "type": "div",
+                            "className": "w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-lg flex items-center justify-center",
+                            "children": [
+                              {
+                                "type": "svg",
+                                "icon": "Code",
+                                "size": 20,
+                                "className": "text-white"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "span",
+                            "className": "text-xl font-semibold text-white/80",
+                            "text": "Quick Setup"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "div",
+                        "className": "glass-inline rounded-xl p-6 font-mono text-sm",
+                        "children": [
+                          {
+                            "type": "div",
+                            "className": "space-y-2 text-white/80",
+                            "children": [
+                              {
+                                "type": "div",
+                                "children": [
+                                  {
+                                    "type": "span",
+                                    "className": "text-purple-400",
+                                    "text": "import"
+                                  },
+                                  {
+                                    "type": "span",
+                                    "className": "text-white/90",
+                                    "text": " { TitleSlide } "
+                                  },
+                                  {
+                                    "type": "span",
+                                    "className": "text-purple-400",
+                                    "text": "from"
+                                  },
+                                  {
+                                    "type": "span",
+                                    "className": "text-emerald-400",
+                                    "text": " '/slides-library'"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "div",
+                                "className": "text-gray-500 italic",
+                                "text": ""
+                              },
+                              {
+                                "type": "div",
+                                "children": [
+                                  {
+                                    "type": "span",
+                                    "className": "text-cyan-400",
+                                    "text": "<TitleSlide"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "div",
+                                "className": "pl-4",
+                                "children": [
+                                  {
+                                    "type": "span",
+                                    "className": "text-blue-400",
+                                    "text": "title"
+                                  },
+                                  {
+                                    "type": "span",
+                                    "className": "text-white/70",
+                                    "text": "="
+                                  },
+                                  {
+                                    "type": "span",
+                                    "className": "text-emerald-400",
+                                    "text": "\"My Presentation\""
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "div",
+                                "className": "pl-4",
+                                "children": [
+                                  {
+                                    "type": "span",
+                                    "className": "text-blue-400",
+                                    "text": "gradient"
+                                  },
+                                  {
+                                    "type": "span",
+                                    "className": "text-white/70",
+                                    "text": "="
+                                  },
+                                  {
+                                    "type": "span",
+                                    "className": "text-emerald-400",
+                                    "text": "\"violet\""
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "div",
+                                "children": [
+                                  {
+                                    "type": "span",
+                                    "className": "text-cyan-400",
+                                    "text": "/>"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "div",
+                "className": "fragment fade-up",
+                "data-fragment-index": 2,
+                "children": [
+                  {
+                    "type": "div",
+                    "className": "glass-medium rounded-2xl p-10 h-full hover-glow",
+                    "children": [
+                      {
+                        "type": "div",
+                        "className": "flex items-center gap-3 mb-8",
+                        "children": [
+                          {
+                            "type": "div",
+                            "className": "w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center",
+                            "children": [
+                              {
+                                "type": "svg",
+                                "icon": "TrendingUp",
+                                "size": 20,
+                                "className": "text-white"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "span",
+                            "className": "text-xl font-semibold text-white/80",
+                            "text": "Development Timeline"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "div",
+                        "className": "space-y-6",
+                        "children": [
+                          {
+                            "type": "div",
+                            "className": "flex items-center gap-4",
+                            "children": [
+                              {
+                                "type": "div",
+                                "className": "w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center shadow-elevation-md flex-shrink-0",
+                                "children": [
+                                  {
+                                    "type": "svg",
+                                    "icon": "Lightbulb",
+                                    "size": 24,
+                                    "className": "text-white"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "div",
+                                "className": "flex-1",
+                                "children": [
+                                  {
+                                    "type": "div",
+                                    "className": "flex items-center gap-3 mb-1",
+                                    "children": [
+                                      {
+                                        "type": "span",
+                                        "className": "text-lg font-semibold text-white/90",
+                                        "text": "Concept & Design"
+                                      },
+                                      {
+                                        "type": "span",
+                                        "className": "glass-inline px-3 py-1 rounded-full text-xs text-cyan-400 font-semibold",
+                                        "text": "Q1 2024"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "p",
+                                    "className": "text-sm text-white/60",
+                                    "text": "Initial planning and prototyping"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "div",
+                            "className": "flex items-center gap-4",
+                            "children": [
+                              {
+                                "type": "div",
+                                "className": "w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center shadow-elevation-md flex-shrink-0",
+                                "children": [
+                                  {
+                                    "type": "svg",
+                                    "icon": "Rocket",
+                                    "size": 24,
+                                    "className": "text-white"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "div",
+                                "className": "flex-1",
+                                "children": [
+                                  {
+                                    "type": "div",
+                                    "className": "flex items-center gap-3 mb-1",
+                                    "children": [
+                                      {
+                                        "type": "span",
+                                        "className": "text-lg font-semibold text-white/90",
+                                        "text": "Launch & Production"
+                                      },
+                                      {
+                                        "type": "span",
+                                        "className": "glass-inline px-3 py-1 rounded-full text-xs text-purple-400 font-semibold",
+                                        "text": "Q3 2024"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "p",
+                                    "className": "text-sm text-white/60",
+                                    "text": "Full release and optimization"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "div",
+                "className": "fragment fade-up",
+                "data-fragment-index": 3,
+                "children": [
+                  {
+                    "type": "div",
+                    "className": "glass-medium rounded-2xl p-10 h-full hover-glow flex flex-col justify-center",
+                    "children": [
+                      {
+                        "type": "div",
+                        "className": "flex items-center gap-3 mb-8",
+                        "children": [
+                          {
+                            "type": "div",
+                            "className": "w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center",
+                            "children": [
+                              {
+                                "type": "svg",
+                                "icon": "BarChart3",
+                                "size": 20,
+                                "className": "text-white"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "span",
+                            "className": "text-xl font-semibold text-white/80",
+                            "text": "Performance Metrics"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "div",
+                        "className": "space-y-5",
+                        "children": [
+                          {
+                            "type": "div",
+                            "className": "glass-inline rounded-xl p-5 flex items-center gap-4",
+                            "children": [
+                              {
+                                "type": "div",
+                                "className": "text-4xl font-black text-shadow-glow-blue-sm",
+                                "children": [
+                                  {
+                                    "type": "span",
+                                    "className": "bg-gradient-to-r from-blue-300 to-cyan-400 bg-clip-text text-transparent",
+                                    "text": "98%"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "div",
+                                "className": "flex-1",
+                                "children": [
+                                  {
+                                    "type": "div",
+                                    "className": "text-sm font-semibold text-white/90",
+                                    "text": "Satisfaction"
+                                  },
+                                  {
+                                    "type": "div",
+                                    "className": "text-xs text-white/60",
+                                    "text": "User feedback rating"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "div",
+                            "className": "glass-inline rounded-xl p-5 flex items-center gap-4",
+                            "children": [
+                              {
+                                "type": "div",
+                                "className": "text-4xl font-black text-shadow-glow-blue-sm",
+                                "children": [
+                                  {
+                                    "type": "span",
+                                    "className": "bg-gradient-to-r from-purple-300 to-pink-400 bg-clip-text text-transparent",
+                                    "text": "15K+"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "div",
+                                "className": "flex-1",
+                                "children": [
+                                  {
+                                    "type": "div",
+                                    "className": "text-sm font-semibold text-white/90",
+                                    "text": "Active Users"
+                                  },
+                                  {
+                                    "type": "div",
+                                    "className": "text-xs text-white/60",
+                                    "text": "Growing 40% monthly"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "div",
+                            "className": "glass-inline rounded-xl p-5 flex items-center gap-4",
+                            "children": [
+                              {
+                                "type": "div",
+                                "className": "text-4xl font-black text-shadow-glow-blue-sm",
+                                "children": [
+                                  {
+                                    "type": "span",
+                                    "className": "bg-gradient-to-r from-emerald-300 to-teal-400 bg-clip-text text-transparent",
+                                    "text": "500+"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "div",
+                                "className": "flex-1",
+                                "children": [
+                                  {
+                                    "type": "div",
+                                    "className": "text-sm font-semibold text-white/90",
+                                    "text": "Presentations"
+                                  },
+                                  {
+                                    "type": "div",
+                                    "className": "text-xs text-white/60",
+                                    "text": "Created and counting"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "metadata": {
+    "title": "Advanced Features Grid",
+    "notes": "2x2 grid showcasing quote, code, timeline, and performance metrics",
+    "background": {
+      "type": "mesh-particles",
+      "colors": ["#8b5cf6", "#ec4899", "#a855f7"],
+      "animation": "slow",
+      "count": 30,
+      "color": "#a855f7"
+    }
+  }
+}

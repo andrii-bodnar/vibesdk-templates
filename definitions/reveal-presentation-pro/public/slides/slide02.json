@@ -1,0 +1,70 @@
+{
+  "id": "slide02",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "root": {
+    "type": "div",
+    "className": "relative w-full h-full bg-slate-900",
+    "children": [
+      {
+        "type": "div",
+        "className": "flex flex-col h-full px-20 py-16 gap-12 items-center text-center",
+        "children": [
+          {
+            "type": "h2",
+            "className": "slide-title",
+            "children": [
+              {
+                "type": "span",
+                "className": "bg-gradient-to-r from-emerald-300 to-emerald-500 bg-clip-text text-transparent",
+                "text": "Welcome"
+              }
+            ]
+          },
+          {
+            "type": "div",
+            "className": "flex-1 flex justify-center animate-fade-in-delay",
+            "children": [
+              {
+                "type": "div",
+                "className": "text-5xl text-white leading-relaxed max-w-5xl",
+                "children": [
+                  {
+                    "type": "p",
+                    "className": "text-5xl leading-relaxed max-w-4xl",
+                    "children": [
+                      {
+                        "type": "span",
+                        "text": "Create stunning, modern presentations with glass morphism effects, sophisticated gradients, and smooth animations. This template combines the power of "
+                      },
+                      {
+                        "type": "span",
+                        "className": "bg-gradient-to-r from-emerald-500 to-emerald-700 bg-clip-text text-transparent font-semibold",
+                        "text": "Reveal.js"
+                      },
+                      {
+                        "type": "span",
+                        "text": " with beautiful React components and cutting-edge design."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "metadata": {
+    "title": "Welcome",
+    "notes": "Introduction slide with centered content",
+    "background": {
+      "type": "mesh",
+      "colors": ["#10b981", "#14b8a6", "#34d399"],
+      "animation": "slow"
+    }
+  }
+}

@@ -149,3 +149,6 @@ tooltip.tsx
 
 # IMPORTANT NOTE: You must inform the user that although this project has AI capaibilities, There is a limit on the number of requests that can be made to the AI servers across all user apps in a given time period. 
 Add the above note in an appropriate and visible location in the app - like in the footer or in the chat interface or as a modal
+
+All SHADCN Components are present in ./src/components/ui/* and can be imported from there, example: import { Button } from "@/components/ui/button";
+**Please do not rewrite these components, just import them and use them**
