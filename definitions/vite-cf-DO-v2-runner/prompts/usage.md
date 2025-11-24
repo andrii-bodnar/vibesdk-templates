@@ -84,3 +84,32 @@ CRITICAL: only `GlobalDurableObject` is available for stateful ops
 ## Frontend
 - Call `/api/*` endpoints directly
 - Handle loading/errors; use shared types
+
+---
+
+## React Router Rules
+
+Router hooks (`useNavigate`, `useLocation`, `useParams`, `Link`) only work inside `<RouterProvider>`.
+
+**Adding routes** (edit `src/main.tsx`):
+```tsx
+const router = createBrowserRouter([
+  { path: "/", element: <HomePage />, errorElement: <RouteErrorBoundary /> },
+  { path: "/about", element: <AboutPage />, errorElement: <RouteErrorBoundary /> },
+]);
+```
+
+**Navigation:**
+```tsx
+import { Link } from 'react-router-dom';
+<Link to="/about">About</Link>
+```
+
+**With UI components:**
+```tsx
+<BreadcrumbLink asChild><Link to="/home">Home</Link></BreadcrumbLink>
+```
+
+**Common errors:**
+- "useRouteError must be used within a data router" → Only use `RouteErrorBoundary` in `errorElement` field
+- "Cannot destructure property 'basename'" → Don't use `Link` outside router context
