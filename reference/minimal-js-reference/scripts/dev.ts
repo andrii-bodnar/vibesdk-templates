@@ -3,7 +3,7 @@
 // - Forwards app-emitted JSON logs untouched
 // - Filters Wrangler's non-JSON lines; emits a JSON-ready signal when server is ready
 
-const port = process.env.PORT || "8787";
+const port = process.env.PORT || "8001";
 
 type Level = 30 | 40 | 50;
 const emit = (level: Level, msg: string, extra?: Record<string, unknown>) => {

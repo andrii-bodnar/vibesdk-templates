@@ -147,8 +147,37 @@ tooltip.tsx
 - `APP_CONTROLLER`: A durable object binding for the app controller, but can be extended and used for other agentic purposes
 **IMPORTANT: You are NOT ALLOWED to edit/add/remove ANY worker bindings OR touch wrangler.jsonc/wrangler.toml. Build your application around what is already provided.**
 
-# IMPORTANT NOTE: You must inform the user that although this project has AI capaibilities, There is a limit on the number of requests that can be made to the AI servers across all user apps in a given time period. 
+# IMPORTANT NOTE: You must inform the user that although this project has AI capaibilities, There is a limit on the number of requests that can be made to the AI servers across all user apps in a given time period.
 Add the above note in an appropriate and visible location in the app - like in the footer or in the chat interface or as a modal
+
+---
+
+## React Router Rules
+
+Router hooks (`useNavigate`, `useLocation`, `useParams`, `Link`) only work inside `<RouterProvider>`.
+
+**Adding routes** (edit `src/main.tsx`):
+```tsx
+const router = createBrowserRouter([
+  { path: "/", element: <HomePage />, errorElement: <RouteErrorBoundary /> },
+  { path: "/about", element: <AboutPage />, errorElement: <RouteErrorBoundary /> },
+]);
+```
+
+**Navigation:**
+```tsx
+import { Link } from 'react-router-dom';
+<Link to="/about">About</Link>
+```
+
+**With UI components:**
+```tsx
+<BreadcrumbLink asChild><Link to="/home">Home</Link></BreadcrumbLink>
+```
+
+**Common errors:**
+- "useRouteError must be used within a data router" → Only use `RouteErrorBoundary` in `errorElement` field
+- "Cannot destructure property 'basename'" → Don't use `Link` outside router context
 
 All SHADCN Components are present in ./src/components/ui/* and can be imported from there, example: import { Button } from "@/components/ui/button";
 **Please do not rewrite these components, just import them and use them**

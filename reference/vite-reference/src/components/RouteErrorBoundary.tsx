@@ -4,10 +4,15 @@ import { errorReporter } from '@/lib/errorReporter';
 import { ErrorFallback } from './ErrorFallback';
 
 export function RouteErrorBoundary() {
-  const error = useRouteError();
+  let error: unknown;
+  try {
+    error = useRouteError();
+  } catch (e) {
+    console.error('RouteErrorBoundary must only be used in errorElement field of router config, not rendered directly in JSX');
+    error = e;
+  }
 
   useEffect(() => {
-    // Report the route error
     if (error) {
       let errorMessage = 'Unknown route error';
       let errorStack = '';
