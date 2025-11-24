@@ -11,12 +11,12 @@
                     {
                         "type": "h2",
                         "className": "slide-title text-gradient",
-                        "text": "Key Features"
+                        "text": "Section Title"
                     },
                     {
                         "type": "p",
                         "className": "slide-subtitle mx-auto",
-                        "text": "Everything you need to build world-class presentations."
+                        "text": "A brief description that introduces the content below."
                     }
                 ]
             },
@@ -43,12 +43,12 @@
                             {
                                 "type": "h3",
                                 "className": "slide-heading",
-                                "text": "Lightning Fast"
+                                "text": "Feature One Title"
                             },
                             {
                                 "type": "p",
                                 "className": "slide-caption mb-4",
-                                "text": "Generate complete decks in seconds with our advanced AI engine."
+                                "text": "A description of what this feature provides to your audience."
                             },
                             {
                                 "type": "ul",
@@ -119,12 +119,12 @@
                             {
                                 "type": "h3",
                                 "className": "slide-heading",
-                                "text": "Smart Layouts"
+                                "text": "Feature Two Title"
                             },
                             {
                                 "type": "p",
                                 "className": "slide-caption mb-4",
-                                "text": "Auto-adapting grids that ensure your content always looks perfect."
+                                "text": "Another description highlighting a different aspect or capability."
                             },
                             {
                                 "type": "ul",
@@ -195,12 +195,12 @@
                             {
                                 "type": "h3",
                                 "className": "slide-heading",
-                                "text": "Premium Themes"
+                                "text": "Feature Three Title"
                             },
                             {
                                 "type": "p",
                                 "className": "slide-caption mb-4",
-                                "text": "Beautiful, professionally designed themes that match your brand."
+                                "text": "A third description showcasing additional functionality or benefits."
                             },
                             {
                                 "type": "ul",

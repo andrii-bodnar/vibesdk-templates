@@ -11,12 +11,12 @@
                     {
                         "type": "h2",
                         "className": "slide-title text-gradient",
-                        "text": "Component Library"
+                        "text": "Section Title"
                     },
                     {
                         "type": "p",
                         "className": "slide-subtitle text-center",
-                        "text": "Pre-built components for rapid development"
+                        "text": "A brief subtitle describing the content below"
                     }
                 ]
             },
@@ -27,9 +27,9 @@
                     {
                         "type": "StatCard",
                         "props": {
-                            "title": "Active Users",
-                            "value": "12.5K",
-                            "trend": "+23%",
+                            "title": "Metric A",
+                            "value": "1,234",
+                            "trend": "+12%",
                             "icon": "Users",
                             "className": "w-full"
                         }
@@ -37,9 +37,9 @@
                     {
                         "type": "StatCard",
                         "props": {
-                            "title": "Conversion Rate",
-                            "value": "8.2%",
-                            "trend": "+5.1%",
+                            "title": "Metric B",
+                            "value": "56%",
+                            "trend": "+3.4%",
                             "icon": "TrendingUp",
                             "className": "w-full"
                         }
@@ -53,26 +53,26 @@
                             {
                                 "type": "h3",
                                 "className": "slide-heading mb-4",
-                                "text": "Timeline Component"
+                                "text": "Subsection Title"
                             },
                             {
                                 "type": "Timeline",
                                 "props": {
                                     "items": [
                                         {
-                                            "date": "2024 Q1",
-                                            "title": "Launch",
-                                            "description": "Platform goes live with core features"
+                                            "date": "Phase 1",
+                                            "title": "First Stage",
+                                            "description": "Initial milestone or event description"
                                         },
                                         {
-                                            "date": "2024 Q2",
-                                            "title": "Growth",
-                                            "description": "Reached 10K active users milestone"
+                                            "date": "Phase 2",
+                                            "title": "Second Stage",
+                                            "description": "Follow-up milestone or event description"
                                         },
                                         {
-                                            "date": "2024 Q3",
-                                            "title": "Scale",
-                                            "description": "Enterprise features and integrations"
+                                            "date": "Phase 3",
+                                            "title": "Third Stage",
+                                            "description": "Final milestone or event description"
                                         }
                                     ],
                                     "className": "w-full"

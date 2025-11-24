@@ -21,19 +21,19 @@
                             {
                                 "type": "span",
                                 "className": "text-sm font-mono tracking-wider text-purple-400 uppercase",
-                                "text": "Why It Matters"
+                                "text": "Section Label"
                             }
                         ]
                     },
                     {
                         "type": "h2",
                         "className": "slide-title text-gradient mb-4",
-                        "text": "Why Choose Reveal Pro?"
+                        "text": "Your Section Title"
                     },
                     {
                         "type": "p",
                         "className": "slide-subtitle mb-responsive-lg",
-                        "text": "Move beyond static slides. Embrace a platform that combines the flexibility of the web with the elegance of premium design."
+                        "text": "A brief description that introduces the content on this slide and provides context for your audience."
                     },
                     {
                         "type": "ul",
@@ -51,7 +51,7 @@
                                     },
                                     {
                                         "type": "span",
-                                        "text": "Interactive web components"
+                                        "text": "First key feature"
                                     }
                                 ]
                             },
@@ -67,7 +67,7 @@
                                     },
                                     {
                                         "type": "span",
-                                        "text": "Real-time streaming"
+                                        "text": "Second key feature"
                                     }
                                 ]
                             },
@@ -83,7 +83,7 @@
                                     },
                                     {
                                         "type": "span",
-                                        "text": "AI-powered generation"
+                                        "text": "Third key feature"
                                     }
                                 ]
                             }
@@ -106,7 +106,7 @@
                                     {
                                         "type": "h3",
                                         "className": "text-lg font-semibold text-white",
-                                        "text": "Growth Trajectory"
+                                        "text": "Chart Title"
                                     },
                                     {
                                         "type": "div",
@@ -274,12 +274,12 @@
                                     {
                                         "type": "div",
                                         "className": "text-2xl font-bold text-cyan-400 mb-1",
-                                        "text": "8.5K"
+                                        "text": "1,234"
                                     },
                                     {
                                         "type": "div",
                                         "className": "text-xs text-white/60",
-                                        "text": "Active Users"
+                                        "text": "Metric A"
                                     }
                                 ]
                             },
@@ -290,12 +290,12 @@
                                     {
                                         "type": "div",
                                         "className": "text-2xl font-bold text-purple-400 mb-1",
-                                        "text": "98%"
+                                        "text": "85%"
                                     },
                                     {
                                         "type": "div",
                                         "className": "text-xs text-white/60",
-                                        "text": "Engagement"
+                                        "text": "Metric B"
                                     }
                                 ]
                             },
@@ -306,12 +306,12 @@
                                     {
                                         "type": "div",
                                         "className": "text-2xl font-bold text-emerald-400 mb-1",
-                                        "text": "+254%"
+                                        "text": "+67%"
                                     },
                                     {
                                         "type": "div",
                                         "className": "text-xs text-white/60",
-                                        "text": "Growth"
+                                        "text": "Metric C"
                                     }
                                 ]
                             }

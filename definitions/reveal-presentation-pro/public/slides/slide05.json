@@ -11,7 +11,7 @@
                     {
                         "type": "h2",
                         "className": "slide-title text-gradient",
-                        "text": "Advanced Capabilities"
+                        "text": "Section Title"
                     }
                 ]
             },
@@ -42,14 +42,14 @@
                                     {
                                         "type": "h3",
                                         "className": "slide-heading",
-                                        "text": "Developer Friendly"
+                                        "text": "Capability One"
                                     }
                                 ]
                             },
                             {
                                 "type": "p",
                                 "className": "slide-caption mb-4",
-                                "text": "Export to React, HTML, or PDF with a single click."
+                                "text": "Description of what this capability provides to users."
                             },
                             {
                                 "type": "div",
@@ -58,17 +58,17 @@
                                     {
                                         "type": "div",
                                         "className": "px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded text-xs text-cyan-400 font-mono",
-                                        "text": "React"
+                                        "text": "Tag A"
                                     },
                                     {
                                         "type": "div",
                                         "className": "px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded text-xs text-cyan-400 font-mono",
-                                        "text": "HTML"
+                                        "text": "Tag B"
                                     },
                                     {
                                         "type": "div",
                                         "className": "px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded text-xs text-cyan-400 font-mono",
-                                        "text": "PDF"
+                                        "text": "Tag C"
                                     }
                                 ]
                             }
@@ -97,14 +97,14 @@
                                     {
                                         "type": "h3",
                                         "className": "slide-heading",
-                                        "text": "Global CDN"
+                                        "text": "Capability Two"
                                     }
                                 ]
                             },
                             {
                                 "type": "p",
                                 "className": "slide-caption mb-4",
-                                "text": "Deployed instantly to the edge for lightning-fast delivery."
+                                "text": "Description of what this capability provides to users."
                             },
                             {
                                 "type": "div",
@@ -113,12 +113,12 @@
                                     {
                                         "type": "div",
                                         "className": "text-2xl font-bold text-purple-400",
-                                        "text": "<50ms"
+                                        "text": "123"
                                     },
                                     {
                                         "type": "div",
                                         "className": "text-xs text-white/50",
-                                        "text": "Average load time"
+                                        "text": "Metric label"
                                     }
                                 ]
                             }
@@ -147,14 +147,14 @@
                                     {
                                         "type": "h3",
                                         "className": "slide-heading",
-                                        "text": "Enterprise Security"
+                                        "text": "Capability Three"
                                     }
                                 ]
                             },
                             {
                                 "type": "p",
                                 "className": "slide-caption mb-4",
-                                "text": "SOC2 compliant and secure by default with end-to-end encryption."
+                                "text": "Description of what this capability provides to users."
                             },
                             {
                                 "type": "div",
@@ -163,12 +163,12 @@
                                     {
                                         "type": "div",
                                         "className": "px-2 py-1 bg-pink-500/10 border border-pink-500/20 rounded text-xs text-pink-400",
-                                        "text": "SOC2"
+                                        "text": "Badge A"
                                     },
                                     {
                                         "type": "div",
                                         "className": "px-2 py-1 bg-pink-500/10 border border-pink-500/20 rounded text-xs text-pink-400",
-                                        "text": "GDPR"
+                                        "text": "Badge B"
                                     }
                                 ]
                             }
@@ -197,14 +197,14 @@
                                     {
                                         "type": "h3",
                                         "className": "slide-heading",
-                                        "text": "AI Integration"
+                                        "text": "Capability Four"
                                     }
                                 ]
                             },
                             {
                                 "type": "p",
                                 "className": "slide-caption mb-4",
-                                "text": "Built-in LLM capabilities for smart content generation."
+                                "text": "Description of what this capability provides to users."
                             },
                             {
                                 "type": "div",
@@ -213,12 +213,12 @@
                                     {
                                         "type": "div",
                                         "className": "text-2xl font-bold text-emerald-400",
-                                        "text": "GPT-4"
+                                        "text": "Tech"
                                     },
                                     {
                                         "type": "div",
                                         "className": "text-xs text-white/50",
-                                        "text": "Powered by OpenAI"
+                                        "text": "Technology label"
                                     }
                                 ]
                             }

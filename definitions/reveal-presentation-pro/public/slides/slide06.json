@@ -25,19 +25,19 @@
                             {
                                 "type": "span",
                                 "className": "text-sm font-mono tracking-wider text-purple-400 uppercase",
-                                "text": "Get Started Today"
+                                "text": "Closing Label"
                             }
                         ]
                     },
                     {
                         "type": "h2",
                         "className": "slide-title text-gradient mb-6",
-                        "text": "Ready to Build?"
+                        "text": "Closing Title"
                     },
                     {
                         "type": "p",
                         "className": "slide-subtitle mb-8",
-                        "text": "Join thousands of creators building the future of presentations."
+                        "text": "A compelling closing statement or call-to-action message."
                     },
                     {
                         "type": "div",
@@ -49,7 +49,7 @@
                                 "children": [
                                     {
                                         "type": "span",
-                                        "text": "Start Free Trial"
+                                        "text": "Primary Action"
                                     },
                                     {
                                         "type": "svg",
@@ -61,7 +61,7 @@
                             {
                                 "type": "div",
                                 "className": "px-8 py-4 border border-white/20 rounded-full font-bold text-lg hover:bg-white/10 transition-colors cursor-pointer",
-                                "text": "Contact Sales"
+                                "text": "Secondary Action"
                             }
                         ]
                     },
@@ -81,7 +81,7 @@
                                     },
                                     {
                                         "type": "span",
-                                        "text": "No credit card required"
+                                        "text": "Detail A"
                                     }
                                 ]
                             },
@@ -97,7 +97,7 @@
                                     },
                                     {
                                         "type": "span",
-                                        "text": "Free forever plan"
+                                        "text": "Detail B"
                                     }
                                 ]
                             }

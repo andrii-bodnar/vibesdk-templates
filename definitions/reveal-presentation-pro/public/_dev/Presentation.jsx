@@ -56,7 +56,7 @@ export default function Presentation({
     const { deck, isReady, sync } = useReveal(revealDivRef, {
         controls,
         progress,
-        center: true,
+        center: false,
         hash: true,
         transition,
         keyboard: mode === 'view',
@@ -64,11 +64,17 @@ export default function Presentation({
         mouseWheel: mode === 'view',
     });
 
-    // Inject CSS to show all fragments during streaming mode
-    useEffect(() => {
-        if (!isStreamingSlide) return;
+    // Check for showAllFragments URL parameter
+    const showAllFragments = useMemo(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('showAllFragments') === 'true';
+    }, []);
 
-        console.log('[Presentation] Entering streaming mode - showing all fragments');
+    // Inject CSS to show all fragments during streaming mode OR when showAllFragments param is present
+    useEffect(() => {
+        if (!isStreamingSlide && !showAllFragments) return;
+
+        console.log(`[Presentation] ${showAllFragments ? 'showAllFragments param detected' : 'Entering streaming mode'} - showing all fragments`);
 
         const style = document.createElement('style');
         style.id = 'streaming-mode-style';
@@ -81,10 +87,12 @@ export default function Presentation({
         document.head.appendChild(style);
 
         return () => {
-            console.log('[Presentation] Exiting streaming mode - restoring fragment system');
-            document.getElementById('streaming-mode-style')?.remove();
+            if (!showAllFragments) {
+                console.log('[Presentation] Exiting streaming mode - restoring fragment system');
+                document.getElementById('streaming-mode-style')?.remove();
+            }
         };
-    }, [isStreamingSlide]);
+    }, [isStreamingSlide, showAllFragments]);
 
     // Sync when slides change AND handle auto-navigation
     useEffect(() => {
@@ -189,8 +197,17 @@ export default function Presentation({
                         break;
 
                     case 'NAVIGATE_TO_SLIDE':
+                        console.log('[Presentation] Received NAVIGATE_TO_SLIDE message:', message.data);
+                        console.log('[Presentation] Reveal deck available:', !!deck);
                         if (deck && message.data && typeof message.data.index === 'number') {
+                            console.log('[Presentation] Navigating to slide index:', message.data.index);
                             deck.slide(message.data.index);
+                        } else {
+                            console.warn('[Presentation] Cannot navigate - missing deck or invalid index:', {
+                                hasDeck: !!deck,
+                                hasData: !!message.data,
+                                indexType: typeof message.data?.index
+                            });
                         }
                         break;
 
@@ -327,7 +344,7 @@ export default function Presentation({
 
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, [mergeWithBase]);
+    }, [mergeWithBase, deck]); // Added deck to dependencies
 
 
 
