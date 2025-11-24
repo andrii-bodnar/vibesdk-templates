@@ -4743,6 +4743,54 @@ app.delete('/api/delete-data', async (req: Request, res: Response) => {
 });
 ```
 
+**Get All Metadata:**
+```typescript
+app.get('/api/all-metadata', async (req: Request, res: Response) => {
+    try {
+        const jwt = req.query.jwt as string;
+        
+        if (!jwt) {
+            return res.status(400).json({ success: false, error: 'JWT token is required' });
+        }
+        
+        if (!crowdinApp.establishCrowdinConnection) {
+            return res.status(500).json({ success: false, error: 'Crowdin connection method not available' });
+        }
+
+        const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+
+        if (!connection.client) {
+            return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
+        }
+
+        // Retrieve all metadata records from storage
+        const allMetadata = await crowdinApp.storage.getAllMetadata();
+        
+        // allMetadata structure:
+        // [
+        //   {
+        //     id: "org_123_user_456_preferences",  // key
+        //     data: "{"theme":"dark","lang":"en"}", // JSON stringified value
+        //     crowdin_id: "domain"     // crowdin identifier (from connection.context.crowdinId during save)
+        //   },
+        //   ...
+        // ]
+        
+        // Parse and format data
+        const formattedData = allMetadata.map(record => ({
+            key: record.id,
+            value: JSON.parse(record.data || '{}'),
+            crowdinId: record.crowdin_id
+        }));
+        
+        res.json({ success: true, metadata: formattedData, count: formattedData.length });
+    } catch (error) {
+        console.error('Error retrieving all metadata:', error);
+        res.status(500).json({ success: false, error: 'Failed to retrieve metadata' });
+    }
+});
+```
+
 **Store Complex Objects:**
 ```typescript
 // Save complex user preferences
@@ -4870,6 +4918,39 @@ await crowdinModule.metadataStore.saveMetadata(key, updatedPrefs, connection.con
    };
    ```
 
+8. **NEVER use KVStore for configurations - use metadataStore instead**
+   ```typescript
+   // ✅ CORRECT - use metadataStore for ALL configuration storage
+   const config = {
+       apiKey: userApiKey,
+       apiEndpoint: 'https://api.example.com',
+       languageMapping: { 'en': 'en-US' }
+   };
+   await crowdinModule.metadataStore.saveMetadata(
+       `config_org_${organizationId}`, 
+       config, 
+       connection.context.crowdinId
+   );
+   
+   // ✅ CORRECT - read configuration from metadataStore
+   const config = await crowdinModule.metadataStore.getMetadata(`config_org_${organizationId}`) || {};
+   
+   // ❌ WRONG - using KVStore for configuration storage
+   const config = {
+       apiKey: userApiKey,
+       apiEndpoint: 'https://api.example.com',
+       languageMapping: { 'en': 'en-US' }
+   };
+   await env.KVStore.put(
+       `config_org_${organizationId}`, 
+       JSON.stringify(config)
+   );
+   
+   // ❌ WRONG - reading configuration from KVStore
+   const configData = await env.KVStore.get(`config_org_${organizationId}`);
+   const config = JSON.parse(configData || '{}');
+   ```
+
 ### Cron Scheduling
 
 #### Overview
@@ -4939,6 +5020,73 @@ crowdinApp.cron.schedule('0 0 * * *', async () => {
         // Generate reports
     } catch (error) {
         console.error('Report error:', error);
+    }
+});
+```
+
+**Using Crowdin API Client in Cron Jobs:**
+```typescript
+// In worker/app.ts, after initializing crowdinApp
+const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
+
+// Register cron job that processes data for multiple organizations
+crowdinApp.cron.schedule('0 0 * * *', async () => {
+    try {
+        console.log('Daily sync started');
+        
+        // Get all metadata records
+        const allMetadata = await crowdinApp.storage.getAllMetadata();
+        
+        if (!allMetadata || allMetadata.length === 0) {
+            console.log('No metadata found, skipping sync');
+            return;
+        }
+        
+        // Filter metadata by pattern using regex (e.g., find all organization configs)
+        const configPattern = /^org_(\d+)_config$/;
+        const orgConfigs = allMetadata.filter(record => 
+            configPattern.test(record.id)
+        );
+        
+        console.log(`Found ${orgConfigs.length} organization configs to process`);
+        
+        // Process each organization separately
+        for (const configRecord of orgConfigs) {
+            try {
+                const match = configRecord.id.match(configPattern);
+                const organizationId = match?.[1];
+                const crowdinId = configRecord.crowdin_id; // domain or organizationId
+                const configData = JSON.parse(configRecord.data || '{}');
+                
+                console.log(`Processing organization ${organizationId}`);
+                
+                // Create individual Crowdin API client for this organization
+                const encryptedData = crowdinApp.encryptCrowdinConnection({
+                    crowdinId,
+                    extra: {}, // Always pass empty object
+                });
+                
+                const { client } = await crowdinApp.dencryptCrowdinConnection(encryptedData, true);
+                
+                // Use client to make API calls for this specific organization
+                const projects = await client.projectsGroupsApi.withFetchAll().listProjects();
+                console.log(`Organization ${organizationId}: Found ${projects.data.length} projects`);
+                
+                // Process organization-specific configuration
+                if (configData.autoSync) {
+                    console.log(`Organization ${organizationId}: Auto-sync enabled, processing...`);
+                    // Perform sync operations
+                }
+                
+            } catch (error) {
+                console.error(`Error processing organization ${organizationId}:`, error);
+                // Continue with next organization
+            }
+        }
+        
+        console.log('Daily sync completed');
+    } catch (error) {
+        console.error('Cron job error:', error);
     }
 });
 ```
