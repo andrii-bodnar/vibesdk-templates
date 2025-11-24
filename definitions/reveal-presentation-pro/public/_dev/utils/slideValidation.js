@@ -9,7 +9,7 @@ const allowedElementTypes = [
     'XAxis', 'YAxis', 'CartesianGrid', 'Tooltip', 'Legend', 'Bar', 'Line', 'Area', 'Pie', 'Radar',
     'PolarGrid', 'PolarAngleAxis', 'PolarRadiusAxis', 'Cell',
     // Slide Templates
-    'StatCard', 'GlassCard', 'IconBadge', 'Timeline', 'Comparison', 'CodeBlock'
+    'StatCard', 'GlassCard', 'IconBadge', 'Timeline', 'Comparison', 'CodeBlock', 'Icon'
 ];
 
 const styleKeys = [
@@ -18,7 +18,8 @@ const styleKeys = [
     'color', 'background', 'backgroundColor', 'backgroundImage', 'borderRadius',
     'boxShadow', 'padding', 'paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom',
     'margin', 'marginLeft', 'marginRight', 'marginTop', 'marginBottom',
-    'transform', 'opacity', 'backdropFilter'
+    'transform', 'opacity', 'backdropFilter',
+    'fontSize', 'gap'
 ];
 
 const StyleSchema = z.record(z.string(), z.any()).refine((obj) => {

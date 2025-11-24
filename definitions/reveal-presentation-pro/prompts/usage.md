@@ -1,112 +1,66 @@
 ## Usage Guide – Reveal Presentation Pro
 
-### 1. How to think about this template
+### 1. Quick Start
 
-You are building a presentation for a user. Think of this template as:
-- A **Reveal.js slide deck** where every slide is a JSON file.
-- Each JSON file describes a tree of elements (`root` + `children`) that is very close to JSX/HTML, with Tailwind classes for layout and style.
-- A shared design system (`slides-styles.css` plus Tailwind config in `index.html`) gives you gradients, glass‑morphism, spacing and typography that match a premium conference deck.
+This template generates **Reveal.js presentations** using JSON slide definitions. Each slide is a JSON file describing an element tree (similar to JSX/HTML) with Tailwind classes for styling. A shared design system provides gradients, glass morphism, typography, and animations.
 
-You never need to worry about how the platform loads or renders slides. Your job is to:
-1. Understand the user’s goals and story.
-2. Plan the slide sequence.
-3. Create and refine slide JSON files and manifest.
-4. Adjust theme/layout when needed to create a coherent, beautiful experience.
+**Your role:** Generate JSON slide files that the runtime renderer converts to UI.
 
-### Visual Design Checklist (CRITICAL)
+**Working examples:** The template includes working example slides in `public/slides/` (typically slide01-06.json) demonstrating:
+- Various layout patterns (centered, split, grid)
+- Icon usage with SVG elements
+- Glass morphism effects and variants
+- Fragment-based progressive disclosure
+- Chart integration (Recharts components)
+- Different background types
 
-Every presentation MUST use these template features for maximum visual impact:
-
-**Typography (Required):**
-- `.slide-display` or `.slide-title-fluorescent` for main titles (never plain `text-5xl`)
-- `.slide-stat` for numbers/metrics (always with `.text-shadow-glow-white-md`)
-- `.slide-title`, `.slide-subtitle`, `.slide-heading` for proper hierarchy
-
-**Glass Variants (Required):**
-- Rotate between: `.glass-blue`, `.glass-purple`, `.glass-cyan`, `.glass-emerald`
-- Never use only `.glass` for all slides - variety is essential
-
-**Visual Elements (Required):**
-- Include lucide icons on every slide (1-3 per slide)
-- Use gradient text for emphasis: `.bg-gradient-to-r .from-color-X .to-color-Y .bg-clip-text .text-transparent`
-- Add `.hover-lift` to interactive cards for depth
-
-**Fragments (Required):**
-- Minimum 3 fragments per content slide (for progressive disclosure)
-- Use `data-fragment-index` to sequence reveals
-- Every key point should be a fragment
-
-**Forbidden:**
-- Plain headings without `.slide-title` classes
-- Numbers without `.slide-stat`
-- Text-only slides without visual elements
-- Slides without any icons
+**Copy patterns from these examples** when building new slides - they show proper JSON structure, component usage, and styling techniques.
 
 ---
 
-### 2. Files you control
+### 2. Critical Constraints
 
-When using this template, treat these as your main tools:
+#### ✅ Always Do
+- Generate valid JSON only (no trailing commas, no comments, double quotes)
+- Use `type: "svg"` with `icon: "IconName"` for Lucide icons
+- Update `public/slides/manifest.json` after creating/removing slides
+- Reference existing slides (slide01-06.json) for syntax patterns
+- Use template CSS classes and Tailwind utilities for styling
 
-**Content & structure (primary):**
-- `public/slides/manifest.json`
-  - Controls slide order and basic metadata.
-  - You can add/remove slide filenames and update metadata like title/theme.
-- `public/slides/slideNN.json` (e.g. `slide01.json`, `slide02.json`)
-  - One slide per file.
-  - You define the visual structure and content in these JSON files.
+#### ❌ Never Do
+- Modify `public/_dev/` files (runtime infrastructure - will break template)
+- Modify `public/index.html` (bootstrap file)
+- Create `.jsx` or `.tsx` files (template uses JSON only, not code)
+- Try to install npm packages (sandbox is static)
+- Use event handlers (`onClick`, `onChange`, etc. - no JavaScript runtime)
+- Use `"type": "Icon"` (wrong - use `"type": "svg"` instead)
+- Reference non-existent components not in catalog below
 
-**Theme & styling (only when changing look & feel):**
-- `public/slides-styles.css`
-  - Holds the core visual language: glass‑morphism utilities (`.glass`, `.glass-inline`, etc.), type scales (`.slide-title`, `.slide-subtitle`), glows, animations, and Reveal‑specific overrides.
-  - Use this when the user wants a different “feel” to the entire deck (e.g. more subtle glass, stronger glows, different typography scale), not for one‑off slide hacks.
+#### 🔧 Quick Fixes
 
-Do **not** touch:
-- `public/_dev/**/*` – runtime loader, compiler, component registry.
-- `public/index.html` – Reveal + Tailwind bootstrap.
+| Problem | Fix |
+|---------|-----|
+| Icon not rendering | Use `{"type": "svg", "icon": "IconName", "className": "..."}` |
+| Slide not appearing | Add filename to `manifest.json` slides array |
+| Invalid JSON error | Remove trailing commas, comments, single quotes |
+| Component not found | Use only components from catalog (Section 4) |
+| CSS not applying | Use classes from slides-styles.css or Tailwind |
 
 ---
 
-### 3. Slide JSON shape (what you actually write)
+### 3. Slide JSON Reference
 
-Each `public/slides/slideNN.json` file looks like this:
+#### File Structure
 
-#### ❌ Avoid: Basic (underuses template)
+Each `public/slides/slideNN.json` file:
 
 ```json
 {
   "id": "slide01",
+  "canvas": {"width": 1920, "height": 1080},
   "root": {
     "type": "div",
-    "className": "w-full h-full flex flex-col items-center justify-center px-32",
-    "children": [
-      {
-        "type": "h1",
-        "className": "text-5xl text-white mb-4",
-        "text": "Key Features"
-      },
-      {
-        "type": "div",
-        "className": "glass p-8 rounded-2xl",
-        "children": [{
-          "type": "p",
-          "className": "text-gray-200",
-          "text": "Feature description here"
-        }]
-      }
-    ]
-  }
-}
-```
-
-#### ✅ Use: Premium (leverages template)
-
-```json
-{
-  "id": "slide01",
-  "root": {
-    "type": "div",
-    "className": "w-full h-full flex flex-col items-center justify-center px-32",
+    "className": "layout-center",
     "children": [
       {
         "type": "h1",
@@ -114,300 +68,175 @@ Each `public/slides/slideNN.json` file looks like this:
         "children": [{
           "type": "span",
           "className": "bg-gradient-to-r from-purple-300 to-pink-500 bg-clip-text text-transparent",
-          "text": "Key Features"
+          "text": "Slide Title"
         }]
       },
       {
         "type": "div",
-        "className": "glass-purple p-8 rounded-2xl hover-lift",
+        "className": "glass-purple p-8 rounded-2xl",
         "children": [
           {
             "type": "div",
             "className": "flex items-center gap-4 mb-4",
             "children": [
-              {
-                "type": "Icon",
-                "props": { "name": "Sparkles", "className": "w-8 h-8 text-purple-400" }
-              },
-              {
-                "type": "h3",
-                "className": "slide-heading text-white",
-                "text": "Amazing Feature"
-              }
+              {"type": "svg", "icon": "Rocket", "size": 32, "className": "text-purple-400"},
+              {"type": "p", "className": "text-xl", "text": "Feature description"}
             ]
           },
           {
             "type": "p",
-            "className": "fragment text-gray-200",
+            "className": "fragment fade-in",
             "data-fragment-index": 0,
-            "text": "Feature description here"
+            "text": "This appears on click"
           }
         ]
       }
     ]
+  },
+  "metadata": {
+    "title": "Slide Title",
+    "notes": "Speaker notes here",
+    "background": {
+      "type": "mesh",
+      "colors": ["#8b5cf6", "#ec4899"],
+      "animation": "slow"
+    }
   }
 }
 ```
 
-**Top‑level fields:**
-- `id` – unique slide identifier (conventionally matches the number, e.g. `"slide01"`).
-- `canvas` – optional, controls width/height; defaults to 1920×1080 if omitted.
-- `root` – the root element for the slide.
-- `metadata` – optional slide metadata:
-  - `title` – human‑readable slide title.
-  - `notes` – speaker notes.
-  - `background` – optional dynamic background configuration (see below).
+#### Element Schema
 
-**Element shape (`root` and its `children`):**
-
-```ts
-type SlideElement = {
-  type: string;              // HTML tag from the allowed set below
-  className?: string;        // Tailwind classes
-  text?: string;             // Text content for headings/paragraphs/buttons, etc.
-  children?: SlideElement[]; // Nested elements
-  role?: string;             // Optional ARIA role
-  ariaLevel?: string;        // Optional ARIA heading level
-  'data-fragment-index'?: number; // Reveal fragment ordering
-  'data-transition'?: string;     // Per-element transition override
-  style?: Record<string, string | number>; // Validated but currently ignored by renderer
-  _streaming?: boolean;      // Optional flag to visually mark “currently typing” text
-};
+```typescript
+{
+  type: string;                    // HTML tag or component name
+  className?: string;              // Tailwind classes
+  icon?: string;                   // For type: "svg" - Lucide icon name
+  size?: number;                   // For type: "svg" - icon size
+  text?: string;                   // Text content
+  children?: Element[];            // Nested elements
+  props?: Record<string, any>;     // For chart components
+  "data-fragment-index"?: number;  // Fragment reveal order
+  role?: string;                   // ARIA role
+}
 ```
 
-**Allowed `type` values (others are ignored):**
-- Layout & containers: `div`, `section`, `article`, `aside`, `header`, `footer`
-- Text: `h1`, `h2`, `h3`, `h4`, `h5`, `h6`, `p`, `span`, `strong`, `em`, `blockquote`
-- Lists: `ul`, `ol`, `li`
-- Media & code: `img`, `pre`, `code`, `svg`
-- Simple UI: `button`, `a`
+**Allowed HTML types:** div, section, header, footer, h1-h6, p, span, strong, em, blockquote, ul, ol, li, img, pre, code, svg, button, a
 
-Use semantic tags whenever possible (`h1` for main title, `h2`/`h3` for section headings, `p` for body text, etc.).
-
-> The current renderer ignores inline `style` and relies entirely on `className` and CSS utilities. You can include `style` for future‑proofing, but don’t rely on it for visual changes today.
-
-### 4. Dynamic backgrounds (per‑slide)
-
-You can configure a rich animated background per slide via `metadata.background`.
-
-Supported `background.type` values:
-
-- `"mesh"` – animated mesh gradient background.
-  ```json
-  {
-    "metadata": {
-      "background": {
-        "type": "mesh",
-        "colors": ["#7c3aed", "#6366f1", "#a855f7"],
-        "animation": "slow"
-      }
-    }
+**Manifest format:**
+```json
+{
+  "slides": ["slide01.json", "slide02.json", "slide03.json"],
+  "metadata": {
+    "title": "Presentation Title",
+    "theme": "dark",
+    "transition": "slide"
   }
-  ```
-  - `colors` (array of 1–3 hex strings) – gradient colors.
-  - `animation` – `"none" | "slow" | "medium" | "fast"` (controls movement speed).
-
-- `"particles"` – floating ambient particles.
-  ```json
-  {
-    "metadata": {
-      "background": {
-        "type": "particles",
-        "count": 40,
-        "color": "#a855f7",
-        "speed": "medium"
-      }
-    }
-  }
-  ```
-  - `count` – number of particles (20–50 recommended).
-  - `color` – particle color (hex).
-  - `speed` – `"slow" | "medium" | "fast"` (movement speed).
-
-- `"mesh-particles"` – mesh gradient + particles combined.
-  ```json
-  {
-    "metadata": {
-      "background": {
-        "type": "mesh-particles",
-        "colors": ["#8b5cf6", "#ec4899", "#a855f7"],
-        "animation": "slow",
-        "count": 30,
-        "color": "#a855f7"
-      }
-    }
-  }
-  ```
-
-- `"gradient"` – static linear gradient.
-  ```json
-  {
-    "metadata": {
-      "background": {
-        "type": "gradient",
-        "colors": ["#1e293b", "#334155", "#475569"]
-      }
-    }
-  }
-  ```
-
-- `"solid"` – flat background color.
-  ```json
-  {
-    "metadata": {
-      "background": {
-        "type": "solid",
-        "color": "#0f172a"
-      }
-    }
-  }
-  ```
-
-> You can combine metadata backgrounds with additional visual elements in `root` (e.g. gradient overlays) when needed, but prefer `metadata.background` for primary slide backgrounds.
+}
+```
 
 ---
 
-### 5. How to build and edit a deck with this template
+### 4. Component Catalog
 
-When a user asks you to create or update a presentation:
+#### Icons (35 available, use `type: "svg"`)
 
-1. **Clarify the story and structure**
-   - Identify major sections: intro, problem, solution, architecture, metrics, roadmap, etc.
-   - Decide on an approximate slide count and the purpose of each slide.
+| Category | Icons |
+|----------|-------|
+| **UI** | Sparkles, Check, Star, Zap, ChevronRight, ArrowRight |
+| **Symbols** | Rocket, Target, Award, Trophy, Heart, Lightbulb |
+| **Tech** | Code, Database, Globe, Lock, TestTube |
+| **Actions** | Upload, Download, Search, Settings, Mail, Phone |
+| **Data** | BarChart2, BarChart3, Activity, TrendingUp |
+| **People** | Users, Calendar, Clock, Quote, Shield, AlertCircle |
 
-2. **Set up the manifest**
-   - Edit `public/slides/manifest.json` so `slides` lists each slide file in order:
-     ```json
-     {
-       "slides": ["slide01.json", "slide02.json", "slide03.json"],
-       "metadata": {
-         "title": "Product Demo",
-         "theme": "dark",
-         "transition": "slide"
-       }
-     }
-     ```
-   - Keep filenames and `id` fields consistent (`slide01.json` → `"id": "slide01"`).
+**Usage:** `{"type": "svg", "icon": "Rocket", "size": 24, "className": "text-purple-400"}`
 
-3. **Create initial slides**
-   - For each planned slide, create a JSON skeleton with:
-     - A clear `id` and, if needed, a simple `metadata.background` configuration.
-     - A simple `root` tree using allowed tags and Tailwind classes.
-   - Start with simple, readable layouts; you can always refine them later.
+#### Charts (Recharts components)
 
-4. **Refine layout and visual hierarchy**
-   - Use Tailwind classes in `className` for:
-     - Layout: `flex`, `grid`, `items-center`, `justify-between`, `gap-8`, `px-24`, `py-20`.
-     - Typography: `text-5xl`, `font-semibold`, `leading-tight`, `tracking-tight`.
-     - Color: `text-white`, `text-gray-300`, `bg-slate-900`, gradient utilities (`bg-gradient-to-br`, `from-violet-900`, etc.).
-   - For more advanced layouts (e.g. columns, cards, highlights), compose nested `div`s with clear class names rather than overusing inline `style`.
+**Containers:** BarChart, LineChart, AreaChart, PieChart, RadarChart
+**Elements:** Bar, Line, Area, Pie, Radar
+**Axes:** XAxis, YAxis, CartesianGrid, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+**Accessories:** Tooltip, Legend, ResponsiveContainer, Cell
 
-5. **Iterate on content**
-   - It is safe to regenerate a slide JSON file multiple times:
-1.  **Clarify the story and structure**
-    - Identify major sections: intro, problem, solution, architecture, metrics, roadmap, etc.
-    - Decide on an approximate slide count and the purpose of each slide.
+**Example:** Check example slides for complete chart implementations with data, axes, tooltips, and styling.
 
-2.  **Set up the manifest**
-    - Edit `public/slides/manifest.json` so `slides` lists each slide file in order:
-      ```json
-      {
-        "slides": ["slide01.json", "slide02.json", "slide03.json"],
-        "metadata": {
-          "title": "Product Demo",
-          "theme": "dark",
-          "transition": "slide"
-        }
-      }
-      ```
-    - Keep filenames and `id` fields consistent (`slide01.json` → `"id": "slide01"`).
+#### CSS Classes
 
-3.  **Create initial slides**
-    - For each planned slide, create a JSON skeleton with:
-      - A clear `id` and, if needed, a simple `metadata.background` configuration.
-      - A simple `root` tree using allowed tags and Tailwind classes.
-    - Start with simple, readable layouts; you can always refine them later.
+| Category | Classes |
+|----------|---------|
+| **Typography** | slide-title, slide-subtitle, slide-heading, slide-display, slide-stat, slide-caption |
+| **Glass** | glass, glass-panel, glass-blue, glass-purple, glass-cyan, glass-emerald |
+| **Layout** | layout-center, layout-split, layout-default, grid-2, grid-3 |
+| **Effects** | hover-lift, hover-glow, text-gradient, text-shadow-glow-white-md |
+| **Fragments** | fragment, fade-in, fade-in-then-semi-out |
 
-4.  **Refine layout and visual hierarchy**
-    - Use Tailwind classes in `className` for:
-      - Layout: `flex`, `grid`, `items-center`, `justify-between`, `gap-8`, `px-24`, `py-20`.
-      - Typography: `text-5xl`, `font-semibold`, `leading-tight`, `tracking-tight`.
-      - Color: `text-white`, `text-gray-300`, `bg-slate-900`, gradient utilities (`bg-gradient-to-br`, `from-violet-900`, etc.).
-    - For more advanced layouts (e.g. columns, cards, highlights), compose nested `div`s with clear class names rather than overusing inline `style`.
+#### Backgrounds (metadata.background)
 
-5.  **Iterate on content**
-    - It is safe to regenerate a slide JSON file multiple times:
-      - Rewrite headings for clarity.
-      - Shorten or expand body text.
-      - Reorder points or change examples.
-    - Always emit **valid JSON** (no trailing commas or comments).
-
-6.  **Use fragments for step-by-step reveals**
-    - Add the `fragment` class to elements that should appear one at a time:
-      ```json
-      {
-        "type": "div",
-        "className": "fragment",
-        "children": [
-          {
-            "type": "p",
-            "className": "text-xl text-gray-200",
-            "text": "This will appear on first click"
-          }
-        ]
-      }
-      ```
-    - Fragments appear in DOM order by default
-    - Use `data-fragment-index` to control order explicitly:
-      ```json
-      {
-        "type": "p",
-        "className": "fragment",
-        "data-fragment-index": 2,
-        "text": "This appears third (index 2)"
-      }
-      ```
-    - During live streaming, fragments are shown immediately as they're generated
-    - After streaming completes, fragments behave normally (step-by-step reveals)
+| Type | Properties | Example |
+|------|------------|---------|
+| **mesh** | colors: string[], animation: "slow"\|"medium"\|"fast" | `{"type":"mesh","colors":["#7c3aed","#6366f1"],"animation":"slow"}` |
+| **particles** | count: number, color: string, speed: "slow"\|"medium"\|"fast" | `{"type":"particles","count":40,"color":"#a855f7","speed":"medium"}` |
+| **mesh-particles** | (combines mesh + particles) | `{"type":"mesh-particles","colors":["#8b5cf6"],"animation":"slow","count":30,"color":"#a855f7"}` |
+| **gradient** | colors: string[] | `{"type":"gradient","colors":["#1e293b","#334155"]}` |
+| **solid** | color: string | `{"type":"solid","color":"#0f172a"}` |
 
 ---
 
-### 6. Streaming support (platform integration)
+### 5. Fragments & Workflow
 
-When the platform generates slides dynamically, it uses a streaming protocol:
+#### Progressive Disclosure (Fragments)
 
-**Protocol:**
-1.  `file_generating` – sent when generation starts
-    - Platform navigates to the slide being generated
-    - Enters "streaming mode" (all fragments visible during generation)
-2.  `file_chunk` – sent repeatedly with partial JSON
-    - Content appears live as it's being generated
-    - Fragments show immediately (no waiting for navigation)
-3.  `file_generated` – sent when generation completes
-    - Exits streaming mode
-    - Navigates to last fragment properly
+Add `"className": "fragment"` to elements for step-by-step reveals:
 
-**For LLM builders:**
-- You don't need to handle streaming yourself - the platform does this automatically
-- Just generate valid slide JSON using the streaming tool calls
-- Fragments will appear live during generation, then work normally afterwards
-- The presentation gracefully handles partial JSON (shows what's parseable)
+```json
+{
+  "type": "p",
+  "className": "fragment fade-in",
+  "data-fragment-index": 0,
+  "text": "Appears on first click"
+}
+```
+
+- Fragments appear in DOM order by default
+- Use `data-fragment-index` to control order explicitly
+- During live generation, fragments show immediately
+- After generation, fragments work as step-by-step reveals
+
+#### Live Preview
+
+Slides appear in real-time as you generate them - just create valid JSON files and they'll render automatically in the presentation.
 
 ---
 
-### 7. Safety and constraints
+### 6. Theme Customization
 
-To keep the template stable and maintainable:
+#### CSS Variables (edit `public/slides-styles.css`)
 
-- Only modify:
-  - `public/slides/manifest.json`
-  - `public/slides/slideNN.json`
-  - `public/slides-styles.css` (for global visual refinements)
-- Do **not**:
-  - Add new external scripts or CDN dependencies.
-  - Touch any files under `public/_dev`.
-  - Use tags or style properties outside the allowed sets listed above.
+Customize theme by editing CSS variables:
 
-When in doubt:
-- Copy an existing slide from this template, adjust `text` and `className`, and keep the overall structure and tags consistent.
-- Aim for clean, readable JSON and a small, focused set of classes/styles per element. This makes future edits and refinements easier for both you and other agents.
+```css
+:root {
+  --bg-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --font-display: 'Inter', -apple-system, sans-serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --accent-gradient: linear-gradient(to right, #8b5cf6, #ec4899);
+  --glass-bg: rgba(15, 23, 42, 0.7);
+}
+```
+
+**When to customize:** Only when default theme doesn't match user's requested aesthetic (cyberpunk, corporate, playful, etc.). Default theme works for most presentations.
+
+**What you can change:** Colors, fonts, gradients, glass opacity, glow effects, animations.
+
+---
+
+## Summary
+
+- **Work with:** Slide JSON files, manifest.json, optionally slides-styles.css
+- **Never touch:** _dev/ directory, index.html, build files
+- **Learn from:** Example slides in public/slides/ (working patterns to copy)
+- **Reference:** Component catalog (Section 4) for available icons, charts, classes
+- **Generate:** Valid JSON only - runtime handles rendering

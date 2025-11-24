@@ -6,7 +6,7 @@ import {
     Users, TrendingUp, Shield, Trophy, Heart, Lightbulb, Code, Database,
     Globe, Lock, Mail, Phone, Settings, Upload, Download, Search,
     Calendar, Clock, BarChart2, BarChart3, Activity, AlertCircle,
-    Quote, TestTube, ArrowRight
+    Quote, TestTube, ArrowRight, Layout, Palette, Cpu
 } from 'lucide-react'
 
 import {
@@ -14,6 +14,9 @@ import {
     PieChart, Pie, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts'
+
+// Import ALL exports from slides-library so any new component is automatically available
+import * as SlideLibrary from '../../../slides-library.jsx'
 
 export { React }
 
@@ -146,7 +149,10 @@ export async function setupGlobals() {
         TimelineSlide, TwoColumnSlide, CodeSlide, ComparisonSlide,
         QuoteSlide, ImageSlide, FullImageSlide, CallToActionSlide,
         GlassCard, SlideContainer, SlideTitle, IconBadge,
-        GradientBackdrop, GradientBox, GradientText, Fragment, Divider
+        GradientBackdrop, GradientBox, GradientText, Fragment, Divider,
+        // Automatically include ALL exports from slides-library.jsx
+        // This allows LLMs to create new components without manual registration
+        ...SlideLibrary
     }
 
     // Register Lucide Icons
@@ -155,7 +161,7 @@ export async function setupGlobals() {
         Users, TrendingUp, Shield, Trophy, Heart, Lightbulb, Code, Database,
         Globe, Lock, Mail, Phone, Settings, Upload, Download, Search,
         Calendar, Clock, BarChart2, BarChart3, Activity, AlertCircle,
-        Quote, TestTube, ArrowRight
+        Quote, TestTube, ArrowRight, Layout, Palette, Cpu
     }
 
     window.SlideUtils = {

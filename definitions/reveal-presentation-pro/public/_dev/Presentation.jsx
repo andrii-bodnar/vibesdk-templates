@@ -188,6 +188,12 @@ export default function Presentation({
                         }
                         break;
 
+                    case 'NAVIGATE_TO_SLIDE':
+                        if (deck && message.data && typeof message.data.index === 'number') {
+                            deck.slide(message.data.index);
+                        }
+                        break;
+
                     case 'SELECT_ELEMENT':
                         if (message.data.slideIndex !== undefined && message.data.elementId) {
                             setSelectedElement({

@@ -1,70 +1,337 @@
 {
-  "id": "slide02",
-  "canvas": {
-    "width": 1920,
-    "height": 1080
-  },
-  "root": {
-    "type": "div",
-    "className": "relative w-full h-full bg-slate-900",
-    "children": [
-      {
+    "id": "slide02",
+    "root": {
         "type": "div",
-        "className": "flex flex-col h-full px-20 py-16 gap-12 items-center text-center",
+        "className": "layout-split",
         "children": [
-          {
-            "type": "h2",
-            "className": "slide-title",
-            "children": [
-              {
-                "type": "span",
-                "className": "bg-gradient-to-r from-emerald-300 to-emerald-500 bg-clip-text text-transparent",
-                "text": "Welcome"
-              }
-            ]
-          },
-          {
-            "type": "div",
-            "className": "flex-1 flex justify-center animate-fade-in-delay",
-            "children": [
-              {
+            {
                 "type": "div",
-                "className": "text-5xl text-white leading-relaxed max-w-5xl",
+                "className": "flex-col justify-center gap-responsive-lg",
                 "children": [
-                  {
-                    "type": "p",
-                    "className": "text-5xl leading-relaxed max-w-4xl",
-                    "children": [
-                      {
-                        "type": "span",
-                        "text": "Create stunning, modern presentations with glass morphism effects, sophisticated gradients, and smooth animations. This template combines the power of "
-                      },
-                      {
-                        "type": "span",
-                        "className": "bg-gradient-to-r from-emerald-500 to-emerald-700 bg-clip-text text-transparent font-semibold",
-                        "text": "Reveal.js"
-                      },
-                      {
-                        "type": "span",
-                        "text": " with beautiful React components and cutting-edge design."
-                      }
-                    ]
-                  }
+                    {
+                        "type": "div",
+                        "className": "flex items-center gap-3 mb-2",
+                        "children": [
+                            {
+                                "type": "svg",
+                                "icon": "Sparkles",
+                                "size": 20,
+                                "className": "text-purple-400"
+                            },
+                            {
+                                "type": "span",
+                                "className": "text-sm font-mono tracking-wider text-purple-400 uppercase",
+                                "text": "Why It Matters"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "h2",
+                        "className": "slide-title text-gradient mb-4",
+                        "text": "Why Choose Reveal Pro?"
+                    },
+                    {
+                        "type": "p",
+                        "className": "slide-subtitle mb-responsive-lg",
+                        "text": "Move beyond static slides. Embrace a platform that combines the flexibility of the web with the elegance of premium design."
+                    },
+                    {
+                        "type": "ul",
+                        "className": "flex-col gap-3",
+                        "children": [
+                            {
+                                "type": "li",
+                                "className": "flex items-start gap-3 text-sm-responsive text-white/80",
+                                "children": [
+                                    {
+                                        "type": "svg",
+                                        "icon": "Check",
+                                        "size": 18,
+                                        "className": "text-cyan-400 mt-1 flex-shrink-0"
+                                    },
+                                    {
+                                        "type": "span",
+                                        "text": "Interactive web components"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "li",
+                                "className": "flex items-start gap-3 text-sm-responsive text-white/80",
+                                "children": [
+                                    {
+                                        "type": "svg",
+                                        "icon": "Check",
+                                        "size": 18,
+                                        "className": "text-purple-400 mt-1 flex-shrink-0"
+                                    },
+                                    {
+                                        "type": "span",
+                                        "text": "Real-time streaming"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "li",
+                                "className": "flex items-start gap-3 text-sm-responsive text-white/80",
+                                "children": [
+                                    {
+                                        "type": "svg",
+                                        "icon": "Check",
+                                        "size": 18,
+                                        "className": "text-pink-400 mt-1 flex-shrink-0"
+                                    },
+                                    {
+                                        "type": "span",
+                                        "text": "AI-powered generation"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
                 ]
-              }
-            ]
-          }
+            },
+            {
+                "type": "div",
+                "className": "h-full flex flex-col gap-4 justify-center",
+                "children": [
+                    {
+                        "type": "div",
+                        "className": "glass-panel p-6 flex-1 flex flex-col",
+                        "children": [
+                            {
+                                "type": "div",
+                                "className": "flex items-center justify-between mb-4",
+                                "children": [
+                                    {
+                                        "type": "h3",
+                                        "className": "text-lg font-semibold text-white",
+                                        "text": "Growth Trajectory"
+                                    },
+                                    {
+                                        "type": "div",
+                                        "className": "flex gap-4 text-xs",
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "className": "flex items-center gap-2",
+                                                "children": [
+                                                    {
+                                                        "type": "div",
+                                                        "className": "w-3 h-3 rounded-full bg-cyan-400"
+                                                    },
+                                                    {
+                                                        "type": "span",
+                                                        "className": "text-white/60",
+                                                        "text": "Users"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "div",
+                                                "className": "flex items-center gap-2",
+                                                "children": [
+                                                    {
+                                                        "type": "div",
+                                                        "className": "w-3 h-3 rounded-full bg-purple-400"
+                                                    },
+                                                    {
+                                                        "type": "span",
+                                                        "className": "text-white/60",
+                                                        "text": "Engagement %"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "div",
+                                "className": "flex-1 flex items-center justify-center",
+                                "children": [
+                                    {
+                                        "type": "LineChart",
+                                        "props": {
+                                            "width": 480,
+                                            "height": 280,
+                                            "data": [
+                                                {
+                                                    "month": "Jan",
+                                                    "users": 2400,
+                                                    "engagement": 80
+                                                },
+                                                {
+                                                    "month": "Feb",
+                                                    "users": 3200,
+                                                    "engagement": 85
+                                                },
+                                                {
+                                                    "month": "Mar",
+                                                    "users": 4100,
+                                                    "engagement": 88
+                                                },
+                                                {
+                                                    "month": "Apr",
+                                                    "users": 5300,
+                                                    "engagement": 92
+                                                },
+                                                {
+                                                    "month": "May",
+                                                    "users": 6800,
+                                                    "engagement": 95
+                                                },
+                                                {
+                                                    "month": "Jun",
+                                                    "users": 8500,
+                                                    "engagement": 98
+                                                }
+                                            ],
+                                            "margin": {
+                                                "top": 10,
+                                                "right": 30,
+                                                "left": 10,
+                                                "bottom": 10
+                                            }
+                                        },
+                                        "children": [
+                                            {
+                                                "type": "CartesianGrid",
+                                                "props": {
+                                                    "strokeDasharray": "3 3",
+                                                    "stroke": "#ffffff08"
+                                                }
+                                            },
+                                            {
+                                                "type": "XAxis",
+                                                "props": {
+                                                    "dataKey": "month",
+                                                    "stroke": "#94a3b8",
+                                                    "style": {
+                                                        "fontSize": "13px"
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "type": "YAxis",
+                                                "props": {
+                                                    "stroke": "#94a3b8",
+                                                    "style": {
+                                                        "fontSize": "13px"
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "type": "Tooltip",
+                                                "props": {
+                                                    "contentStyle": {
+                                                        "backgroundColor": "#1e293b",
+                                                        "border": "1px solid #475569",
+                                                        "borderRadius": "8px"
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "type": "Line",
+                                                "props": {
+                                                    "type": "monotone",
+                                                    "dataKey": "users",
+                                                    "stroke": "#38bdf8",
+                                                    "strokeWidth": 3,
+                                                    "dot": {
+                                                        "fill": "#38bdf8",
+                                                        "r": 4
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "type": "Line",
+                                                "props": {
+                                                    "type": "monotone",
+                                                    "dataKey": "engagement",
+                                                    "stroke": "#a855f7",
+                                                    "strokeWidth": 3,
+                                                    "dot": {
+                                                        "fill": "#a855f7",
+                                                        "r": 4
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "div",
+                        "className": "grid grid-cols-3 gap-3",
+                        "children": [
+                            {
+                                "type": "div",
+                                "className": "glass-panel p-3 text-center",
+                                "children": [
+                                    {
+                                        "type": "div",
+                                        "className": "text-2xl font-bold text-cyan-400 mb-1",
+                                        "text": "8.5K"
+                                    },
+                                    {
+                                        "type": "div",
+                                        "className": "text-xs text-white/60",
+                                        "text": "Active Users"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "div",
+                                "className": "glass-panel p-3 text-center",
+                                "children": [
+                                    {
+                                        "type": "div",
+                                        "className": "text-2xl font-bold text-purple-400 mb-1",
+                                        "text": "98%"
+                                    },
+                                    {
+                                        "type": "div",
+                                        "className": "text-xs text-white/60",
+                                        "text": "Engagement"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "div",
+                                "className": "glass-panel p-3 text-center",
+                                "children": [
+                                    {
+                                        "type": "div",
+                                        "className": "text-2xl font-bold text-emerald-400 mb-1",
+                                        "text": "+254%"
+                                    },
+                                    {
+                                        "type": "div",
+                                        "className": "text-xs text-white/60",
+                                        "text": "Growth"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
         ]
-      }
-    ]
-  },
-  "metadata": {
-    "title": "Welcome",
-    "notes": "Introduction slide with centered content",
-    "background": {
-      "type": "mesh",
-      "colors": ["#10b981", "#14b8a6", "#34d399"],
-      "animation": "slow"
+    },
+    "metadata": {
+        "title": "Split Layout with Chart",
+        "notes": "Features prominent LineChart showing growth metrics with stat cards below",
+        "background": {
+            "type": "mesh",
+            "colors": [
+                "#8b5cf6",
+                "#a855f7",
+                "#c084fc"
+            ],
+            "animation": "medium"
+        }
     }
-  }
 }

@@ -1,210 +1,272 @@
 {
-  "id": "slide03",
-  "canvas": {
-    "width": 1920,
-    "height": 1080
-  },
-  "root": {
-    "type": "div",
-    "className": "relative w-full h-full bg-slate-900",
-    "children": [
-      {
+    "id": "slide03",
+    "root": {
         "type": "div",
-        "className": "flex flex-col h-full px-20 py-16 gap-12",
+        "className": "layout-default justify-center",
         "children": [
-          {
-            "type": "h2",
-            "className": "slide-title",
-            "children": [
-              {
-                "type": "span",
-                "className": "bg-gradient-to-r from-purple-300 to-purple-500 bg-clip-text text-transparent",
-                "text": "Key Features"
-              }
-            ]
-          },
-          {
-            "type": "ul",
-            "className": "flex flex-col gap-6",
-            "role": "list",
-            "children": [
-              {
+            {
                 "type": "div",
-                "className": "fragment fade-in-then-semi-out",
-                "data-fragment-index": 0,
+                "className": "mb-12 text-center",
                 "children": [
-                  {
-                    "type": "li",
-                    "className": "flex gap-6 items-start group glass-blue rounded-lg px-6 py-5 hover-lift",
-                    "children": [
-                      {
-                        "type": "div",
-                        "className": "flex items-center justify-center bg-gradient-to-br from-cyan-500 to-blue-600 w-12 h-12 p-3 rounded-lg shadow-elevation-sm group-hover:scale-110",
-                        "children": [
-                          {
-                            "type": "svg",
-                            "icon": "Check",
-                            "size": 24,
-                            "className": "text-white"
-                          }
-                        ]
-                      },
-                      {
-                        "type": "div",
-                        "className": "flex-1 min-w-0",
-                        "children": [
-                          {
-                            "type": "p",
-                            "className": "slide-heading leading-snug",
-                            "text": "Beautiful Modern Design"
-                          },
-                          {
-                            "type": "p",
-                            "className": "slide-caption mt-1.5",
-                            "text": "Gradients, animations, and stunning visuals"
-                          }
-                        ]
-                      }
-                    ]
-                  }
+                    {
+                        "type": "h2",
+                        "className": "slide-title text-gradient",
+                        "text": "Key Features"
+                    },
+                    {
+                        "type": "p",
+                        "className": "slide-subtitle mx-auto",
+                        "text": "Everything you need to build world-class presentations."
+                    }
                 ]
-              },
-              {
+            },
+            {
                 "type": "div",
-                "className": "fragment fade-in-then-semi-out",
-                "data-fragment-index": 1,
+                "className": "grid-3 h-full max-h-[500px]",
                 "children": [
-                  {
-                    "type": "li",
-                    "className": "flex gap-6 items-start group glass rounded-lg px-6 py-5 hover-lift",
-                    "children": [
-                      {
+                    {
                         "type": "div",
-                        "className": "flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-700 w-12 h-12 p-3 rounded-lg shadow-elevation-sm group-hover:scale-110",
+                        "className": "glass-panel",
                         "children": [
-                          {
-                            "type": "svg",
-                            "icon": "Check",
-                            "size": 24,
-                            "className": "text-white"
-                          }
+                            {
+                                "type": "div",
+                                "className": "icon-box",
+                                "children": [
+                                    {
+                                        "type": "svg",
+                                        "icon": "Zap",
+                                        "className": "text-cyan-400",
+                                        "size": 32
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "h3",
+                                "className": "slide-heading",
+                                "text": "Lightning Fast"
+                            },
+                            {
+                                "type": "p",
+                                "className": "slide-caption mb-4",
+                                "text": "Generate complete decks in seconds with our advanced AI engine."
+                            },
+                            {
+                                "type": "ul",
+                                "className": "space-y-2",
+                                "children": [
+                                    {
+                                        "type": "li",
+                                        "className": "text-sm text-white/60 flex items-center gap-2",
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "className": "w-1 h-1 rounded-full bg-cyan-400"
+                                            },
+                                            {
+                                                "type": "span",
+                                                "text": "Auto-layouts"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "li",
+                                        "className": "text-sm text-white/60 flex items-center gap-2",
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "className": "w-1 h-1 rounded-full bg-cyan-400"
+                                            },
+                                            {
+                                                "type": "span",
+                                                "text": "Smart themes"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "li",
+                                        "className": "text-sm text-white/60 flex items-center gap-2",
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "className": "w-1 h-1 rounded-full bg-cyan-400"
+                                            },
+                                            {
+                                                "type": "span",
+                                                "text": "Live preview"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
                         ]
-                      },
-                      {
+                    },
+                    {
                         "type": "div",
-                        "className": "flex-1 min-w-0",
+                        "className": "glass-panel",
                         "children": [
-                          {
-                            "type": "p",
-                            "className": "slide-heading leading-snug",
-                            "text": "Easy to Customize"
-                          },
-                          {
-                            "type": "p",
-                            "className": "slide-caption mt-1.5",
-                            "text": "Reusable components for quick modifications"
-                          }
+                            {
+                                "type": "div",
+                                "className": "icon-box",
+                                "children": [
+                                    {
+                                        "type": "svg",
+                                        "icon": "Layout",
+                                        "className": "text-purple-400",
+                                        "size": 32
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "h3",
+                                "className": "slide-heading",
+                                "text": "Smart Layouts"
+                            },
+                            {
+                                "type": "p",
+                                "className": "slide-caption mb-4",
+                                "text": "Auto-adapting grids that ensure your content always looks perfect."
+                            },
+                            {
+                                "type": "ul",
+                                "className": "space-y-2",
+                                "children": [
+                                    {
+                                        "type": "li",
+                                        "className": "text-sm text-white/60 flex items-center gap-2",
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "className": "w-1 h-1 rounded-full bg-purple-400"
+                                            },
+                                            {
+                                                "type": "span",
+                                                "text": "Responsive grids"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "li",
+                                        "className": "text-sm text-white/60 flex items-center gap-2",
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "className": "w-1 h-1 rounded-full bg-purple-400"
+                                            },
+                                            {
+                                                "type": "span",
+                                                "text": "Flex containers"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "li",
+                                        "className": "text-sm text-white/60 flex items-center gap-2",
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "className": "w-1 h-1 rounded-full bg-purple-400"
+                                            },
+                                            {
+                                                "type": "span",
+                                                "text": "Auto-scaling"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
                         ]
-                      }
-                    ]
-                  }
+                    },
+                    {
+                        "type": "div",
+                        "className": "glass-panel",
+                        "children": [
+                            {
+                                "type": "div",
+                                "className": "icon-box",
+                                "children": [
+                                    {
+                                        "type": "svg",
+                                        "icon": "Palette",
+                                        "className": "text-pink-400",
+                                        "size": 32
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "h3",
+                                "className": "slide-heading",
+                                "text": "Premium Themes"
+                            },
+                            {
+                                "type": "p",
+                                "className": "slide-caption mb-4",
+                                "text": "Beautiful, professionally designed themes that match your brand."
+                            },
+                            {
+                                "type": "ul",
+                                "className": "space-y-2",
+                                "children": [
+                                    {
+                                        "type": "li",
+                                        "className": "text-sm text-white/60 flex items-center gap-2",
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "className": "w-1 h-1 rounded-full bg-pink-400"
+                                            },
+                                            {
+                                                "type": "span",
+                                                "text": "Color palettes"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "li",
+                                        "className": "text-sm text-white/60 flex items-center gap-2",
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "className": "w-1 h-1 rounded-full bg-pink-400"
+                                            },
+                                            {
+                                                "type": "span",
+                                                "text": "Typography"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "li",
+                                        "className": "text-sm text-white/60 flex items-center gap-2",
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "className": "w-1 h-1 rounded-full bg-pink-400"
+                                            },
+                                            {
+                                                "type": "span",
+                                                "text": "Glassmorphism"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
                 ]
-              },
-              {
-                "type": "div",
-                "className": "fragment fade-in-then-semi-out",
-                "data-fragment-index": 2,
-                "children": [
-                  {
-                    "type": "li",
-                    "className": "flex gap-6 items-start group glass rounded-lg px-6 py-5 hover-lift",
-                    "children": [
-                      {
-                        "type": "div",
-                        "className": "flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-700 w-12 h-12 p-3 rounded-lg shadow-elevation-sm group-hover:scale-110",
-                        "children": [
-                          {
-                            "type": "svg",
-                            "icon": "Check",
-                            "size": 24,
-                            "className": "text-white"
-                          }
-                        ]
-                      },
-                      {
-                        "type": "div",
-                        "className": "flex-1 min-w-0",
-                        "children": [
-                          {
-                            "type": "p",
-                            "className": "slide-heading leading-snug",
-                            "text": "Responsive & Accessible"
-                          },
-                          {
-                            "type": "p",
-                            "className": "slide-caption mt-1.5",
-                            "text": "Works perfectly on all devices"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "type": "div",
-                "className": "fragment fade-in-then-semi-out",
-                "data-fragment-index": 3,
-                "children": [
-                  {
-                    "type": "li",
-                    "className": "flex gap-6 items-start group glass rounded-lg px-6 py-5 hover-lift",
-                    "children": [
-                      {
-                        "type": "div",
-                        "className": "flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-700 w-12 h-12 p-3 rounded-lg shadow-elevation-sm group-hover:scale-110",
-                        "children": [
-                          {
-                            "type": "svg",
-                            "icon": "Check",
-                            "size": 24,
-                            "className": "text-white"
-                          }
-                        ]
-                      },
-                      {
-                        "type": "div",
-                        "className": "flex-1 min-w-0",
-                        "children": [
-                          {
-                            "type": "p",
-                            "className": "slide-heading leading-snug",
-                            "text": "Runtime Compilation"
-                          },
-                          {
-                            "type": "p",
-                            "className": "slide-caption mt-1.5",
-                            "text": "No build step required for slides"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
+            }
         ]
-      }
-    ]
-  },
-  "metadata": {
-    "title": "Key Features",
-    "notes": "List of key features with progressive reveal",
-    "background": {
-      "type": "mesh",
-      "colors": ["#8b5cf6", "#a855f7", "#c084fc"],
-      "animation": "medium"
+    },
+    "metadata": {
+        "title": "Features Grid",
+        "notes": "3-column feature grid with nested bullet points",
+        "background": {
+            "type": "mesh",
+            "colors": [
+                "#06b6d4",
+                "#0ea5e9",
+                "#22d3ee"
+            ],
+            "animation": "medium"
+        }
     }
-  }
 }

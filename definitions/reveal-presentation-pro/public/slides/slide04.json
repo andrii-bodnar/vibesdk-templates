@@ -1,276 +1,100 @@
 {
-  "id": "slide04",
-  "canvas": {
-    "width": 1920,
-    "height": 1080
-  },
-  "root": {
-    "type": "div",
-    "className": "relative w-full h-full bg-slate-900",
-    "children": [
-      {
+    "id": "slide04",
+    "root": {
         "type": "div",
-        "className": "flex flex-col h-full px-20 py-12 gap-8",
+        "className": "layout-default justify-center",
         "children": [
-          {
-            "type": "h2",
-            "className": "slide-title",
-            "children": [
-              {
-                "type": "span",
-                "className": "bg-gradient-to-r from-cyan-300 to-cyan-500 bg-clip-text text-transparent",
-                "text": "Component Library"
-              }
-            ]
-          },
-          {
-            "type": "div",
-            "className": "flex-1 grid grid-cols-2 gap-8",
-            "children": [
-              {
+            {
                 "type": "div",
-                "className": "flex flex-col gap-6",
+                "className": "mb-8 text-center mx-auto",
                 "children": [
-                  {
-                    "type": "div",
-                    "className": "glass-cyan rounded-2xl p-8 flex flex-col items-center text-center hover-lift",
-                    "data-fragment-index": 0,
-                    "children": [
-                      {
-                        "type": "div",
-                        "className": "text-8xl font-black text-shadow-glow-white-md mb-4",
-                        "children": [
-                          {
-                            "type": "span",
-                            "className": "bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent",
-                            "text": "13"
-                          }
-                        ]
-                      },
-                      {
-                        "type": "div",
-                        "className": "w-20 h-1 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full mb-3"
-                      },
-                      {
-                        "type": "h3",
-                        "className": "slide-heading text-white/90 mb-2",
-                        "text": "Slide Templates"
-                      },
-                      {
+                    {
+                        "type": "h2",
+                        "className": "slide-title text-gradient",
+                        "text": "Component Library"
+                    },
+                    {
                         "type": "p",
-                        "className": "slide-caption text-white/70",
-                        "text": "Pre-built components"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "div",
-                    "className": "glass-purple rounded-2xl p-8 flex flex-col items-center text-center hover-lift",
-                    "data-fragment-index": 1,
-                    "children": [
-                      {
-                        "type": "div",
-                        "className": "text-8xl font-black text-shadow-glow-white-md mb-4",
-                        "children": [
-                          {
-                            "type": "span",
-                            "className": "bg-gradient-to-r from-purple-300 to-pink-400 bg-clip-text text-transparent",
-                            "text": "12"
-                          }
-                        ]
-                      },
-                      {
-                        "type": "div",
-                        "className": "w-20 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mb-3"
-                      },
-                      {
-                        "type": "h3",
-                        "className": "slide-heading text-white/90 mb-2",
-                        "text": "Color Gradients"
-                      },
-                      {
-                        "type": "p",
-                        "className": "slide-caption text-white/70",
-                        "text": "Stunning color schemes"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "div",
-                    "className": "glass-emerald rounded-2xl p-8 flex flex-col items-center text-center hover-lift",
-                    "data-fragment-index": 2,
-                    "children": [
-                      {
-                        "type": "div",
-                        "className": "text-8xl font-black text-shadow-glow-white-md mb-4",
-                        "children": [
-                          {
-                            "type": "span",
-                            "className": "bg-gradient-to-r from-emerald-300 to-teal-400 bg-clip-text text-transparent",
-                            "text": "∞"
-                          }
-                        ]
-                      },
-                      {
-                        "type": "div",
-                        "className": "w-20 h-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full mb-3"
-                      },
-                      {
-                        "type": "h3",
-                        "className": "slide-heading text-white/90 mb-2",
-                        "text": "Possibilities"
-                      },
-                      {
-                        "type": "p",
-                        "className": "slide-caption text-white/70",
-                        "text": "Unlimited combinations"
-                      }
-                    ]
-                  }
+                        "className": "slide-subtitle text-center",
+                        "text": "Pre-built components for rapid development"
+                    }
                 ]
-              },
-              {
+            },
+            {
                 "type": "div",
-                "className": "flex flex-col gap-6 justify-center",
+                "className": "grid-2 max-w-6xl mx-auto gap-responsive-lg",
                 "children": [
-                  {
-                    "type": "div",
-                    "className": "fragment zoom-in",
-                    "data-fragment-index": 3,
-                    "children": [
-                      {
-                        "type": "div",
-                        "className": "glass rounded-2xl p-7 flex items-center gap-6 group hover-lift",
+                    {
+                        "type": "StatCard",
+                        "props": {
+                            "title": "Active Users",
+                            "value": "12.5K",
+                            "trend": "+23%",
+                            "icon": "Users",
+                            "className": "w-full"
+                        }
+                    },
+                    {
+                        "type": "StatCard",
+                        "props": {
+                            "title": "Conversion Rate",
+                            "value": "8.2%",
+                            "trend": "+5.1%",
+                            "icon": "TrendingUp",
+                            "className": "w-full"
+                        }
+                    },
+                    {
+                        "type": "GlassCard",
+                        "props": {
+                            "className": "col-span-2"
+                        },
                         "children": [
-                          {
-                            "type": "div",
-                            "className": "flex items-center justify-center bg-gradient-to-br from-cyan-500 to-blue-600 w-20 h-20 p-5 rounded-xl shadow-glow-md glow-cyan group-hover:scale-110 transition-transform",
-                            "children": [
-                              {
-                                "type": "svg",
-                                "icon": "Sparkles",
-                                "size": 40,
-                                "className": "text-white icon-glow"
-                              }
-                            ]
-                          },
-                          {
-                            "type": "div",
-                            "className": "flex-1",
-                            "children": [
-                              {
-                                "type": "h4",
-                                "className": "slide-heading text-white/90 mb-1",
-                                "text": "Glass Morphism"
-                              },
-                              {
-                                "type": "p",
-                                "className": "slide-caption text-white/70",
-                                "text": "Beautiful frosted glass effects"
-                              }
-                            ]
-                          }
+                            {
+                                "type": "h3",
+                                "className": "slide-heading mb-4",
+                                "text": "Timeline Component"
+                            },
+                            {
+                                "type": "Timeline",
+                                "props": {
+                                    "items": [
+                                        {
+                                            "date": "2024 Q1",
+                                            "title": "Launch",
+                                            "description": "Platform goes live with core features"
+                                        },
+                                        {
+                                            "date": "2024 Q2",
+                                            "title": "Growth",
+                                            "description": "Reached 10K active users milestone"
+                                        },
+                                        {
+                                            "date": "2024 Q3",
+                                            "title": "Scale",
+                                            "description": "Enterprise features and integrations"
+                                        }
+                                    ],
+                                    "className": "w-full"
+                                }
+                            }
                         ]
-                      }
-                    ]
-                  },
-                  {
-                    "type": "div",
-                    "className": "fragment zoom-in",
-                    "data-fragment-index": 4,
-                    "children": [
-                      {
-                        "type": "div",
-                        "className": "glass rounded-2xl p-7 flex items-center gap-6 group hover-lift",
-                        "children": [
-                          {
-                            "type": "div",
-                            "className": "flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-600 w-20 h-20 p-5 rounded-xl shadow-glow-md glow-purple group-hover:scale-110 transition-transform",
-                            "children": [
-                              {
-                                "type": "svg",
-                                "icon": "Zap",
-                                "size": 40,
-                                "className": "text-white icon-glow"
-                              }
-                            ]
-                          },
-                          {
-                            "type": "div",
-                            "className": "flex-1",
-                            "children": [
-                              {
-                                "type": "h4",
-                                "className": "slide-heading text-white/90 mb-1",
-                                "text": "Smooth Animations"
-                              },
-                              {
-                                "type": "p",
-                                "className": "slide-caption text-white/70",
-                                "text": "Fluid transitions and effects"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "type": "div",
-                    "className": "fragment zoom-in",
-                    "data-fragment-index": 5,
-                    "children": [
-                      {
-                        "type": "div",
-                        "className": "glass rounded-2xl p-7 flex items-center gap-6 group hover-lift",
-                        "children": [
-                          {
-                            "type": "div",
-                            "className": "flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 w-20 h-20 p-5 rounded-xl shadow-glow-md glow-emerald group-hover:scale-110 transition-transform",
-                            "children": [
-                              {
-                                "type": "svg",
-                                "icon": "Star",
-                                "size": 40,
-                                "className": "text-white icon-glow"
-                              }
-                            ]
-                          },
-                          {
-                            "type": "div",
-                            "className": "flex-1",
-                            "children": [
-                              {
-                                "type": "h4",
-                                "className": "slide-heading text-white/90 mb-1",
-                                "text": "Premium Quality"
-                              },
-                              {
-                                "type": "p",
-                                "className": "slide-caption text-white/70",
-                                "text": "Professional design system"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
+                    }
                 ]
-              }
-            ]
-          }
+            }
         ]
-      }
-    ]
-  },
-  "metadata": {
-    "title": "Component Library Showcase",
-    "notes": "Demonstrates stats cards and fragment animations with glass morphism effects",
-    "background": {
-      "type": "mesh",
-      "colors": ["#06b6d4", "#0ea5e9", "#22d3ee"],
-      "animation": "medium"
+    },
+    "metadata": {
+        "title": "Component Library",
+        "notes": "Demonstrates StatCard, GlassCard, and Timeline custom components with proper children handling",
+        "background": {
+            "type": "mesh",
+            "colors": [
+                "#8b5cf6",
+                "#ec4899",
+                "#a855f7"
+            ],
+            "animation": "medium"
+        }
     }
-  }
 }

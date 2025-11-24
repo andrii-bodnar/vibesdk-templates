@@ -12,7 +12,7 @@ export function renderSlideElement(element, key = 0, pathPrefix = '') {
 
     // Check if it's a registered component
     const isRichComponent = window.Recharts?.[element.type] || window.SlideTemplates?.[element.type];
-    const isIcon = element.type === 'svg' && element.icon && window.LucideReact?.[element.icon];
+    const isIcon = (element.type === 'svg' && element.icon && window.LucideReact?.[element.icon]) || (element.type === 'Icon');
 
     if (!isHtmlElement && !isRichComponent && !isIcon) {
         console.warn('Blocked or unknown element type', element.type);
@@ -22,7 +22,7 @@ export function renderSlideElement(element, key = 0, pathPrefix = '') {
     // Generate a unique ID if one doesn't exist
     const elementId = element.id || `${pathPrefix}-${element.type}-${key}`;
 
-    // Handle SVG icons
+    // Handle SVG icons (legacy format)
     if (element.type === 'svg' && element.icon) {
         const IconComponent = window.LucideReact?.[element.icon];
 
@@ -45,6 +45,27 @@ export function renderSlideElement(element, key = 0, pathPrefix = '') {
         return React.createElement(IconComponent, iconProps);
     }
 
+    // Handle 'Icon' type (new format)
+    if (element.type === 'Icon') {
+        const iconName = element.props?.name;
+        const IconComponent = window.LucideReact?.[iconName];
+
+        if (!IconComponent) {
+            console.warn(`Icon "${iconName}" not found in LucideReact`);
+            return null;
+        }
+
+        const { name, ...otherProps } = element.props || {};
+        const iconProps = {
+            key,
+            className: element.className,
+            'data-id': elementId,
+            ...otherProps
+        };
+
+        return React.createElement(IconComponent, iconProps);
+    }
+
     // Handle Rich Components (Recharts, SlideTemplates)
     const RichComponent = window.Recharts?.[element.type] || window.SlideTemplates?.[element.type];
     if (RichComponent) {
@@ -54,7 +75,20 @@ export function renderSlideElement(element, key = 0, pathPrefix = '') {
             'data-id': elementId,
             ...element.props
         };
-        return React.createElement(RichComponent, componentProps);
+
+        // CRITICAL: Process children for custom components just like HTML elements
+        const children = [];
+        if (element.text) {
+            children.push(element.text);
+        }
+        if (element.children && Array.isArray(element.children)) {
+            element.children.forEach((child, index) => {
+                children.push(renderSlideElement(child, index, `${pathPrefix}-${key}`));
+            });
+        }
+
+        // Pass children to component
+        return React.createElement(RichComponent, componentProps, children.length > 0 ? children : null);
     }
 
     // Build props for React element
