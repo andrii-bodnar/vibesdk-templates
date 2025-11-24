@@ -1,7 +1,7 @@
 # Usage
 
 ## Overview
-Cloudflare Workers + React. Storage via a single Durable Object (DO) wrapped to support multiple entities.
+Cloudflare Workers + React. Storage via a single Durable Object (DO) powered library to support multiple entities on a single DO.
 - Frontend: React Router 6 + TypeScript + ShadCN UI
 - Backend: Hono Worker; persistence through one DO (no direct DO access)
 - Shared: Types in `shared/types.ts`
@@ -23,6 +23,7 @@ Cloudflare Workers + React. Storage via a single Durable Object (DO) wrapped to 
 - **Error Handling**: ErrorBoundary components are pre-implemented
 - **Worker Patterns**: Follow exact patterns in `worker/index.ts` to avoid breaking functionality
 - **CRITICAL**: You CANNOT modify `wrangler.jsonc` - only use the single `GlobalDurableObject` binding
+- **CRITICAL**: You CANNOT modify `worker/core-utils.ts` - it is a library to abstract durable object operations, handcrafted by a team of experts at Cloudflare
 
 ## Styling
 - Responsive, accessible
@@ -40,7 +41,7 @@ Cloudflare Workers + React. Storage via a single Durable Object (DO) wrapped to 
 ### Backend Structure
 - `worker/index.ts` - Worker entrypoint (registers routes; do not change patterns)
 - `worker/user-routes.ts` - Add routes here using existing helpers
-- `worker/core-utils.ts` - DO + core index/entity utilities and HTTP helpers (**DO NOT MODIFY**)
+- `worker/core-utils.ts` - DO + core index/entity utilities (**DO NOT MODIFY**)
 - `worker/entities.ts` - Demo entities (users, chats)
 
 ### Shared
@@ -69,7 +70,8 @@ app.post('/api/users', async (c) => {
 - Share types via `shared/types.ts`
 
 ## Bindings
-CRITICAL: only `GlobalDurableObject` is available for stateful ops
+CRITICAL: only `GlobalDurableObject` is available for stateful ops and is managed by our custom library. It is not to be modified or accessed directly in any way.
+
 **IMPORTANT: You are NOT ALLOWED to edit/add/remove ANY worker bindings OR touch wrangler.jsonc/wrangler.toml. Build your application around what is already provided.**
 
 **YOU CANNOT**:
@@ -80,6 +82,26 @@ CRITICAL: only `GlobalDurableObject` is available for stateful ops
 ## Storage Patterns
 - Use Entities/Index utilities from `core-utils.ts`; avoid raw DO calls
 - Atomic ops via provided helpers
+
+Example of using the core-utils library:
+```ts
+import { IndexedEntity } from "./core-utils";
+import type { User, Chat, ChatMessage } from "@shared/types";
+import { MOCK_CHAT_MESSAGES, MOCK_CHATS, MOCK_USERS } from "@shared/mock-data";
+
+export class UserEntity extends IndexedEntity<User> {
+  static readonly entityName = "user";
+  static readonly indexName = "users";
+  static readonly initialState: User = { id: "", name: "" };
+  static seedData = MOCK_USERS;
+}
+```
+
+Then you can do stuff like:
+```ts
+const user = await UserEntity.create(c.env, { id: crypto.randomUUID(), name: name.trim() });
+await UserEntity.list(c.env, null, 10); // Fetch first 10 users
+```
 
 ## Frontend
 - Call `/api/*` endpoints directly
