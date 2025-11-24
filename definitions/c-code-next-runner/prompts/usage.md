@@ -122,3 +122,6 @@ export function Hero() {
   )
 }
 ```
+
+All SHADCN Components are present in ./src/components/ui/* and can be imported from there, example: import { Button } from "@/components/ui/button";
+**Please do not rewrite these components, just import them and use them**

@@ -1,0 +1,11 @@
+[
+  "prompts/usage.md",
+  "prompts/selection.md",
+  "public/slides/",
+  "public/slides/manifest.json",
+  "public/slides-library.jsx",
+  "public/slides-styles.css",
+  "package.json", 
+  "wrangler.jsonc",
+  "public/index.html"
+]

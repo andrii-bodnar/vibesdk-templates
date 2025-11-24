@@ -1,3 +1,4 @@
+/* Edit this file to customize the sidebar */
 import React from "react";
 import { Home, Layers, Compass, Star, Settings, LifeBuoy } from "lucide-react";
 import {

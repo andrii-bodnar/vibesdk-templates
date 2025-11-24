@@ -178,3 +178,6 @@ import { Link } from 'react-router-dom';
 **Common errors:**
 - "useRouteError must be used within a data router" → Only use `RouteErrorBoundary` in `errorElement` field
 - "Cannot destructure property 'basename'" → Don't use `Link` outside router context
+
+All SHADCN Components are present in ./src/components/ui/* and can be imported from there, example: import { Button } from "@/components/ui/button";
+**Please do not rewrite these components, just import them and use them**

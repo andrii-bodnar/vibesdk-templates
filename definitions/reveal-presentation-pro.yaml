@@ -1,13 +1,12 @@
-name: "reveal-presentation-dev"
+name: "reveal-presentation-pro"
 description: "Advanced Reveal.js presentation template with glass morphism design, runtime JSX compilation, and comprehensive slide components"
 base_reference: "minimal-js-reference"
 projectType: presentation
 renderMode: browser
 slideDirectory: "public/slides"
-disabled: true
 
 package_patches:
-  name: "reveal-presentation-dev"
+  name: "reveal-presentation-pro"
   scripts:
     lint:fix: "eslint --cache --fix ."
     format: "prettier --write \"**/*.{js,jsx,json,md,css}\""
