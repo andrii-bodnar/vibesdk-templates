@@ -26,20 +26,10 @@
 			"id": "{{KV_ID}}"
 		}
 	],
-	"triggers": {
-		"crons": [
-			"0 * * * *",
-			"0 */3 * * *",
-			"0 */6 * * *",
-			"0 */12 * * *",
-			"0 0 * * *",
-			"0 0 * * 0",
-			"0 0 1 * *"
-		]
-	},
 	"vars": {
 		"CROWDIN_CLIENT_ID": "{{CROWDIN_CLIENT_ID}}",
-		"CROWDIN_CLIENT_SECRET": "{{CROWDIN_CLIENT_SECRET}}"
+		"CROWDIN_CLIENT_SECRET": "{{CROWDIN_CLIENT_SECRET}}",
+		"SCHEDULED_SECRET": "{{SCHEDULED_SECRET}}"
 	}
 }
 

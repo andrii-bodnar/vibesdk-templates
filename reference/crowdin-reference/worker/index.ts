@@ -74,11 +74,36 @@ function initializeHandler(env: CloudflareEnv): ExportedHandler {
 
 export default {
     async fetch(request: Request<unknown, IncomingRequestCfProperties>, env: CloudflareEnv, ctx: ExecutionContext) {
+        const url = new URL(request.url);
+        
+        // Handle scheduled cron trigger via HTTP endpoint
+        if (url.pathname === '/__scheduled' && request.method === 'GET') {
+            // Verify scheduled secret header
+            const scheduledSecret = request.headers.get('X-Cloudflare-Scheduled-Secret');
+            if (!scheduledSecret || scheduledSecret !== env.SCHEDULED_SECRET) {
+                return new Response('Unauthorized', { status: 401 });
+            }
+            
+            const cronExpression = url.searchParams.get('cron');
+            
+            if (!cronExpression) {
+                return new Response('Missing cron parameter', { status: 400 });
+            }
+            
+            try {
+                // Initialize app to ensure cron tasks are registered
+                initializeApp(env);
+                
+                // Run scheduled tasks for the given cron expression
+                await cron.runScheduled(cronExpression.replace(/\+/g, ' '));
+                
+                return new Response('Scheduled tasks executed successfully', { status: 200 });
+            } catch (error) {
+                console.error('Error executing scheduled tasks:', error);
+                return new Response('Error executing scheduled tasks', { status: 500 });
+            }
+        }
+        
         return initializeHandler(env).fetch!(request, env, ctx);
-    },
-
-    async scheduled(controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext): Promise<void> {
-        initializeApp(env);
-        ctx.waitUntil(cron.runScheduled(controller.cron));
     }
 }
