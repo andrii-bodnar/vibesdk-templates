@@ -176,6 +176,102 @@ export default function Presentation({
         }
     }, [mode, deck]);
 
+    // Listen for file events directly from parent window (simplified communication)
+    useEffect(() => {
+        if (window.parent === window) return; // Not in iframe, skip
+
+        const handleFileEvent = (event) => {
+            try {
+                const message = event.detail;
+
+                switch (message.type) {
+                    case 'file_generating':
+                        if (message.path && message.path.includes('slides/')) {
+                            console.log('[Presentation] File generating:', message.path);
+                            buffersRef.current[message.path] = new StreamingBuffer();
+                            setIsAutoNavigationEnabled(true);
+                            setIsStreamingSlide(true);
+
+                            const filename = message.path.split('/').pop();
+                            const slideIndex = manifest?.slides?.findIndex(s => s === filename);
+
+                            if (slideIndex !== -1 && slides[slideIndex]) {
+                                const slideId = slides[slideIndex].id;
+                                console.log(`[Presentation] Existing streaming slide: ${filename} -> ${slideId}`);
+                                setPendingNavigationSlideId(slideId);
+                                streamingSlideIdRef.current = slideId;
+                            } else {
+                                console.log(`[Presentation] New streaming slide: ${filename}`);
+                                streamingSlideIdRef.current = null;
+                            }
+                        }
+                        break;
+
+                    case 'file_chunk':
+                        if (message.path && buffersRef.current[message.path]) {
+                            try {
+                                buffersRef.current[message.path].addChunk(message.chunk);
+                                const parsed = validateAndFixSlide(buffersRef.current[message.path].tryParse());
+
+                                // Check if validation failed and returned a placeholder
+                                // We don't want to flash "Invalid slide content" during streaming
+                                const isPlaceholder = parsed.root?.children?.[0]?.text === 'Invalid slide content';
+
+                                if (!isPlaceholder) {
+                                    const merged = mergeWithBase(parsed);
+                                    setStreamingSlides(prev => ({ ...prev, [message.path]: merged }));
+
+                                    if (streamingSlideIdRef.current === null && parsed.id) {
+                                        console.log(`[Presentation] First parse for new slide: ${parsed.id}`);
+                                        setPendingNavigationSlideId(parsed.id);
+                                        streamingSlideIdRef.current = parsed.id;
+                                    }
+                                }
+                            } catch (error) {
+                                // Buffer incomplete, waiting for more chunks
+                            }
+                        }
+                        break;
+
+                    case 'file_generated':
+                        if (message.path && message.path.includes('slides/')) {
+                            console.log('[Presentation] File generated:', message.path);
+                            delete buffersRef.current[message.path];
+                            if (message.contents) {
+                                try {
+                                    const parsed = validateAndFixSlide(JSON.parse(message.contents));
+                                    const merged = mergeWithBase(parsed);
+                                    setStreamingSlides(prev => ({ ...prev, [message.path]: merged }));
+                                    setIsStreamingSlide(false);
+                                } catch (error) {
+                                    console.error('[Presentation] Failed to parse generated file:', error);
+                                }
+                            }
+                        }
+                        break;
+                }
+            } catch (error) {
+                console.error('[Presentation] Error handling file event:', error);
+            }
+        };
+
+        // Listen to file events forwarded via postMessage
+        const handleMessage = (event) => {
+            // We expect messages forwarded from parent with type 'file_generating', 'file_chunk', etc.
+            // The parent forwards the CustomEvent detail as the message data
+            const message = event.data;
+            if (!message || !message.type) return;
+
+            // Filter for relevant event types
+            if (['file_generating', 'file_chunk', 'file_generated'].includes(message.type)) {
+                handleFileEvent({ detail: message });
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, [slides, manifest, mergeWithBase]);
+
     // Listen for messages from parent editor / preview bridge
     useEffect(() => {
         const handleMessage = (event) => {
@@ -240,107 +336,6 @@ export default function Presentation({
 
                     case 'DELETE_ELEMENT':
                         console.log('[Presentation] Delete element requested:', message.data);
-                        break;
-
-                    case 'file_generating':
-                        if (message.path) {
-                            console.log('[Presentation] File generating:', message.path);
-                            buffersRef.current[message.path] = new StreamingBuffer();
-                            setIsAutoNavigationEnabled(true);
-                            setIsStreamingSlide(true);
-
-                            const filename = message.path.split('/').pop();
-
-                            // Try to find existing slide in manifest
-                            const slideIndex = manifest?.slides?.findIndex(s => s === filename);
-
-                            if (slideIndex !== -1 && slides[slideIndex]) {
-                                // Existing slide - navigate immediately
-                                const slideId = slides[slideIndex].id;
-                                console.log(`[Presentation] Identified existing streaming slide: ${filename} -> Index ${slideIndex}, ID ${slideId}`);
-                                setPendingNavigationSlideId(slideId);
-                                streamingSlideIdRef.current = slideId;
-                            } else {
-                                // New slide - will navigate on first successful parse
-                                console.log(`[Presentation] New streaming slide: ${filename} - will navigate on first parse`);
-                                streamingSlideIdRef.current = null;
-                            }
-                        }
-                        break;
-
-                    case 'file_chunk':
-                        if (message.path && buffersRef.current[message.path]) {
-                            try {
-                                buffersRef.current[message.path].addChunk(message.chunk);
-                                const parsed = validateAndFixSlide(buffersRef.current[message.path].tryParse());
-                                const merged = mergeWithBase(parsed);
-                                setStreamingSlides(prev => ({ ...prev, [message.path]: merged }));
-
-                                // For new slides, navigate on first successful parse
-                                if (streamingSlideIdRef.current === null && parsed.id) {
-                                    console.log(`[Presentation] First parse successful for new slide: ${parsed.id}`);
-                                    setPendingNavigationSlideId(parsed.id);
-                                    streamingSlideIdRef.current = parsed.id;
-                                }
-                            } catch (error) {
-                                // Buffer incomplete, waiting for more chunks
-                            }
-                        }
-                        break;
-
-                    case 'file_generated':
-                        if (message.path) {
-                            console.log('[Presentation] File generated:', message.path);
-                            delete buffersRef.current[message.path];
-                            if (message.contents) {
-                                try {
-                                    const parsed = validateAndFixSlide(JSON.parse(message.contents));
-                                    const merged = mergeWithBase(parsed);
-
-                                    setStreamingSlides(prev => ({
-                                        ...prev,
-                                        [message.path]: merged,
-                                    }));
-
-                                    // Exit streaming mode
-                                    setIsStreamingSlide(false);
-                                    streamingSlideIdRef.current = null;
-
-                                    // Navigate to last fragment after CSS is removed and Reveal re-enables fragments
-                                    setTimeout(() => {
-                                        if (deck && isAutoNavigationEnabled) {
-                                            const currentSlide = deck.getCurrentSlide();
-                                            if (currentSlide) {
-                                                const fragments = currentSlide.querySelectorAll('.fragment');
-                                                console.log(`[Presentation] Navigating to ${fragments.length} fragment(s)`);
-
-                                                isNavigatingProgrammatically.current = true;
-                                                for (let i = 0; i < fragments.length; i++) {
-                                                    deck.navigateNext();
-                                                }
-                                                requestAnimationFrame(() => {
-                                                    isNavigatingProgrammatically.current = false;
-                                                });
-                                            }
-                                        }
-                                    }, 100);
-                                } catch (error) {
-                                    console.error('[Presentation] Failed to parse final contents for', message.path, error);
-                                    setStreamingSlides(prev => {
-                                        const next = { ...prev };
-                                        delete next[message.path];
-                                        return next;
-                                    });
-                                }
-                            } else {
-                                // Remove from streaming state, loader will fetch the final version
-                                setStreamingSlides(prev => {
-                                    const next = { ...prev };
-                                    delete next[message.path];
-                                    return next;
-                                });
-                            }
-                        }
                         break;
                 }
             } catch (error) {
