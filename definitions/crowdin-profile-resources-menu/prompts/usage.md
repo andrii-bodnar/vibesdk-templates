@@ -69,7 +69,6 @@ const configuration = {
         // Choose from the following valid scopes:
         
         // General scopes
-        crowdinModule.Scope.ALL_SCOPES,                  // 'all' - Full access (use with caution)
         crowdinModule.Scope.NOTIFICATIONS,               // 'notification' - Notifications management
         
         // Project-level scopes
