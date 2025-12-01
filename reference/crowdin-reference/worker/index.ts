@@ -57,6 +57,8 @@ function initializeApp(env: CloudflareEnv): ReturnType<typeof createApp> {
         },
         cron
     });
+    appInstance.expressApp.set('etag', false);
+
     return appInstance;
 }
 
