@@ -4,6 +4,7 @@
     ".important_files.json",
     "worker/index.ts",
     "cloudflare-env.d.ts",
+    "cloudflare-node.d.ts",
     "eslint.config.mjs",
     "package.json",
     "tsconfig.json",

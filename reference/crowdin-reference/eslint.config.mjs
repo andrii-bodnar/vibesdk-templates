@@ -20,14 +20,7 @@ export default [
         crypto: 'readonly',
         Buffer: 'readonly',
         // Cloudflare Workers globals
-        ExportedHandler: 'readonly',
         CloudflareEnv: 'readonly',
-        ExecutionContext: 'readonly',
-        Request: 'readonly',
-        Response: 'readonly',
-        IncomingRequestCfProperties: 'readonly',
-        CfProperties: 'readonly',
-        ScheduledController: 'readonly',
       },
     },
     plugins: {
@@ -42,6 +35,6 @@ export default [
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', '*.js', 'cloudflare-env.d.ts'],
+    ignores: ['dist/', 'node_modules/', '*.js', 'cloudflare-env.d.ts', 'cloudflare-node.d.ts'],
   },
 ];

@@ -1,6 +1,7 @@
 import { httpServerHandler } from 'cloudflare:node';
 import { createApp } from './app';
 import { Cron } from '@crowdin/app-project-module/out/types';
+import { ExportedHandler, Request, IncomingRequestCfProperties, ExecutionContext } from '@cloudflare/workers-types';
 
 let handler: ExportedHandler | undefined;
 let appInstance: ReturnType<typeof createApp> | undefined;

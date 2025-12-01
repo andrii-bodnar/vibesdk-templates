@@ -3,6 +3,7 @@
     "name": "crowdin-editor-right-panel",
     "language": "typescript",
     "frameworks": [
+      "cloudflare",
       "concurrently",
       "express",
       "nodemon",
@@ -18,6 +19,7 @@
     "name": "crowdin-ai-provider",
     "language": "typescript",
     "frameworks": [
+      "cloudflare",
       "concurrently",
       "express",
       "nodemon",
@@ -33,6 +35,7 @@
     "name": "crowdin-organization-menu",
     "language": "typescript",
     "frameworks": [
+      "cloudflare",
       "concurrently",
       "express",
       "nodemon",
@@ -48,6 +51,7 @@
     "name": "crowdin-profile-resources-menu",
     "language": "typescript",
     "frameworks": [
+      "cloudflare",
       "concurrently",
       "express",
       "nodemon",
@@ -63,6 +67,7 @@
     "name": "crowdin-project-tools",
     "language": "typescript",
     "frameworks": [
+      "cloudflare",
       "concurrently",
       "express",
       "nodemon",
@@ -78,6 +83,7 @@
     "name": "crowdin-file-processor",
     "language": "typescript",
     "frameworks": [
+      "cloudflare",
       "concurrently",
       "express",
       "nodemon",
@@ -93,6 +99,7 @@
     "name": "crowdin-custom-mt",
     "language": "typescript",
     "frameworks": [
+      "cloudflare",
       "concurrently",
       "express",
       "nodemon",
