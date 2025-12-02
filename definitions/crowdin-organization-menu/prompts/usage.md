@@ -119,6 +119,176 @@ const configuration = {
 }
 ```
 
+### API Endpoints Best Practices
+
+#### Common Examples
+
+**Standard Endpoint:**
+```typescript
+app.post('/api/process-data', async (req: Request, res: Response) => {
+    try {
+        const jwt = req.query.jwt as string;
+        const { data } = req.body;
+        
+        if (!jwt) {
+            return res.status(400).json({ success: false, error: 'JWT token is required' });
+        }
+        if (!data) {
+            return res.status(400).json({ success: false, error: 'Data is required' });
+        }
+
+        const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+        
+        // Your async logic here
+        const result = await processData(data);
+        
+        res.json({ 
+            success: true, 
+            result
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ success: false, error: 'Operation failed' });
+    }
+});
+```
+
+#### Best Practices
+
+1. **Always await async operations**
+   ```typescript
+   // ✅ CORRECT - all operations are awaited
+   app.post('/api/save-config', async (req: Request, res: Response) => {
+       const jwt = req.query.jwt as string;
+       const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+       
+       await crowdinModule.metadataStore.saveMetadata(key, data, connection.context.crowdinId);
+       
+       res.json({ success: true });
+   });
+   
+   // ❌ WRONG - missing await, operation will NOT complete
+   app.post('/api/save-config', async (req: Request, res: Response) => {
+       const jwt = req.query.jwt as string;
+       const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+       
+       // This will NOT save! Response is sent before operation completes
+       crowdinModule.metadataStore.saveMetadata(key, data, connection.context.crowdinId);
+       
+       res.json({ success: true });
+   });
+   ```
+
+2. **Always return response after all operations complete**
+   ```typescript
+   // ✅ CORRECT - response sent after all operations
+   app.post('/api/update', async (req: Request, res: Response) => {
+       const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+       
+       await operation1();
+       await operation2();
+       await operation3();
+       
+       res.json({ success: true }); // All operations completed
+   });
+   
+   // ❌ WRONG - response sent too early
+   app.post('/api/update', async (req: Request, res: Response) => {
+       const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+       
+       res.json({ success: true }); // Sent immediately
+       
+       await operation1(); // These will NOT execute
+       await operation2();
+       await operation3();
+   });
+   ```
+
+3. **Use Promise.all for independent parallel operations**
+   ```typescript
+   // ✅ CORRECT - parallel operations (faster)
+   const [result1, result2, result3] = await Promise.all([
+       connection.client.projectsGroupsApi.getProject(id1),
+       connection.client.projectsGroupsApi.getProject(id2),
+       connection.client.projectsGroupsApi.getProject(id3)
+   ]);
+   
+   // ❌ WRONG - sequential operations (slower)
+   const result1 = await connection.client.projectsGroupsApi.getProject(id1);
+   const result2 = await connection.client.projectsGroupsApi.getProject(id2);
+   const result3 = await connection.client.projectsGroupsApi.getProject(id3);
+   ```
+
+4. **Wrap all async code in try-catch**
+   ```typescript
+   // ✅ CORRECT - comprehensive error handling
+   app.get('/api/data', async (req: Request, res: Response) => {
+       try {
+           const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+           const data = await fetchData();
+           res.json({ success: true, data });
+       } catch (error) {
+           console.error('Error:', error);
+           res.status(500).json({ success: false, error: 'Operation failed' });
+       }
+   });
+   
+   // ❌ WRONG - no error handling
+   app.get('/api/data', async (req: Request, res: Response) => {
+       const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+       const data = await fetchData(); // May throw unhandled error
+       res.json({ success: true, data });
+   });
+   ```
+
+5. **Never use setTimeout without proper promise wrapper**
+   ```typescript
+   // ✅ CORRECT - setTimeout with promise wrapper
+   app.get('/api/delayed', async (req: Request, res: Response) => {
+       await new Promise((resolve) => {
+           setTimeout(async () => {
+               await saveData();
+               resolve(undefined);
+           }, 1000);
+       });
+       
+       res.json({ success: true });
+   });
+   
+   // ❌ WRONG - setTimeout without await (will NOT execute)
+   app.get('/api/delayed', async (req: Request, res: Response) => {
+       setTimeout(async () => {
+           await saveData(); // This will NOT execute
+       }, 1000);
+       
+       res.json({ success: true }); // Sent immediately
+   });
+   ```
+
+6. **Always check for required parameters early**
+   ```typescript
+   // ✅ CORRECT - validate parameters first
+   app.post('/api/process', async (req: Request, res: Response) => {
+       const jwt = req.query.jwt as string;
+       const { projectId, data } = req.body;
+       
+       // Validate early
+       if (!jwt) {
+           return res.status(400).json({ error: 'JWT token is required' });
+       }
+       if (!projectId) {
+           return res.status(400).json({ error: 'Project ID is required' });
+       }
+       if (!data) {
+           return res.status(400).json({ error: 'Data is required' });
+       }
+       
+       // Continue with processing
+       const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+       // ... rest of the logic
+   });
+   ```
+
 ### Crowdin API Client
 
 #### Official Documentation
@@ -274,6 +444,43 @@ response.data.forEach((fileItem: ResponseObject<SourceFilesModel.File>) => {
    // Use in your code
    const response: ResponseObject<ProjectsGroupsModel.Project> = await connection.client.projectsGroupsApi.getProject(projectId);
    const project: ProjectsGroupsModel.Project = response.data;
+   ```
+
+6. **Always sort data explicitly when order matters**
+   ```typescript
+   // ✅ CORRECT - sort projects by creation date (newest first)
+   const response = await connection.client.projectsGroupsApi.withFetchAll().listProjects();
+   const sortedByDate = response.data.sort(
+     (a: ResponseObject<ProjectsGroupsModel.Project>, b: ResponseObject<ProjectsGroupsModel.Project>) => {
+       const dateA = new Date(a.data.createdAt).getTime();
+       const dateB = new Date(b.data.createdAt).getTime();
+       return dateB - dateA; // Descending order (newest first)
+     }
+   );
+   
+   // ❌ WRONG - assuming data is already sorted by date
+   const response = await connection.client.projectsGroupsApi.withFetchAll().listProjects();
+   // Directly using response.data without sorting - order is not guaranteed!
+   ```
+
+7. **Never use CroQL - fetch all data and filter manually**
+   ```typescript
+   // ✅ CORRECT - fetch all strings and filter manually
+   const allStrings = await connection.client.sourceStringsApi.withFetchAll().listProjectStrings(projectId);
+   
+   // Filter for specific criteria
+   const filteredStrings = allStrings.data.filter(
+     (item: ResponseObject<SourceStringsModel.String>) => {
+       const str = item.data;
+       return str.text.includes('welcome') && !str.isHidden;
+     }
+   );
+   
+   // ❌ WRONG - using CroQL queries
+   const response = await connection.client.sourceStringsApi.listProjectStrings(projectId, {
+     croql: 'text contains "welcome" AND isHidden = false'
+   });
+   // CroQL should be avoided - fetch all data and filter in your code instead
    ```
 
 #### Complete Type Definitions
