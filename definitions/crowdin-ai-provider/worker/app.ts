@@ -1,10 +1,9 @@
 import * as crowdinModule from '@crowdin/app-project-module';
-import { Client } from '@crowdin/crowdin-api-client';
-import { AssetsConfig, CrowdinContextInfo, CrowdinClientRequest, FileStore, Cron } from '@crowdin/app-project-module/out/types';
-import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
-import { Request, Response } from 'express';
-import { AiToolChoice, ChatCompletionMessage, SupportedModels, ChatCompletionChunkMessage, ChatCompletionTool, ChatCompletionResponseMessage, ChatCompletionMessageToolCall } from '@crowdin/app-project-module/out/modules/ai-provider/types';
-import { ExtendedResult } from '@crowdin/app-project-module/out/modules/integration/types';
+import type { Client } from '@crowdin/crowdin-api-client';
+import type { AssetsConfig, CrowdinContextInfo, CrowdinClientRequest, FileStore, Cron, ClientConfig, CrowdinAppUtilities } from '@crowdin/app-project-module/out/types';
+import type { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
+import type { AiToolChoice, ChatCompletionMessage, SupportedModels, ChatCompletionChunkMessage, ChatCompletionTool, ChatCompletionResponseMessage, ChatCompletionMessageToolCall } from '@crowdin/app-project-module/out/modules/ai-provider/types';
+import type { ExtendedResult } from '@crowdin/app-project-module/out/modules/integration/types';
 import { RateLimitError } from '@crowdin/app-project-module/out/modules/ai-provider/util';
 
 // Configuration storage key helper
@@ -102,7 +101,7 @@ export function createApp({
 }) {
     const app = crowdinModule.express();
 
-    const configuration = {
+    const configuration: ClientConfig = {
         name: "AI Provider App",
         identifier: "ai-provider-app",
         description: "A Crowdin app with AI Provider module for custom AI model integration",
@@ -117,7 +116,6 @@ export function createApp({
         
         // API scopes - define what your app can access
         scopes: [
-            crowdinModule.Scope.PROJECTS, // Project management
             // Add other scopes as needed
         ],
         
@@ -126,11 +124,11 @@ export function createApp({
             // Settings UI module configuration
             settingsUiModule: {
                 fileName: 'index.html',
-                uiPath: '/settings'
+                uiPath: '/'
             },
 
             // Get list of available AI models
-            getModelsList: async ({ client: _client, context }: { client: Client; context: CrowdinContextInfo }): Promise<SupportedModels[]> => {
+            getModelsList: async ({ client, context }: { client: Client; context: CrowdinContextInfo }): Promise<SupportedModels[]> => {
                 const organizationId = context.jwtPayload.context.organization_id;
                 
                 // Load organization-specific AI configuration
@@ -192,13 +190,13 @@ export function createApp({
             chatCompletions: async ({
                 messages,
                 model,
-                action: _action,
+                action,
                 responseFormat,
-                client: _client,
+                client,
                 context,
-                req: _req,
-                isStream: _isStream,
-                sendEvent: _sendEvent,
+                req,
+                isStream,
+                sendEvent,
                 tools,
                 toolChoice,
             }: {
@@ -289,92 +287,7 @@ export function createApp({
     };
 
     // Initialize Crowdin app
-    const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
-
-    // Health check endpoint
-    app.get('/health', (req: Request, res: Response) => {
-        res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
-    });
-
-    // Get AI Provider configuration
-    app.get('/api/ai-config', async (req: Request, res: Response) => {
-        try {
-            const jwt = req.query.jwt as string;
-            
-            if (!jwt) {
-                return res.status(400).json({ success: false, error: 'JWT token is required' });
-            }
-            
-            if (!crowdinApp.establishCrowdinConnection) {
-                return res.status(500).json({ success: false, error: 'Crowdin connection method not available' });
-            }
-
-            const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
-
-            if (!connection.client) {
-                return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
-            }
-
-            const organizationId = connection.context.jwtPayload.context.organization_id;
-            const configKey = determineAiConfigKey(organizationId);
-            
-            // Get configuration from metadata storage
-            const config = await crowdinModule.metadataStore.getMetadata(configKey);
-            
-            res.json({ 
-                success: true, 
-                config: config || { apiKey: '', apiEndpoint: '' }
-            });
-        } catch (error) {
-            console.error('Error loading configuration:', error);
-            res.status(500).json({ success: false, error: 'Failed to load configuration' });
-        }
-    });
-
-    // Save AI Provider configuration
-    app.post('/api/ai-config', async (req: Request, res: Response) => {
-        try {
-            const jwt = req.query.jwt as string;
-            const { apiKey, apiEndpoint } = req.body;
-
-            if (!jwt) {
-                return res.status(400).json({ success: false, error: 'JWT token is required' });
-            }
-            
-            if (!crowdinApp.establishCrowdinConnection) {
-                return res.status(500).json({ success: false, error: 'Crowdin connection method not available' });
-            }
-
-            const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
-
-            if (!connection.client) {
-                return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
-            }
-
-            const organizationId = connection.context.jwtPayload.context.organization_id;
-            const configKey = determineAiConfigKey(organizationId);
-            
-            // Save configuration to metadata storage
-            const configData: AiProviderConfig = {
-                apiKey: apiKey || '',
-                apiEndpoint: apiEndpoint || '',
-            };
-            
-            await crowdinModule.metadataStore.saveMetadata(
-                configKey, 
-                configData, 
-                connection.context.crowdinId
-            );
-            
-            res.json({ 
-                success: true, 
-                message: 'AI Provider configuration saved successfully'
-            });
-        } catch (error) {
-            console.error('Error saving configuration:', error);
-            res.status(500).json({ success: false, error: 'Failed to save configuration' });
-        }
-    });
+    const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration) as CrowdinAppUtilities;
 
     return { expressApp: app, crowdinApp };
 }

@@ -1,11 +1,12 @@
 [
-    "public/",
-    "worker/",
-    "cloudflare-env.d.ts",
-    "cloudflare-node.d.ts",
-    "eslint.config.mjs",
+    "components.json",
     "package.json",
+    "tailwind.config.js",
     "tsconfig.json",
-    "wrangler.jsonc",
-    "nodemon.json"
+    "tsconfig.app.json",
+    "tsconfig.node.json",
+    "tsconfig.worker.json",
+    "src/",
+    "worker/",
+    "wrangler.jsonc"
 ]

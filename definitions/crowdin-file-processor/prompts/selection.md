@@ -22,7 +22,12 @@ Avoid when:
 Built with:
 - Crowdin Apps JS API
 - Crowdin Apps SDK (@crowdin/app-project-module)
+- React
+- ShadCN UI
+- Tailwind
+- Lucide Icons
+- ESLint
+- Vite
 - TypeScript
 - Express.js
 - Cloudflare Workers
-- HTML/CSS/JavaScript (modular structure)

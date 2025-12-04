@@ -1,7 +1,6 @@
 import * as crowdinModule from '@crowdin/app-project-module';
-import { AssetsConfig, EditorMode, FileStore, Cron } from '@crowdin/app-project-module/out/types';
-import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
-import { Request, Response } from 'express';
+import type { AssetsConfig, EditorMode, FileStore, Cron, ClientConfig, CrowdinAppUtilities } from '@crowdin/app-project-module/out/types';
+import type { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 
 export function createApp({
     clientId,
@@ -20,7 +19,7 @@ export function createApp({
 }) {
     const app = crowdinModule.express();
 
-    const configuration = {
+    const configuration: ClientConfig = {
         name: "Editor Right Panel App",
         identifier: "editor-right-panel-app",
         description: "A Crowdin app built with the SDK with Editor Right Panel module",
@@ -35,26 +34,20 @@ export function createApp({
         
         // API scopes - define what your app can access
         scopes: [
-            crowdinModule.Scope.PROJECTS,        // Project management
             // Add other scopes as needed
         ],
         
         // Editor Right Panel module configuration
         editorRightPanel: {
             fileName: 'index.html',
-            uiPath: '/editor-panels',
+            uiPath: '/',
             modes: [EditorMode.COMFORTABLE], // Specify editor modes where panel appears
             supportsMultipleStrings: true
         }
     };
 
     // Initialize Crowdin app
-    const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
-
-    // Health check endpoint
-    app.get('/health', (req: Request, res: Response) => {
-        res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
-    });
+    const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration) as CrowdinAppUtilities;
 
     return { expressApp: app, crowdinApp };
 }

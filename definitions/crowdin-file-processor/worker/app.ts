@@ -1,10 +1,8 @@
 import * as crowdinModule from '@crowdin/app-project-module';
-import { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
-import { ContentFileResponse, FileImportExportContent, ProcessFileRequest, ProcessFileString, StringsFileResponse } from '@crowdin/app-project-module/out/modules/file-processing/types';
-import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
-import { AssetsConfig, FileStore, Cron } from '@crowdin/app-project-module/out/types';
-import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
-import { Request, Response } from 'express';
+import type { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
+import type { ContentFileResponse, FileImportExportContent, ProcessFileRequest, ProcessFileString, StringsFileResponse } from '@crowdin/app-project-module/out/modules/file-processing/types';
+import type { AssetsConfig, CrowdinContextInfo, FileStore, Cron, ClientConfig, CrowdinAppUtilities } from '@crowdin/app-project-module/out/types';
+import type { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 
 // Configuration interface
 interface FileProcessorConfig {
@@ -112,7 +110,7 @@ export function createApp({
 }) {
     const app = crowdinModule.express();
 
-    const configuration = {
+    const configuration: ClientConfig = {
         name: "File Processor App",
         identifier: "file-processor-app",
         description: "A Crowdin app with configurable File Processing modules: Pre-Import, Post-Import, Pre-Export, and Post-Export",
@@ -127,7 +125,7 @@ export function createApp({
         
         // API scopes - define what your app can access
         scopes: [
-            // Add scopes as needed
+            // Add other scopes as needed
         ],
         
         /**
@@ -140,11 +138,11 @@ export function createApp({
                 fileContent: ".*"
             },
             fileProcess: async (
-                _req: ProcessFileRequest,
+                req: ProcessFileRequest,
                 content: FileImportExportContent,
-                _client: Client,
+                client: Client,
                 context: CrowdinContextInfo,
-                _projectId: number
+                projectId: number
             ): Promise<ContentFileResponse> => {
                 try {
                     // Get configuration
@@ -196,11 +194,11 @@ export function createApp({
                 fileContent: ".*"
             },
             fileProcess: async (
-                _req: ProcessFileRequest,
+                req: ProcessFileRequest,
                 content: FileImportExportContent,
-                _client: Client,
+                client: Client,
                 context: CrowdinContextInfo,
-                _projectId: number
+                projectId: number
             ): Promise<StringsFileResponse> => {
                 try {
                     // Get configuration
@@ -271,11 +269,11 @@ export function createApp({
                 fileContent: ".*"
             },
             fileProcess: async (
-                _req: ProcessFileRequest,
+                req: ProcessFileRequest,
                 content: FileImportExportContent,
-                _client: Client,
+                client: Client,
                 context: CrowdinContextInfo,
-                _projectId: number
+                projectId: number
             ): Promise<StringsFileResponse> => {
                 try {
                     // Get configuration
@@ -359,11 +357,11 @@ export function createApp({
                 fileContent: ".*"
             },
             fileProcess: async (
-                _req: ProcessFileRequest,
+                req: ProcessFileRequest,
                 content: FileImportExportContent,
-                _client: Client,
+                client: Client,
                 context: CrowdinContextInfo,
-                _projectId: number
+                projectId: number
             ): Promise<ContentFileResponse> => {
                 try {
                     // Get configuration
@@ -408,116 +406,18 @@ export function createApp({
         // Organization Menu module configuration - for Enterprise configuration UI
         organizationMenu: {
             fileName: 'index.html',
-            uiPath: '/menu'
+            uiPath: '/'
         },
 
         // Profile Resources Menu module configuration - for Crowdin configuration UI
         profileResourcesMenu: {
             fileName: 'index.html',
-            uiPath: '/menu'
+            uiPath: '/'
         }
     };
 
     // Initialize Crowdin app
-    const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
-
-    // Health check endpoint
-    app.get('/health', (req: Request, res: Response) => {
-        res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
-    });
-
-    // Get File Processor configuration
-    app.get('/api/config', async (req: Request, res: Response) => {
-        try {
-            const jwt = req.query.jwt as string;
-            
-            if (!jwt) {
-                return res.status(400).json({ success: false, error: 'JWT token is required' });
-            }
-            
-            if (!crowdinApp.establishCrowdinConnection) {
-                return res.status(500).json({ success: false, error: 'Crowdin connection method not available' });
-            }
-
-            const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
-
-            if (!connection.client) {
-                return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
-            }
-
-            const organizationId = connection.context.jwtPayload.context.organization_id;
-            const config = await getConfig(organizationId);
-            
-            res.json({ 
-                success: true, 
-                config
-            });
-        } catch (error) {
-            console.error('Error loading configuration:', error);
-            res.status(500).json({ success: false, error: 'Failed to load configuration' });
-        }
-    });
-
-    // Save File Processor configuration
-    app.post('/api/config', async (req: Request, res: Response) => {
-        try {
-            const jwt = req.query.jwt as string;
-            const { config } = req.body;
-
-            if (!jwt) {
-                return res.status(400).json({ success: false, error: 'JWT token is required' });
-            }
-
-            if (!config) {
-                return res.status(400).json({ success: false, error: 'Configuration is required' });
-            }
-            
-            if (!crowdinApp.establishCrowdinConnection) {
-                return res.status(500).json({ success: false, error: 'Crowdin connection method not available' });
-            }
-
-            const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
-
-            if (!connection.client) {
-                return res.status(500).json({ success: false, error: 'Crowdin API client not available' });
-            }
-
-            const organizationId = connection.context.jwtPayload.context.organization_id;
-            const configKey = determineConfigKey(organizationId);
-            
-            // Merge with default config to ensure all fields exist
-            const mergedConfig: FileProcessorConfig = {
-                modules: { ...defaultConfig.modules, ...config.modules },
-                preImport: { 
-                    replaceRules: config.preImport?.replaceRules || []
-                },
-                postImport: { 
-                    replaceRules: config.postImport?.replaceRules || []
-                },
-                preExport: { 
-                    replaceRules: config.preExport?.replaceRules || []
-                },
-                postExport: { 
-                    replaceRules: config.postExport?.replaceRules || []
-                }
-            };
-            
-            // Save configuration to metadata storage
-            await crowdinModule.metadataStore.saveMetadata(
-                configKey, 
-                mergedConfig, 
-                connection.context.crowdinId
-            );
-            
-            res.json({ 
-                success: true, 
-                message: 'Configuration saved successfully'
-            });
-        } catch (error) {
-            console.error('Error saving configuration:', error);
-            res.status(500).json({ success: false, error: 'Failed to save configuration' });
-        }
-    });
+    const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration) as CrowdinAppUtilities;
 
     return { expressApp: app, crowdinApp };
 }

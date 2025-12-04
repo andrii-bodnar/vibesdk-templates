@@ -1,8 +1,16 @@
 import { httpServerHandler } from 'cloudflare:node';
 import { createApp } from './app';
-import { Cron } from '@crowdin/app-project-module/out/types';
-import { ExportedHandler, Request, IncomingRequestCfProperties, ExecutionContext } from '@cloudflare/workers-types';
+import type { Cron } from '@crowdin/app-project-module/out/types';
+import type { Server } from 'node:http';
+import type { NextFunction, Request as ExpressRequest, Response as ExpressResponse } from 'express';
 
+// Close previous server on HMR reload
+const previousServer = (globalThis as any).__previousServer as Server | undefined;
+if (previousServer) {
+    previousServer.close();
+}
+
+// Module-scoped state (fresh on each module load)
 let handler: ExportedHandler | undefined;
 let appInstance: ReturnType<typeof createApp> | undefined;
 
@@ -59,6 +67,51 @@ function initializeApp(env: CloudflareEnv): ReturnType<typeof createApp> {
     });
     appInstance.expressApp.set('etag', false);
 
+    // Simple koa-style request logger
+    appInstance.expressApp.use((req: ExpressRequest, res: ExpressResponse, next: NextFunction) => {
+      const start = Date.now();
+      const path = req.url?.split('?')[0];
+      
+      console.log(`<-- ${req.method} ${path}`);
+      
+      res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`--> ${req.method} ${path} ${res.statusCode} ${duration}ms`);
+      });
+      
+      next();
+    });
+
+    appInstance.expressApp.get('/api/health', async (req: ExpressRequest, res: ExpressResponse) => {
+      return res.status(200).json({ 
+        success: true,
+        data: {
+          status: 'healthy', 
+          timestamp: new Date().toISOString()
+        }
+       });
+    });
+  
+    appInstance.expressApp.post('/api/client-errors', async (req: ExpressRequest, res: ExpressResponse) => {
+      try {
+        const { timestamp, message, url, stack, componentStack, errorBoundary } = req.body || {};
+        
+        console.error('[CLIENT ERROR]', JSON.stringify({
+          timestamp: timestamp || new Date().toISOString(),
+          message: message,
+          url: url,
+          stack: stack,
+          componentStack: componentStack,
+          errorBoundary: errorBoundary
+        }, null, 2));
+  
+        return res.status(200).json({ success: true });
+      } catch (error) {
+        console.error('[CLIENT ERROR HANDLER] Failed:', error);
+        return res.status(500).json({ success: false, error: 'Failed to process' });
+      }
+    });
+
     return appInstance;
 }
 
@@ -69,7 +122,8 @@ function initializeHandler(env: CloudflareEnv): ExportedHandler {
 
     const { expressApp: app } = initializeApp(env);
     const port: number = 3000;
-    app.listen(port);
+    // Store for cleanup on next HMR reload
+    (globalThis as any).__previousServer = app.listen(port);
     handler = httpServerHandler({ port });
 
     return handler;

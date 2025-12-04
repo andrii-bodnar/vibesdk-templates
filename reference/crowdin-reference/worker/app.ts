@@ -1,7 +1,6 @@
 import * as crowdinModule from '@crowdin/app-project-module';
-import { AssetsConfig, FileStore, Cron } from '@crowdin/app-project-module/out/types';
-import { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
-import { Request, Response } from 'express';
+import type { AssetsConfig, FileStore, Cron, ClientConfig, CrowdinAppUtilities } from '@crowdin/app-project-module/out/types';
+import type { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 
 export function createApp({
     clientId,
@@ -20,7 +19,7 @@ export function createApp({
 }) {
     const app = crowdinModule.express();
 
-    const configuration = {
+    const configuration: ClientConfig = {
         name: "Crowdin App",
         identifier: "crowdin-app",
         description: "A Crowdin app built with the SDK",
@@ -35,13 +34,7 @@ export function createApp({
         // Default module configurations will be overridden by specific templates
     };
 
-    // Initialize Crowdin app
-    const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
-
-    // Health check endpoint
-    app.get('/health', (req: Request, res: Response) => {
-        res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
-    });
+    const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration) as CrowdinAppUtilities;
 
     return { expressApp: app, crowdinApp };
 }

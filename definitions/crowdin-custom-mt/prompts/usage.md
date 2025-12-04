@@ -3,44 +3,59 @@
 ## Overview
 Crowdin app with Custom MT (Machine Translation), Profile Resources Menu and Organization Menu modules for connecting external machine translation engines.
 - Backend: TypeScript with Express.js and Crowdin Apps SDK
-- Frontend: Modular HTML/CSS/JavaScript with Crowdin Apps JS API
-- Authentication: JWT tokens from Crowdin with automatic user context
-- Module: Custom MT (provides translation engine for Crowdin Editor and pre-translation)
-- Module: Profile Resources Menu (appears in user profile menu)
-- Module: Organization Menu (appears in organization navigation)
-- Features: Language mapping for dialects, source text mirroring, organization-level configuration
+- Frontend: React + TypeScript + ShadCN UI + Crowdin Apps JS API
 
 ## Tech Stack
-- **Crowdin Apps JS API** (AP object for context/events) for frontend integration
-- **Crowdin Apps SDK** (@crowdin/app-project-module) for backend
-- **TypeScript** for type-safe backend development
-- **Express.js** for server and API endpoints
-- **Metadata Storage** - Built-in key-value storage for user data
-- **Modular Frontend** - Separate HTML, CSS (styles.css), JS (app.js) files
-- **Responsive CSS** - Mobile-first design (320px+)
+- Crowdin Apps JS API
+- Crowdin Apps SDK (@crowdin/app-project-module)
+- React
+- ShadCN UI
+- Tailwind
+- Lucide Icons
+- ESLint
+- Vite
+- TypeScript
+- Express.js
+- Cloudflare Workers
 
 ## Development Restrictions
+- **Tailwind Colors**: Hardcode custom colors in `tailwind.config.js`, NOT in `index.css`
+- **Components**: Use existing ShadCN components instead of writing custom ones
+- **Icons**: Import from `lucide-react` directly
+- **Error Handling**: ErrorBoundary components are pre-implemented
 - **Authentication**: Always use JWT tokens from Crowdin for API requests
 - **Custom MT Configuration**: Don't modify the customMT configuration structure
 - **Profile Resources Menu Configuration**: Don't modify the profileResourcesMenu configuration structure
 - **Organization Menu Configuration**: Don't modify the organizationMenu configuration structure
-- **Scopes**: Ensure your app has appropriate project-level API scopes
+- **Scopes**: Ensure your app has appropriate API scopes
 - **Storage Keys**: Always include organizationId in metadata keys to isolate data per organization
 - **Return Values**: translate function must return array of strings matching input length
 - **Error Handling**: Return empty strings for failed translations instead of throwing errors to avoid failing entire batches
 - **Critical Errors**: Throw errors for critical configuration issues (missing API keys, invalid credentials) that prevent the entire translation service from working
 
+## Styling
+- Responsive, accessible
+- Prefer ShadCN components; Tailwind for layout/spacing/typography
+- Use framer-motion sparingly for micro-interactions
+
 ## Project Structure
 
 ### Backend Structure
-- `worker/app.ts` - TypeScript backend with Custom MT module configuration
-- `worker/index.ts` - Entry point for Cloudflare Worker
-- `public/` - Static files served to the browser
+- `worker/app.ts` - Express app factory with Custom MT module configuration
+- `worker/index.ts` - Cloudflare Worker entry point (HTTP handler, cron scheduler, middleware)
 
 ### Frontend Structure
-- `public/menu/index.html` - Main HTML interface with configuration UI
-- `public/menu/app.js` - JavaScript with Crowdin Apps JS API integration
-- `public/menu/styles.css` - Responsive CSS with accessibility support
+- `index.html` - HTML entry point with Crowdin Apps JS API script
+- `src/main.tsx` - React entry point with ErrorBoundary wrapper
+- `src/App.tsx` - Main React application component (rewrite this file for your app)
+- `src/index.css` - Global styles and Tailwind CSS customizations
+- `src/components/` - React components
+  - `ErrorBoundary.tsx` - React error boundary with backend error reporting
+  - `ErrorFallback.tsx` - Fallback UI component for error states
+  - `ui/` - ShadCN UI components (button, card, sonner)
+- `src/lib/` - Utility modules
+  - `utils.ts` - Tailwind utility functions (`cn` for class merging)
+  - `errorReporter.ts` - Client-side error reporting to backend
 
 ## Backend Development
 
@@ -49,7 +64,7 @@ Crowdin app with Custom MT (Machine Translation), Profile Resources Menu and Org
 Configure your app identity in `worker/app.ts`:
 
 ```typescript
-const configuration = {
+const configuration: ClientConfig = {
     name: "Your App Name",                    // Display name shown in Crowdin UI
     identifier: "your-unique-app-identifier", // Unique ID (lowercase, hyphens)
     description: "Your app description",      // Brief description of functionality
@@ -69,7 +84,7 @@ Add scopes to configuration in `worker/app.ts` based on your app's functionality
 **⚠️ IMPORTANT**: Only use scopes from the list below. Do not invent or use non-existent scopes!
 
 ```typescript
-const configuration = {
+const configuration: ClientConfig = {
     // ... other configuration ...
     scopes: [
         // Choose from the following valid scopes:
@@ -116,11 +131,11 @@ const configuration = {
 Configure the Custom MT module in `worker/app.ts`:
 
 ```typescript
-import { Client } from '@crowdin/crowdin-api-client';
-import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
+import type { Client } from '@crowdin/crowdin-api-client';
+import type { CrowdinContextInfo, ClientConfig } from '@crowdin/app-project-module/out/types';
 import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
 
-const configuration = {
+const configuration: ClientConfig = {
     // ... other configuration ...
 
     customMT: {
@@ -155,8 +170,8 @@ const configuration = {
 
 **Integration with External MT API:**
 ```typescript
-import { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
-import { CrowdinContextInfo } from '@crowdin/app-project-module/out/types';
+import type { Client, SourceStringsModel } from '@crowdin/crowdin-api-client';
+import type { CrowdinContextInfo, ClientConfig } from '@crowdin/app-project-module/out/types';
 import type { CustomMtString } from '@crowdin/app-project-module/out/modules/custom-mt/types';
 
 // Helper function to extract source text from CustomMtString
@@ -178,7 +193,7 @@ function extractSourceText(string: CustomMtString): string {
     return '';
 }
 
-const configuration = {
+const configuration: ClientConfig = {
     // ... other configuration ...
 
     customMT: {
@@ -581,12 +596,12 @@ export type CustomMtString =
 Configure the Profile Resources Menu module in `worker/app.ts`:
 
 ```typescript
-const configuration = {
+const configuration: ClientConfig = {
     // ... other configuration ...
 
     profileResourcesMenu: {
       fileName: 'index.html',
-      uiPath: '/menu' // Points to public/menu directory
+      uiPath: '/'
     }
 }
 ```
@@ -600,12 +615,12 @@ const configuration = {
 Configure the Organization Menu module in `worker/app.ts`:
 
 ```typescript
-const configuration = {
+const configuration: ClientConfig = {
     // ... other configuration ...
 
     organizationMenu: {
       fileName: 'index.html',
-      uiPath: '/menu' // Points to public/menu directory
+      uiPath: '/'
     }
 }
 ```
@@ -932,7 +947,7 @@ response.data.forEach((fileItem: ResponseObject<SourceFilesModel.File>) => {
 
 5. **Use TypeScript types**
    ```typescript
-   import { ResponseObject, ProjectsGroupsModel } from '@crowdin/crowdin-api-client';
+   import type { ResponseObject, ProjectsGroupsModel } from '@crowdin/crowdin-api-client';
    
    // Use in your code
    const response: ResponseObject<ProjectsGroupsModel.Project> = await connection.client.projectsGroupsApi.getProject(projectId);
@@ -5566,8 +5581,7 @@ await crowdinModule.metadataStore.saveMetadata(key, updatedPrefs, connection.con
        console.error('Metadata save failed:', error);
        return { 
            success: false, 
-           error: 'Failed to save data',
-           details: error.message 
+           error: 'Failed to save data'
        };
    }
    ```
@@ -5661,7 +5675,7 @@ The following cron expressions are supported:
 **Simple Hourly Task:**
 ```typescript
 // In worker/app.ts, after initializing crowdinApp
-const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
+const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration) as CrowdinAppUtilities;
 
 // Register cron job - runs every hour
 crowdinApp.cron.schedule('0 * * * *', async () => {
@@ -5681,7 +5695,7 @@ crowdinApp.cron.schedule('0 * * * *', async () => {
 **Multiple Tasks for Same Schedule:**
 ```typescript
 // In worker/app.ts, after initializing crowdinApp
-const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
+const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration) as CrowdinAppUtilities;
 
 // Both tasks will run daily at midnight
 crowdinApp.cron.schedule('0 0 * * *', async () => {
@@ -5706,7 +5720,7 @@ crowdinApp.cron.schedule('0 0 * * *', async () => {
 **Using Crowdin API Client in Cron Jobs:**
 ```typescript
 // In worker/app.ts, after initializing crowdinApp
-const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration);
+const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration) as CrowdinAppUtilities;
 
 // Register cron job that processes data for multiple organizations
 crowdinApp.cron.schedule('0 0 * * *', async () => {
@@ -5897,7 +5911,7 @@ Webhooks allow your app to subscribe to events that occur in Crowdin projects or
 Configure webhooks in your app configuration in `worker/app.ts`:
 
 ```typescript
-const configuration = {
+const configuration: ClientConfig = {
     // ... other configuration ...
     
     // Webhook subscriptions
@@ -6500,41 +6514,69 @@ The `AP` object provides the Crowdin Apps JS API for interacting with the Crowdi
 
 #### Common Examples
 
-**Get Context:**
-```javascript
-// Get application context
-AP.getContext(function(context) {
-    console.log('Project ID:', context.project_id);
-});
+**Get Context (Promise-based):**
+```typescript
+// Promisified helper
+const getContext = (): Promise<any> => {
+    return new Promise(resolve => (window as any).AP.getContext(resolve));
+};
+
+// Usage
+const context = await getContext();
+console.log('Project ID:', context.project_id);
+```
+
+**Get JWT Token (Promise-based):**
+```typescript
+// Promisified helper
+const getJwtToken = (): Promise<string> => {
+    return new Promise(resolve => (window as any).AP.getJwtToken(resolve));
+};
+
+// Usage with fetch
+const token = await getJwtToken();
+const response = await fetch(`/api/endpoint?jwt=${token}`);
+const data = await response.json();
 ```
 
 #### Best Practices
 
 1. **Always check AP availability**
-   ```javascript
-   if (window.AP) {
-       AP.getContext(function(context) {
-           // Your code
-       });
+   ```typescript
+   if (!window.AP) {
+       console.error('Crowdin AP not available');
+       return;
    }
+   
+   const context = await getContext();
+   // Your code
    ```
 
-2. **Get JWT token for backend calls**
-   ```javascript
-   AP.getJwtToken(function(token) {
-       fetch('/api/endpoint?jwt=' + token)
-           .then(response => response.json());
-   });
+2. **Create reusable API helpers**
+   ```typescript
+   // api.ts
+   const getJwtToken = (): Promise<string> => {
+       return new Promise(resolve => (window as any).AP.getJwtToken(resolve));
+   };
+
+   export const apiCall = async <T>(endpoint: string, options?: RequestInit): Promise<T> => {
+       const token = await getJwtToken();
+       const response = await fetch(`${endpoint}?jwt=${token}`, options);
+       return response.json();
+   };
+
+   // Usage in component
+   const data = await apiCall<ProjectData>('/api/project');
    ```
 
 3. **Handle errors gracefully**
-   ```javascript
+   ```typescript
    try {
-       AP.getContext(function(context) {
-           if (!context.organization_id) {
-               console.error('Organization ID not found');
-           }
-       });
+       const context = await getContext();
+       if (!context.organization_id) {
+           throw new Error('Organization ID not found');
+       }
+       // Your code
    } catch (error) {
        console.error('Failed to get context:', error);
    }
@@ -6571,7 +6613,7 @@ interface Context {
 **⚠️ Important**: You MUST update the configuration in `worker/app.ts` before deployment:
 
 ```typescript
-const configuration = {
+const configuration: ClientConfig = {
     name: "Your App Name",           // Change this to your app's display name
     identifier: "your-app-id",       // Change to unique identifier (lowercase, hyphens)
     description: "Your app description", // Change to describe your app's purpose
@@ -6584,6 +6626,6 @@ const configuration = {
 ### 2. Key Files to Modify
 
 - `worker/app.ts` - Add new API endpoints here
-- `public/menu/index.html` - Modify UI structure
-- `public/menu/app.js` - Add frontend logic
-- `public/menu/styles.css` - Customize styles
+- `src/App.tsx` - Main React component (rewrite for your app logic)
+- `src/index.css` - Customize global styles and Tailwind theme
+- `tailwind.config.js` - Add custom colors and extend theme

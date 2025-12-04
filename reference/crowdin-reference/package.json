@@ -1,32 +1,56 @@
 {
-  "name": "crowdin-app-template",
-  "version": "1.0.0",
-  "private": true,
-  "type": "commonjs",
+	"name": "crowdin-project-tools",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
 	"scripts": {
-		"dev": "bun run build && concurrently \"bun run watch:assets\" \"wrangler dev --port ${PORT:-3000} --ip 0.0.0.0\"",
-		"watch:assets": "nodemon",
-		"build": "bun run build:assets",
-		"build:assets": "mkdir -p dist/client/static && cp -r node_modules/@crowdin/app-project-module/out/static/* dist/client/static/ && cp -r public/* dist/client/",
-		"lint": "eslint worker --ext .ts,.tsx --format json",
+		"dev": "vite --host 0.0.0.0 --port ${PORT:-3000}",
+		"build": "vite build",
+		"lint": "eslint --cache -f json --quiet .",
+		"preview": "bun run build && vite preview --host 0.0.0.0 --port ${PORT:-4173}",
 		"deploy": "bun run build && wrangler deploy",
-		"preview": "bun run build && wrangler dev --ip 0.0.0.0",
-		"cf-typegen": "wrangler types --include-runtime false --env-interface CloudflareEnv cloudflare-env.d.ts"
+		"cf-typegen": "wrangler types --include-runtime false --env-interface CloudflareEnv worker/cloudflare-env.d.ts"
 	},
-  "dependencies": {
-    "@crowdin/app-project-module": "next"
-  },
-  "devDependencies": {
-    "@cloudflare/workers-types": "^4.20251117.0",
-    "@eslint/js": "^9.37.0",
-    "@types/express": "^5.0.0",
-    "@types/node": "^24.7.0",
-    "@typescript-eslint/eslint-plugin": "^8.46.0",
-    "@typescript-eslint/parser": "^8.46.0",
-    "concurrently": "^9.2.1",
-    "eslint": "^9.37.0",
-    "nodemon": "^3.1.10",
-    "typescript": "^5.9.3",
-    "wrangler": "^4.42.1"
-  }
+	"dependencies": {
+		"@crowdin/app-project-module": "next",
+		"@radix-ui/react-slot": "^1.2.3",
+		"@typescript-eslint/eslint-plugin": "^8.38.0",
+		"@typescript-eslint/parser": "^8.38.0",
+		"@typescript-eslint/typescript-estree": "^8.39.0",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"eslint-import-resolver-typescript": "^4.4.4",
+		"eslint-plugin-import": "^2.32.0",
+		"lucide-react": "^0.525.0",
+		"next-themes": "^0.4.6",
+		"pino": "^9.11.0",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
+		"sonner": "^2.0.6",
+		"tailwind-merge": "^3.3.1",
+		"wrangler": "^4.42.1",
+		"zustand": "^5.0.6"
+	},
+	"devDependencies": {
+		"@cloudflare/vite-plugin": "^1.9.4",
+		"@cloudflare/workers-types": "^4.20251117.0",
+		"@eslint/js": "^9.22.0",
+		"@types/express": "^5.0.0",
+		"@types/node": "^22.15.3",
+		"@types/react": "^18.3.1",
+		"@types/react-dom": "^18.3.1",
+		"@vitejs/plugin-react": "^4.3.4",
+		"autoprefixer": "^10.4.21",
+		"eslint": "^9.31.0",
+		"eslint-plugin-react-hooks": "^5.2.0",
+		"eslint-plugin-react-refresh": "^0.4.19",
+		"globals": "^16.0.0",
+		"postcss": "^8.5.3",
+		"tailwindcss": "^3.4.17",
+		"tailwindcss-animate": "^1.0.7",
+		"typescript": "5.8",
+		"typescript-eslint": "^8.26.1",
+		"vite": "^7.2.6",
+		"vite-plugin-static-copy": "^3.1.4"
+	}
 }

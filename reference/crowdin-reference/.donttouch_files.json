@@ -1,13 +1,11 @@
 [
+    "wrangler.jsonc",
+    "package.json",
     ".redacted_files.json",
     ".donttouch_files.json",
     ".important_files.json",
     "worker/index.ts",
-    "cloudflare-env.d.ts",
-    "cloudflare-node.d.ts",
-    "eslint.config.mjs",
-    "package.json",
-    "tsconfig.json",
-    "wrangler.jsonc",
-    "nodemon.json"
+    "src/lib/errorReporter.ts",
+    "src/components/ErrorBoundary.tsx",
+    "vite.config.ts"
 ]
