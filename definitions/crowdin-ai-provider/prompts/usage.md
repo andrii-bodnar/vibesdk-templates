@@ -54,6 +54,7 @@ Crowdin app with AI Provider module for integrating custom AI models into Crowdi
 - `src/lib/` - Utility modules
   - `utils.ts` - Tailwind utility functions (`cn` for class merging)
   - `errorReporter.ts` - Client-side error reporting to backend
+  - `apiClient.ts` - Generic API call wrapper with JWT token handling
 
 ## Backend Development
 
@@ -6832,7 +6833,7 @@ The `AP` object provides the Crowdin Apps JS API for interacting with the Crowdi
 ```typescript
 // Promisified helper
 const getContext = (): Promise<any> => {
-    return new Promise(resolve => (window as any).AP.getContext(resolve));
+    return new Promise(resolve => window.AP.getContext(resolve));
 };
 
 // Usage
@@ -6844,7 +6845,7 @@ console.log('Project ID:', context.project_id);
 ```typescript
 // Promisified helper
 const getJwtToken = (): Promise<string> => {
-    return new Promise(resolve => (window as any).AP.getJwtToken(resolve));
+    return new Promise(resolve => window.AP.getJwtToken(resolve));
 };
 
 // Usage with fetch
@@ -6855,35 +6856,7 @@ const data = await response.json();
 
 #### Best Practices
 
-1. **Always check AP availability**
-   ```typescript
-   if (!window.AP) {
-       console.error('Crowdin AP not available');
-       return;
-   }
-   
-   const context = await getContext();
-   // Your code
-   ```
-
-2. **Create reusable API helpers**
-   ```typescript
-   // api.ts
-   const getJwtToken = (): Promise<string> => {
-       return new Promise(resolve => (window as any).AP.getJwtToken(resolve));
-   };
-
-   export const apiCall = async <T>(endpoint: string, options?: RequestInit): Promise<T> => {
-       const token = await getJwtToken();
-       const response = await fetch(`${endpoint}?jwt=${token}`, options);
-       return response.json();
-   };
-
-   // Usage in component
-   const data = await apiCall<ProjectData>('/api/project');
-   ```
-
-3. **Handle errors gracefully**
+1. **Handle errors gracefully**
    ```typescript
    try {
        const context = await getContext();
