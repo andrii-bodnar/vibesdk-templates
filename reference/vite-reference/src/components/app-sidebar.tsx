@@ -1,4 +1,4 @@
-/* Edit this file to customize the sidebar */
+/* This is a demo sidebar. **COMPULSORY** Edit this file to customize the sidebar OR remove it from appLayout OR don't use appLayout at all */
 import React from "react";
 import { Home, Layers, Compass, Star, Settings, LifeBuoy } from "lucide-react";
 import {
@@ -23,7 +23,7 @@ export function AppSidebar(): JSX.Element {
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1">
           <div className="h-6 w-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500" />
-          <span className="text-sm font-medium">Template</span>
+          <span className="text-sm font-medium">Demo Sidebar</span>
         </div>
         <SidebarInput placeholder="Search" />
       </SidebarHeader>
@@ -61,16 +61,6 @@ export function AppSidebar(): JSX.Element {
                 <a href="#"><Star /> <span>Starred</span></a>
               </SidebarMenuButton>
               <SidebarMenuBadge>5</SidebarMenuBadge>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <a href="#"><LifeBuoy /> <span>Support</span></a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <a href="#"><Settings /> <span>Settings</span></a>
-              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>

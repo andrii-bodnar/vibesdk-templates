@@ -95,7 +95,7 @@ export function HomePage() {
   const formatted = formatDuration(elapsedMs)
 
   return (
-    <AppLayout>
+    // <AppLayout> Uncomment this if you want to use the sidebar
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
         <ThemeToggle />
         <div className="absolute inset-0 bg-gradient-rainbow opacity-10 dark:opacity-20 pointer-events-none" />
@@ -143,6 +143,6 @@ export function HomePage() {
         </footer>
         <Toaster richColors closeButton />
       </div>
-    </AppLayout>
+    // </AppLayout> Uncomment this if you want to use the sidebar
   )
 }
