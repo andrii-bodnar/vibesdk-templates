@@ -11,7 +11,6 @@ export { GlobalDurableObject };
 export interface ClientErrorReport {
     message: string;
     url: string;
-    userAgent: string;
     timestamp: string;
     stack?: string;
     componentStack?: string;
@@ -35,8 +34,7 @@ app.get('/api/health', (c) => c.json({ success: true, data: { status: 'healthy',
 app.post('/api/client-errors', async (c) => {
   try {
     const e = await c.req.json<ClientErrorReport>();
-    if (!e.message) return c.json({ success: false, error: 'Missing required fields' }, 400);
-    console.error('[CLIENT ERROR]', JSON.stringify(e, null, 2));
+    console.error('[CLIENT ERROR]', JSON.stringify({ timestamp: e.timestamp || new Date().toISOString(), message: e.message, url: e.url, stack: e.stack, componentStack: e.componentStack, errorBoundary: e.errorBoundary }, null, 2));
     return c.json({ success: true });
   } catch (error) {
     console.error('[CLIENT ERROR HANDLER] Failed:', error);
