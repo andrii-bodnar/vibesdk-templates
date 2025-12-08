@@ -5154,6 +5154,23 @@ await crowdinModule.metadataStore.saveMetadata(key, updatedPrefs, connection.con
    const config = JSON.parse(configData || '{}');
    ```
 
+9. **ALWAYS use metadataStore - it implements upsert, not just insert**
+   ```typescript
+   // ✅ CORRECT - implements upsert (insert or update)
+   await crowdinModule.metadataStore.saveMetadata(
+       key, 
+       data, 
+       connection.context.crowdinId
+   );
+   
+   // ❌ WRONG - only insert, NOT upsert (will fail if key already exists)
+   await crowdinApp.storage.saveMetadata(
+       key, 
+       data, 
+       connection.context.crowdinId
+   );
+   ```
+
 ### Cron Scheduling
 
 #### Overview
