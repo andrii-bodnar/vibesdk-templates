@@ -162,5 +162,18 @@ export default {
         }
         
         return initializeHandler(env).fetch!(request, env, ctx);
-    }
+    },
+    async scheduled(controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext): Promise<void> {
+		console.log(`Cron triggered: ${controller.cron}`);
+
+        try {
+            // Initialize app to ensure cron tasks are registered
+            initializeApp(env);
+            
+            // Run scheduled tasks for the given cron expression
+            await cron.runScheduled(controller.cron);
+        } catch (error) {
+            console.error('Error executing scheduled tasks:', error);
+        }
+	},
 }
