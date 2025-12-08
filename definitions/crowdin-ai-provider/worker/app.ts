@@ -85,6 +85,7 @@ const MODEL_CAPABILITIES: Record<string, Partial<SupportedModels>> = {
 };
 
 export function createApp({
+    app,
     clientId,
     clientSecret,
     assetsConfig,
@@ -92,6 +93,7 @@ export function createApp({
     fileStore,
     cron
 }: {
+    app: ReturnType<typeof crowdinModule.express>;
     clientId: string;
     clientSecret: string;
     assetsConfig: AssetsConfig;
@@ -99,8 +101,6 @@ export function createApp({
     fileStore: FileStore;
     cron: Cron;
 }) {
-    const app = crowdinModule.express();
-
     const configuration: ClientConfig = {
         name: "AI Provider App",
         identifier: "ai-provider-app",
@@ -289,6 +289,6 @@ export function createApp({
     // Initialize Crowdin app
     const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration) as CrowdinAppUtilities;
 
-    return { expressApp: app, crowdinApp };
+    return crowdinApp;
 }
 

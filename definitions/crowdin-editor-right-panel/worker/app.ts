@@ -3,6 +3,7 @@ import type { AssetsConfig, EditorMode, FileStore, Cron, ClientConfig, CrowdinAp
 import type { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
 
 export function createApp({
+    app,
     clientId,
     clientSecret,
     assetsConfig,
@@ -10,6 +11,7 @@ export function createApp({
     fileStore,
     cron
 }: {
+    app: ReturnType<typeof crowdinModule.express>;
     clientId: string;
     clientSecret: string;
     assetsConfig: AssetsConfig;
@@ -17,8 +19,6 @@ export function createApp({
     fileStore: FileStore;
     cron: Cron;
 }) {
-    const app = crowdinModule.express();
-
     const configuration: ClientConfig = {
         name: "Editor Right Panel App",
         identifier: "editor-right-panel-app",
@@ -49,5 +49,5 @@ export function createApp({
     // Initialize Crowdin app
     const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration) as CrowdinAppUtilities;
 
-    return { expressApp: app, crowdinApp };
+    return crowdinApp;
 }

@@ -94,6 +94,7 @@ function applyReplaceRules(text: string, rules: Array<{ find: string; replace: s
 }
 
 export function createApp({
+    app,
     clientId,
     clientSecret,
     assetsConfig,
@@ -101,6 +102,7 @@ export function createApp({
     fileStore,
     cron
 }: {
+    app: ReturnType<typeof crowdinModule.express>;
     clientId: string;
     clientSecret: string;
     assetsConfig: AssetsConfig;
@@ -108,8 +110,6 @@ export function createApp({
     fileStore: FileStore;
     cron: Cron;
 }) {
-    const app = crowdinModule.express();
-
     const configuration: ClientConfig = {
         name: "File Processor App",
         identifier: "file-processor-app",
@@ -419,5 +419,5 @@ export function createApp({
     // Initialize Crowdin app
     const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration) as CrowdinAppUtilities;
 
-    return { expressApp: app, crowdinApp };
+    return crowdinApp;
 }

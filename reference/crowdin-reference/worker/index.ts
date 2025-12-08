@@ -1,5 +1,6 @@
 import { httpServerHandler } from 'cloudflare:node';
 import { createApp } from './app';
+import * as crowdinModule from '@crowdin/app-project-module';
 import type { Cron } from '@crowdin/app-project-module/out/types';
 import type { Server } from 'node:http';
 import type { NextFunction, Request as ExpressRequest, Response as ExpressResponse } from 'express';
@@ -12,7 +13,7 @@ if (previousServer) {
 
 // Module-scoped state (fresh on each module load)
 let handler: ExportedHandler | undefined;
-let appInstance: ReturnType<typeof createApp> | undefined;
+let appInstance: { app: ReturnType<typeof crowdinModule.express>, crowdinApp: ReturnType<typeof createApp> } | undefined;
 
 class CloudflareCron implements Cron {
     private handlers: Map<string, Array<() => Promise<void>>> = new Map();
@@ -32,12 +33,91 @@ class CloudflareCron implements Cron {
 
 const cron = new CloudflareCron();
 
-function initializeApp(env: CloudflareEnv): ReturnType<typeof createApp> {
+function setupExpressApp(app: ReturnType<typeof crowdinModule.express>, env: CloudflareEnv): void {
+    app.set('etag', false);
+
+    // Simple koa-style request logger
+    app.use((req: ExpressRequest, res: ExpressResponse, next: NextFunction) => {
+      const start = Date.now();
+      const path = req.url?.split('?')[0];
+      
+      console.log(`<-- ${req.method} ${path}`);
+      
+      res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`--> ${req.method} ${path} ${res.statusCode} ${duration}ms`);
+      });
+      
+      next();
+    });
+
+    app.get('/api/health', async (req: ExpressRequest, res: ExpressResponse) => {
+      return res.status(200).json({ 
+        success: true,
+        data: {
+          status: 'healthy', 
+          timestamp: new Date().toISOString()
+        }
+       });
+    });
+  
+    app.post('/api/client-errors', async (req: ExpressRequest, res: ExpressResponse) => {
+      try {
+        const { timestamp, message, url, stack, componentStack, errorBoundary } = req.body || {};
+        
+        console.error('[CLIENT ERROR]', JSON.stringify({
+          timestamp: timestamp || new Date().toISOString(),
+          message: message,
+          url: url,
+          stack: stack,
+          componentStack: componentStack,
+          errorBoundary: errorBoundary
+        }, null, 2));
+  
+        return res.status(200).json({ success: true });
+      } catch (error) {
+        console.error('[CLIENT ERROR HANDLER] Failed:', error);
+        return res.status(500).json({ success: false, error: 'Failed to process' });
+      }
+    });
+
+    // Handle scheduled cron trigger via HTTP endpoint
+    app.get('/__scheduled', async (req: ExpressRequest, res: ExpressResponse) => {
+      try {
+        // Verify scheduled secret header
+        const scheduledSecret = req.headers['x-cloudflare-scheduled-secret'];
+        if (!scheduledSecret || scheduledSecret !== env.SCHEDULED_SECRET) {
+          return res.status(401).send('Unauthorized');
+        }
+        
+        const cronExpression = req.query.cron as string;
+        
+        if (!cronExpression) {
+          return res.status(400).send('Missing cron parameter');
+        }
+        
+        // Run scheduled tasks for the given cron expression
+        await cron.runScheduled(cronExpression.replace(/\+/g, ' '));
+        
+        return res.status(200).send('Scheduled tasks executed successfully');
+      } catch (error) {
+        console.error('Error executing scheduled tasks:', error);
+        return res.status(500).send('Error executing scheduled tasks');
+      }
+    });
+}
+
+function initializeApp(env: CloudflareEnv): { app: ReturnType<typeof crowdinModule.express>, crowdinApp: ReturnType<typeof createApp> } {
     if (appInstance) {
         return appInstance;
     }
 
-    appInstance = createApp({
+    const app = crowdinModule.express();
+
+    setupExpressApp(app, env);
+
+    const crowdinApp = createApp({
+        app,
         clientId: env.CROWDIN_CLIENT_ID,
         clientSecret: env.CROWDIN_CLIENT_SECRET,
         assetsConfig: {
@@ -65,52 +145,8 @@ function initializeApp(env: CloudflareEnv): ReturnType<typeof createApp> {
         },
         cron
     });
-    appInstance.expressApp.set('etag', false);
 
-    // Simple koa-style request logger
-    appInstance.expressApp.use((req: ExpressRequest, res: ExpressResponse, next: NextFunction) => {
-      const start = Date.now();
-      const path = req.url?.split('?')[0];
-      
-      console.log(`<-- ${req.method} ${path}`);
-      
-      res.on('finish', () => {
-        const duration = Date.now() - start;
-        console.log(`--> ${req.method} ${path} ${res.statusCode} ${duration}ms`);
-      });
-      
-      next();
-    });
-
-    appInstance.expressApp.get('/api/health', async (req: ExpressRequest, res: ExpressResponse) => {
-      return res.status(200).json({ 
-        success: true,
-        data: {
-          status: 'healthy', 
-          timestamp: new Date().toISOString()
-        }
-       });
-    });
-  
-    appInstance.expressApp.post('/api/client-errors', async (req: ExpressRequest, res: ExpressResponse) => {
-      try {
-        const { timestamp, message, url, stack, componentStack, errorBoundary } = req.body || {};
-        
-        console.error('[CLIENT ERROR]', JSON.stringify({
-          timestamp: timestamp || new Date().toISOString(),
-          message: message,
-          url: url,
-          stack: stack,
-          componentStack: componentStack,
-          errorBoundary: errorBoundary
-        }, null, 2));
-  
-        return res.status(200).json({ success: true });
-      } catch (error) {
-        console.error('[CLIENT ERROR HANDLER] Failed:', error);
-        return res.status(500).json({ success: false, error: 'Failed to process' });
-      }
-    });
+    appInstance = { app, crowdinApp };
 
     return appInstance;
 }
@@ -120,7 +156,7 @@ function initializeHandler(env: CloudflareEnv): ExportedHandler {
         return handler;
     }
 
-    const { expressApp: app } = initializeApp(env);
+    const { app } = initializeApp(env);
     const port: number = 3000;
     // Store for cleanup on next HMR reload
     (globalThis as any).__previousServer = app.listen(port);
@@ -131,36 +167,6 @@ function initializeHandler(env: CloudflareEnv): ExportedHandler {
 
 export default {
     async fetch(request: Request<unknown, IncomingRequestCfProperties>, env: CloudflareEnv, ctx: ExecutionContext) {
-        const url = new URL(request.url);
-        
-        // Handle scheduled cron trigger via HTTP endpoint
-        if (url.pathname === '/__scheduled' && request.method === 'GET') {
-            // Verify scheduled secret header
-            const scheduledSecret = request.headers.get('X-Cloudflare-Scheduled-Secret');
-            if (!scheduledSecret || scheduledSecret !== env.SCHEDULED_SECRET) {
-                return new Response('Unauthorized', { status: 401 });
-            }
-            
-            const cronExpression = url.searchParams.get('cron');
-            
-            if (!cronExpression) {
-                return new Response('Missing cron parameter', { status: 400 });
-            }
-            
-            try {
-                // Initialize app to ensure cron tasks are registered
-                initializeApp(env);
-                
-                // Run scheduled tasks for the given cron expression
-                await cron.runScheduled(cronExpression.replace(/\+/g, ' '));
-                
-                return new Response('Scheduled tasks executed successfully', { status: 200 });
-            } catch (error) {
-                console.error('Error executing scheduled tasks:', error);
-                return new Response('Error executing scheduled tasks', { status: 500 });
-            }
-        }
-        
         return initializeHandler(env).fetch!(request, env, ctx);
     },
     async scheduled(controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext): Promise<void> {
