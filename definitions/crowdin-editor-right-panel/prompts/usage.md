@@ -147,7 +147,7 @@ const configuration: ClientConfig = {
 #### Editor Modes
 
 ```typescript
-import type { EditorMode } from '@crowdin/app-project-module/out/types';
+import { EditorMode } from '@crowdin/app-project-module/out/types';
 
 // Available editor modes:
 EditorMode.COMFORTABLE   // Comfortable mode (most common)

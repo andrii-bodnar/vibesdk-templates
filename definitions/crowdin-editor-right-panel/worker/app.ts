@@ -1,6 +1,7 @@
 import * as crowdinModule from '@crowdin/app-project-module';
-import type { AssetsConfig, EditorMode, FileStore, Cron, ClientConfig, CrowdinAppUtilities } from '@crowdin/app-project-module/out/types';
+import type { AssetsConfig, FileStore, Cron, ClientConfig, CrowdinAppUtilities } from '@crowdin/app-project-module/out/types';
 import type { D1StorageConfig } from '@crowdin/app-project-module/out/storage/d1';
+import { EditorMode } from '@crowdin/app-project-module/out/types';
 
 export function createApp({
     app,
