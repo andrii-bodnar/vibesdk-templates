@@ -121,7 +121,8 @@ export function createApp({
         d1Config,
         fileStore,
         cron,
-        imagePath: '/logo.png',
+        imagePath: '/logo.svg',
+        assetsPath: '/assets',
         
         // API scopes - define what your app can access
         scopes: [

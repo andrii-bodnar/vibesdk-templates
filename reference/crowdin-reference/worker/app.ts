@@ -30,10 +30,12 @@ export function createApp({
         d1Config,
         fileStore,
         cron,
-        imagePath: '/logo.png',
+        imagePath: '/logo.svg',
+        assetsPath: '/assets',
         // Default module configurations will be overridden by specific templates
     };
 
+    // Initialize Crowdin app
     const crowdinApp = crowdinModule.addCrowdinEndpoints(app, configuration) as CrowdinAppUtilities;
 
     return crowdinApp;

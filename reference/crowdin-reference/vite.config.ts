@@ -119,6 +119,16 @@ export default ({ mode }: { mode: string }) => {
     },
     server: {
       allowedHosts: true,
+      watch: {
+        // Ignore wrangler.jsonc to prevent miniflare crashes on config syntax errors
+        ignored: ["**/wrangler.jsonc"],
+      },
+      fs: {
+        allow: [
+          path.resolve(__dirname, "./src"),
+          path.resolve(__dirname, "./node_modules"),
+        ],
+      },
     },
     resolve: {
       alias: {
