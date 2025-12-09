@@ -1,3 +1,5 @@
+// Making changes to this file is **STRICTLY** forbidden. Please add your routes in `app.ts` file.
+
 import { httpServerHandler } from 'cloudflare:node';
 import { createApp } from './app';
 import * as crowdinModule from '@crowdin/app-project-module';

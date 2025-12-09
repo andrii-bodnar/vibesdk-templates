@@ -52,7 +52,9 @@ Crowdin app with Custom MT (Machine Translation), Profile Resources Menu and Org
 - `src/components/` - React components
   - `ErrorBoundary.tsx` - React error boundary with backend error reporting
   - `ErrorFallback.tsx` - Fallback UI component for error states
-  - `ui/` - ShadCN UI components (button, card, sonner)
+  - `ui/` - ShadCN UI components (button, card, sonner, etc.)
+- `src/hooks/` - Custom React hooks
+  - `use-mobile.tsx` - Hook for detecting mobile breakpoints
 - `src/lib/` - Utility modules
   - `utils.ts` - Tailwind utility functions (`cn` for class merging)
   - `errorReporter.ts` - Client-side error reporting to backend

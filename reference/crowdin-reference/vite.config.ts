@@ -1,3 +1,4 @@
+// Making changes to this file is **STRICTLY** forbidden. All the code in here is 100% correct and audited.
 import { defineConfig, loadEnv } from "vite";
 import path from "path";
 import react from "@vitejs/plugin-react";
@@ -51,7 +52,6 @@ const customLogger = {
 
 function watchDependenciesPlugin() {
   return {
-    // Plugin to clear caches when dependencies change
     name: "watch-dependencies",
     configureServer(server: any) {
       const filesToWatch = [
@@ -64,12 +64,11 @@ function watchDependenciesPlugin() {
       server.watcher.on("change", (filePath: string) => {
         if (filesToWatch.includes(filePath)) {
           console.log(
-            `\n📦 Dependency file changed: ${path.basename(
+            `\n Dependency file changed: ${path.basename(
               filePath
             )}. Clearing caches...`
           );
 
-          // Run the cache-clearing command
           exec(
             "rm -f .eslintcache tsconfig.tsbuildinfo",
             (err, stdout, stderr) => {
@@ -77,9 +76,26 @@ function watchDependenciesPlugin() {
                 console.error("Failed to clear caches:", stderr);
                 return;
               }
-              console.log("✅ Caches cleared successfully.\n");
+              console.log("Caches cleared successfully.\n");
             }
           );
+        }
+      });
+    },
+  };
+}
+
+function reloadTriggerPlugin() {
+  return {
+    name: "reload-trigger",
+    configureServer(server: any) {
+      const triggerFile = path.resolve(".reload-trigger");
+      server.watcher.add(triggerFile);
+
+      server.watcher.on("change", (filePath: string) => {
+        if (filePath === triggerFile || filePath.endsWith(".reload-trigger")) {
+          logger.info("Reload triggered via .reload-trigger");
+          server.ws.send({ type: "full-reload" });
         }
       });
     },
@@ -94,6 +110,7 @@ export default ({ mode }: { mode: string }) => {
       react(),
       cloudflare(),
       watchDependenciesPlugin(),
+      reloadTriggerPlugin(),
       viteStaticCopy({
         targets: [
           {
@@ -120,8 +137,10 @@ export default ({ mode }: { mode: string }) => {
     server: {
       allowedHosts: true,
       watch: {
-        // Ignore wrangler.jsonc to prevent miniflare crashes on config syntax errors
-        ignored: ["**/wrangler.jsonc"],
+        awaitWriteFinish: {
+          stabilityThreshold: 150,
+          pollInterval: 50,
+        },
       },
       fs: {
         allow: [
