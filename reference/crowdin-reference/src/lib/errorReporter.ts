@@ -643,13 +643,15 @@ class ErrorReporter {
 // Early console interceptor utility functions
 const formatConsoleArgs = (args: unknown[]): string => {
   return args
-    .map((arg) =>
-      typeof arg === "string"
-        ? arg
-        : typeof arg === "object" && arg
-        ? JSON.stringify(arg, null, 2)
-        : String(arg)
-    )
+    .map((arg) => {
+      if (typeof arg === "string") return arg;
+      if (arg instanceof Error) return arg.message || arg.name;
+      if (typeof arg === "object" && arg) {
+        const json = JSON.stringify(arg);
+        return json === "{}" ? String(arg) : json;
+      }
+      return String(arg);
+    })
     .join(" ");
 };
 

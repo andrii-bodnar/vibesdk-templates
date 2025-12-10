@@ -1,4 +1,5 @@
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import React from 'react';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -7,6 +8,7 @@ export interface ErrorFallbackProps {
   message?: string;
   error?: Error | any;
   onRetry?: () => void;
+  onGoHome?: () => void;
   showErrorDetails?: boolean;
   statusMessage?: string;
 }
@@ -16,6 +18,7 @@ export function ErrorFallback({
   message = "An unexpected error occurred. Please try again or refresh the page.",
   error,
   onRetry,
+  onGoHome,
   showErrorDetails = true,
   statusMessage
 }: ErrorFallbackProps) {
@@ -24,6 +27,14 @@ export function ErrorFallback({
       onRetry();
     } else {
       window.location.reload();
+    }
+  };
+
+  const handleGoHome = () => {
+    if (onGoHome) {
+      onGoHome();
+    } else {
+      window.location.hash = '#/';
     }
   };
 
@@ -58,6 +69,10 @@ export function ErrorFallback({
               <Button onClick={handleRetry} className="w-full">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Try Again
+              </Button>
+              <Button onClick={handleGoHome} variant="secondary" className="w-full">
+                <Home className="w-4 h-4 mr-2" />
+                Go to Homepage
               </Button>
             </div>
 

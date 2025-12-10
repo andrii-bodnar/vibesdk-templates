@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Toaster, toast } from '@/components/ui/sonner'
 import { create } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
+import { AppLayout } from '@/components/layout/AppLayout'
 
 // Timer store: independent slice with a clear, minimal API, for demonstration
 type TimerState = {
@@ -46,7 +47,7 @@ function formatDuration(ms: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-export default function App() {
+export function HomePage() {
   // Select only what is needed to avoid unnecessary re-renders
   const { isRunning, elapsedMs } = useTimerStore(
     useShallow((s) => ({ isRunning: s.isRunning, elapsedMs: s.elapsedMs })),
@@ -93,7 +94,8 @@ export default function App() {
   const formatted = formatDuration(elapsedMs)
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
+    // <AppLayout> Uncomment this if you want to use the sidebar
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
         <div className="absolute inset-0 bg-gradient-rainbow opacity-10 dark:opacity-20 pointer-events-none" />
         <div className="text-center space-y-8 relative z-10 animate-fade-in">
           <div className="flex justify-center">
@@ -136,5 +138,6 @@ export default function App() {
         </div>
         <Toaster richColors closeButton />
       </div>
+    // </AppLayout> Uncomment this if you want to use the sidebar
   )
 }

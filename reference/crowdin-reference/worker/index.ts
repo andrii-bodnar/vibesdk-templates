@@ -63,7 +63,7 @@ function setupExpressApp(app: ReturnType<typeof crowdinModule.express>, env: Clo
        });
     });
   
-    app.post('/api/client-errors', async (req: ExpressRequest, res: ExpressResponse) => {
+    app.post('/api/client-errors', crowdinModule.express.json({ limit: '50mb' }), async (req: ExpressRequest, res: ExpressResponse) => {
       try {
         const { timestamp, message, url, stack, componentStack, errorBoundary } = req.body || {};
         

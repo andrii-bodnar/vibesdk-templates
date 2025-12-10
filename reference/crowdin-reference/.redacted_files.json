@@ -3,5 +3,6 @@
     ".donttouch_files.json",
     ".important_files.json",
     "src/lib/errorReporter.ts",
-    "src/components/ErrorBoundary.tsx"
+    "src/components/ErrorBoundary.tsx",
+    "src/components/RouteErrorBoundary.tsx"
 ]
