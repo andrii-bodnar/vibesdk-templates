@@ -640,7 +640,7 @@ const configuration: ClientConfig = {
 
 **Note**: While you can customize the UI and functionality, you must not remove this module configuration from your app.
 
-### API Endpoints Best Practices
+### API Endpoints
 
 #### Common Examples
 
@@ -665,7 +665,7 @@ app.post('/api/process-data', async (req: Request, res: Response) => {
         
         res.json({ 
             success: true, 
-            result
+            data: result
         });
     } catch (error) {
         console.error('Error:', error);
@@ -681,6 +681,11 @@ app.post('/api/process-data', async (req: Request, res: Response) => {
    // ✅ CORRECT - all operations are awaited
    app.post('/api/save-config', async (req: Request, res: Response) => {
        const jwt = req.query.jwt as string;
+
+       if (!jwt) {
+           return res.status(400).json({ success: false, error: 'JWT token is required' });
+       }
+
        const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
        
        await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
@@ -795,19 +800,51 @@ app.post('/api/process-data', async (req: Request, res: Response) => {
        
        // Validate early
        if (!jwt) {
-           return res.status(400).json({ error: 'JWT token is required' });
+           return res.status(400).json({ success: false, error: 'JWT token is required' });
        }
        if (!projectId) {
-           return res.status(400).json({ error: 'Project ID is required' });
+           return res.status(400).json({ success: false, error: 'Project ID is required' });
        }
        if (!data) {
-           return res.status(400).json({ error: 'Data is required' });
+           return res.status(400).json({ success: false, error: 'Data is required' });
        }
        
        // Continue with processing
        const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
        // ... rest of the logic
    });
+   ```
+
+7. **Extract user_id, organization_id, and project_id correctly**
+   ```typescript
+   // ✅ CORRECT - extract all IDs from JWT payload
+   app.post('/api/endpoint', async (req: Request, res: Response) => {
+       const jwt = req.query.jwt as string;
+
+       if (!jwt) {
+           return res.status(400).json({ success: false, error: 'JWT token is required' });
+       }
+
+       const connection = await crowdinApp.establishCrowdinConnection(jwt, undefined);
+       
+       const userId = connection.context.jwtPayload.context.user_id;
+       const organizationId = connection.context.jwtPayload.context.organization_id;
+       const projectId = connection.context.jwtPayload.context.project_id;
+       
+       console.log('User ID:', userId);              // number
+       console.log('Organization ID:', organizationId); // number
+       console.log('Project ID:', projectId);        // number
+       
+       res.json({ 
+           success: true, 
+           data: { userId, organizationId, projectId }
+       });
+   });
+   
+   // ❌ WRONG - incorrect paths
+   const userId = connection.context.user_id; // Wrong: missing jwtPayload.context
+   const organizationId = connection.context.organization_id; // Wrong: missing jwtPayload.context
+   const projectId = connection.context.project_id; // Wrong: missing jwtPayload.context
    ```
 
 ### Crowdin API Client
@@ -948,12 +985,12 @@ response.data.forEach((fileItem: ResponseObject<SourceFilesModel.File>) => {
 
      // API errors have specific structure
      if (error.code === 404) {
-       return res.status(404).json({ error: 'Project not found' });
+       return res.status(404).json({ success: false, error: 'Project not found' });
      }
      
      return res.status(500).json({
-       error: 'API request failed',
-       details: error.message
+       success: false,
+       error: 'API request failed'
      });
    }
    ```
@@ -5372,7 +5409,7 @@ app.post('/api/save-data', async (req: Request, res: Response) => {
         
         // Save data to metadata storage
         await crowdinApp.saveMetadata(key, data, connection.context.crowdinId);
-        res.json({ success: true, message: 'Data saved successfully' });
+        res.json({ success: true });
     } catch (error) {
         console.error('Save error:', error);
         res.status(500).json({ success: false, error: 'Failed to save data' });
@@ -5412,8 +5449,7 @@ app.get('/api/get-data', async (req: Request, res: Response) => {
         if (!data) {
             return res.json({ 
                 success: true, 
-                data: null, 
-                message: 'No data found' 
+                data: null
             });
         }
         
@@ -5452,7 +5488,7 @@ app.delete('/api/delete-data', async (req: Request, res: Response) => {
         
         // Delete data from metadata storage
         await crowdinApp.deleteMetadata(key);
-        res.json({ success: true, message: 'Data deleted successfully' });
+        res.json({ success: true });
     } catch (error) {
         console.error('Delete error:', error);
         res.status(500).json({ success: false, error: 'Failed to delete data' });
@@ -5500,7 +5536,13 @@ app.get('/api/all-metadata', async (req: Request, res: Response) => {
             crowdinId: record.crowdin_id
         }));
         
-        res.json({ success: true, metadata: formattedData, count: formattedData.length });
+        res.json({ 
+            success: true, 
+            data: { 
+                metadata: formattedData, 
+                count: formattedData.length 
+            }
+        });
     } catch (error) {
         console.error('Error retrieving all metadata:', error);
         res.status(500).json({ success: false, error: 'Failed to retrieve metadata' });
