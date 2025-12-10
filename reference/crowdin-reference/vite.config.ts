@@ -122,7 +122,12 @@ export default ({ mode }: { mode: string }) => {
     ],
     build: {
       minify: true,
-      sourcemap: false,
+      sourcemap: true,
+      rollupOptions: {
+        output: {
+          sourcemapExcludeSources: true,
+        },
+      },
     },
     customLogger: env.VITE_LOGGER_TYPE === 'json' ? customLogger : undefined,
     // Enable source maps in development too
