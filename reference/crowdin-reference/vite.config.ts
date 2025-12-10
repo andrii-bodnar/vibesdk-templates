@@ -111,13 +111,33 @@ export default ({ mode }: { mode: string }) => {
       cloudflare(),
       watchDependenciesPlugin(),
       reloadTriggerPlugin(),
-      viteStaticCopy({
+      ...viteStaticCopy({
         targets: [
           {
             src: "node_modules/@crowdin/app-project-module/out/static/*",
             dest: "assets",
           },
         ],
+      }).map((plugin) => {
+        let isSsrBuild = false;
+        
+        return {
+          ...plugin,
+          configResolved(resolvedConfig: any) {
+            isSsrBuild = resolvedConfig.build?.ssr === true;
+            if (typeof plugin.configResolved === 'function') {
+              (plugin.configResolved as (config: any) => void)(resolvedConfig);
+            }
+          },
+          async writeBundle(...args: any[]) {
+            if (isSsrBuild) {
+              return;
+            }
+            if (typeof plugin.writeBundle === 'function') {
+              return (plugin.writeBundle as (...args: any[]) => any)(...args);
+            }
+          },
+        };
       }),
     ],
     build: {
