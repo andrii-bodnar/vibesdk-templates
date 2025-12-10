@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Toaster, toast } from '@/components/ui/sonner'
 import { create } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
-import { AppLayout } from '@/components/layout/AppLayout'
 
 // Timer store: independent slice with a clear, minimal API, for demonstration
 type TimerState = {
@@ -94,50 +93,48 @@ export function HomePage() {
   const formatted = formatDuration(elapsedMs)
 
   return (
-    // <AppLayout> Uncomment this if you want to use the sidebar
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
-        <div className="absolute inset-0 bg-gradient-rainbow opacity-10 dark:opacity-20 pointer-events-none" />
-        <div className="text-center space-y-8 relative z-10 animate-fade-in">
-          <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-primary floating">
-              <Sparkles className="w-8 h-8 text-white rotating" />
-            </div>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight">
-            Creating your <span className="text-gradient">app</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto text-pretty">
-            Your application would be ready soon.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button 
-              size="lg"
-              onClick={onPleaseWait}
-              className="btn-gradient px-8 py-4 text-lg font-semibold hover:-translate-y-0.5 transition-all duration-200"
-              aria-live="polite"
-            >
-              Please Wait
-            </Button>
-          </div>
-          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-            <div>
-              Time elapsed: <span className="font-medium tabular-nums text-foreground">{formatted}</span>
-            </div>
-            <div>
-              Coins: <span className="font-medium tabular-nums text-foreground">{count}</span>
-            </div>
-          </div>
-          <div className="flex justify-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => { resetTimer(); resetCount(); toast('Reset complete') }}>
-              Reset
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => { inc(); toast('Coin added') }}>
-              Add Coin
-            </Button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
+      <div className="absolute inset-0 bg-gradient-rainbow opacity-10 dark:opacity-20 pointer-events-none" />
+      <div className="text-center space-y-8 relative z-10 animate-fade-in">
+        <div className="flex justify-center">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-primary floating">
+            <Sparkles className="w-8 h-8 text-white rotating" />
           </div>
         </div>
-        <Toaster richColors closeButton />
+        <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight">
+          Creating your <span className="text-gradient">app</span>
+        </h1>
+        <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto text-pretty">
+          Your application would be ready soon.
+        </p>
+        <div className="flex justify-center gap-4">
+          <Button 
+            size="lg"
+            onClick={onPleaseWait}
+            className="btn-gradient px-8 py-4 text-lg font-semibold hover:-translate-y-0.5 transition-all duration-200"
+            aria-live="polite"
+          >
+            Please Wait
+          </Button>
+        </div>
+        <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
+          <div>
+            Time elapsed: <span className="font-medium tabular-nums text-foreground">{formatted}</span>
+          </div>
+          <div>
+            Coins: <span className="font-medium tabular-nums text-foreground">{count}</span>
+          </div>
+        </div>
+        <div className="flex justify-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => { resetTimer(); resetCount(); toast('Reset complete') }}>
+            Reset
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => { inc(); toast('Coin added') }}>
+            Add Coin
+          </Button>
+        </div>
       </div>
-    // </AppLayout> Uncomment this if you want to use the sidebar
+      <Toaster richColors closeButton />
+    </div>
   )
 }
