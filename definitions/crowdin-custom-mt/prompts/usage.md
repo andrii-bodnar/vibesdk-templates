@@ -43,22 +43,32 @@ Crowdin app with Custom MT (Machine Translation), Profile Resources Menu and Org
 ### Backend Structure
 - `worker/app.ts` - Express app factory with Custom MT module configuration
 - `worker/index.ts` - Cloudflare Worker entry point (HTTP handler, cron scheduler, middleware)
+- `worker/types/` - Backend TypeScript type definitions
+  - `cloudflare-env.d.ts` - Cloudflare environment types (KV storage, secrets)
 
 ### Frontend Structure
 - `index.html` - HTML entry point with Crowdin Apps JS API script
 - `src/main.tsx` - React entry point with ErrorBoundary wrapper
-- `src/App.tsx` - Main React application component (rewrite this file for your app)
 - `src/index.css` - Global styles and Tailwind CSS customizations
 - `src/components/` - React components
+  - `app-sidebar.tsx` - Application sidebar navigation
   - `ErrorBoundary.tsx` - React error boundary with backend error reporting
   - `ErrorFallback.tsx` - Fallback UI component for error states
+  - `RouteErrorBoundary.tsx` - Error boundary for routing errors
+  - `layout/` - Layout components
+    - `AppLayout.tsx` - Main application layout wrapper
   - `ui/` - ShadCN UI components (button, card, sonner, etc.)
+- `src/pages/` - Page components
+  - `HomePage.tsx` - Home page component (main entry point for your app logic)
 - `src/hooks/` - Custom React hooks
   - `use-mobile.tsx` - Hook for detecting mobile breakpoints
 - `src/lib/` - Utility modules
   - `utils.ts` - Tailwind utility functions (`cn` for class merging)
   - `errorReporter.ts` - Client-side error reporting to backend
   - `apiClient.ts` - Generic API call wrapper with JWT token handling
+- `src/types/` - TypeScript type definitions
+  - `global.d.ts` - Global type declarations
+  - `vite-env.d.ts` - Vite environment types
 
 ## Backend Development
 
@@ -6635,6 +6645,8 @@ const configuration: ClientConfig = {
 ### 2. Key Files to Modify
 
 - `worker/app.ts` - Add new API endpoints here
-- `src/App.tsx` - Main React component (rewrite for your app logic)
+- `src/pages/HomePage.tsx` - Main page component (customize for your app logic)
+- `src/components/app-sidebar.tsx` - Sidebar navigation (customize menu items)
+- `src/components/layout/AppLayout.tsx` - Application layout (customize layout structure)
 - `src/index.css` - Customize global styles and Tailwind theme
 - `tailwind.config.js` - Add custom colors and extend theme

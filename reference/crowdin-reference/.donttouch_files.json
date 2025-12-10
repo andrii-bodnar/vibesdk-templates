@@ -5,8 +5,10 @@
     ".donttouch_files.json",
     ".important_files.json",
     "worker/index.ts",
+    "worker/types/cloudflare-env.d.ts",
     "src/lib/errorReporter.ts",
     "src/components/ErrorBoundary.tsx",
     "src/components/RouteErrorBoundary.tsx",
+    "src/types/vite-env.d.ts",
     "vite.config.ts"
 ]
