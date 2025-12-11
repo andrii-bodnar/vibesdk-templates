@@ -78,65 +78,6 @@ There are already several models presupplied with the template along with proper
 
 ---
 
-The system automatically:
-- Connects to MCP servers using proper transport
-- Uses official MCP SDK schemas for validation
-- Discovers tools with proper error handling
-- Routes tool calls to the correct server
-- Parses results using MCP result schemas
-
-Components available:
-```sh
-$ ls -1 src/components/ui
-accordion.tsx
-alert-dialog.tsx
-alert.tsx
-aspect-ratio.tsx
-avatar.tsx
-badge.tsx
-breadcrumb.tsx
-button.tsx
-calendar.tsx
-card.tsx
-carousel.tsx
-chart.tsx
-checkbox.tsx
-collapsible.tsx
-command.tsx
-context-menu.tsx
-dialog.tsx
-drawer.tsx
-dropdown-menu.tsx
-form.tsx
-hover-card.tsx
-input-otp.tsx
-input.tsx
-label.tsx
-menubar.tsx
-navigation-menu.tsx
-pagination.tsx
-popover.tsx
-progress.tsx
-radio-group.tsx
-resizable.tsx
-scroll-area.tsx
-select.tsx
-separator.tsx
-sheet.tsx
-sidebar.tsx
-skeleton.tsx
-slider.tsx
-sonner.tsx
-switch.tsx
-table.tsx
-tabs.tsx
-textarea.tsx
-toast.tsx
-toggle-group.tsx
-toggle.tsx
-tooltip.tsx
-```
-
 # Important Notes
 - Conversations and persistence are already handled by the template. Utilize existing utilities and apis to build something greater.
 - For example, to build a chatgpt clone - You just need to build the frontend and use existing APIs without modifying them.
@@ -152,32 +93,28 @@ Add the above note in an appropriate and visible location in the app - like in t
 
 ---
 
-## React Router Rules
+## Routing (CRITICAL)
 
-Router hooks (`useNavigate`, `useLocation`, `useParams`, `Link`) only work inside `<RouterProvider>`.
+Uses `createBrowserRouter` - do NOT switch to `BrowserRouter`/`HashRouter`.
 
-**Adding routes** (edit `src/main.tsx`):
+**Add routes in `src/main.tsx`:**
 ```tsx
 const router = createBrowserRouter([
   { path: "/", element: <HomePage />, errorElement: <RouteErrorBoundary /> },
-  { path: "/about", element: <AboutPage />, errorElement: <RouteErrorBoundary /> },
+  { path: "/new", element: <NewPage />, errorElement: <RouteErrorBoundary /> },
 ]);
 ```
 
-**Navigation:**
+**Navigation:** `import { Link } from 'react-router-dom'` then `<Link to="/new">New</Link>`
+
+**Don't:**
+- Use `BrowserRouter`, `HashRouter`, `MemoryRouter`
+- Remove `errorElement` from routes
+- Use `useRouteError()` in your components
+
+## UI Components
+All ShadCN components are in `./src/components/ui/*`. Import and use them directly:
 ```tsx
-import { Link } from 'react-router-dom';
-<Link to="/about">About</Link>
+import { Button } from "@/components/ui/button";
 ```
-
-**With UI components:**
-```tsx
-<BreadcrumbLink asChild><Link to="/home">Home</Link></BreadcrumbLink>
-```
-
-**Common errors:**
-- "useRouteError must be used within a data router" → Only use `RouteErrorBoundary` in `errorElement` field
-- "Cannot destructure property 'basename'" → Don't use `Link` outside router context
-
-All SHADCN Components are present in ./src/components/ui/* and can be imported from there, example: import { Button } from "@/components/ui/button";
-**Please do not rewrite these components, just import them and use them**
+**Do not rewrite these components.**

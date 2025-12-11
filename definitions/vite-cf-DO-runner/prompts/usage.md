@@ -113,32 +113,28 @@ CRITICAL: only `GlobalDurableObject` is available for stateful ops
 
 ---
 
-## React Router Rules
+## Routing (CRITICAL)
 
-Router hooks (`useNavigate`, `useLocation`, `useParams`, `Link`) only work inside `<RouterProvider>`.
+Uses `createBrowserRouter` - do NOT switch to `BrowserRouter`/`HashRouter`.
 
-**Adding routes** (edit `src/main.tsx`):
+**Add routes in `src/main.tsx`:**
 ```tsx
 const router = createBrowserRouter([
   { path: "/", element: <HomePage />, errorElement: <RouteErrorBoundary /> },
-  { path: "/about", element: <AboutPage />, errorElement: <RouteErrorBoundary /> },
+  { path: "/new", element: <NewPage />, errorElement: <RouteErrorBoundary /> },
 ]);
 ```
 
-**Navigation:**
+**Navigation:** `import { Link } from 'react-router-dom'` then `<Link to="/new">New</Link>`
+
+**Don't:**
+- Use `BrowserRouter`, `HashRouter`, `MemoryRouter`
+- Remove `errorElement` from routes
+- Use `useRouteError()` in your components
+
+## UI Components
+All ShadCN components are in `./src/components/ui/*`. Import and use them directly:
 ```tsx
-import { Link } from 'react-router-dom';
-<Link to="/about">About</Link>
+import { Button } from "@/components/ui/button";
 ```
-
-**With UI components:**
-```tsx
-<BreadcrumbLink asChild><Link to="/home">Home</Link></BreadcrumbLink>
-```
-
-**Common errors:**
-- "useRouteError must be used within a data router" → Only use `RouteErrorBoundary` in `errorElement` field
-- "Cannot destructure property 'basename'" → Don't use `Link` outside router context
-
-All SHADCN Components are present in ./src/components/ui/* and can be imported from there, example: import { Button } from "@/components/ui/button";
-**Please do not rewrite these components, just import them and use them**
+**Do not rewrite these components.**

@@ -454,29 +454,20 @@ Keep it simple and add only what you need!
 
 ---
 
-## React Router Rules
+## Routing (CRITICAL)
 
-Router hooks (`useNavigate`, `useLocation`, `useParams`, `Link`) only work inside `<RouterProvider>`.
+If you add React Router, use `createBrowserRouter` - do NOT use `BrowserRouter`/`HashRouter`.
 
-**Adding routes** (edit `src/main.tsx`):
+**Add routes in `src/main.tsx`:**
 ```tsx
 const router = createBrowserRouter([
-  { path: "/", element: <HomePage />, errorElement: <RouteErrorBoundary /> },
-  { path: "/about", element: <AboutPage />, errorElement: <RouteErrorBoundary /> },
+  { path: "/", element: <HomePage /> },
+  { path: "/new", element: <NewPage /> },
 ]);
 ```
 
-**Navigation:**
-```tsx
-import { Link } from 'react-router-dom';
-<Link to="/about">About</Link>
-```
+**Navigation:** `import { Link } from 'react-router-dom'` then `<Link to="/new">New</Link>`
 
-**With UI components:**
-```tsx
-<BreadcrumbLink asChild><Link to="/home">Home</Link></BreadcrumbLink>
-```
-
-**Common errors:**
-- "useRouteError must be used within a data router" → Only use `RouteErrorBoundary` in `errorElement` field
-- "Cannot destructure property 'basename'" → Don't use `Link` outside router context
+**Don't:**
+- Use `BrowserRouter`, `HashRouter`, `MemoryRouter`
+- Use `useRouteError()` in your components
