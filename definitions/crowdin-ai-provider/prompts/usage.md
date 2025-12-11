@@ -22,6 +22,7 @@ Crowdin app with AI Provider module for integrating custom AI models into Crowdi
 - **Tailwind Colors**: Hardcode custom colors in `tailwind.config.js`, NOT in `index.css`
 - **Components**: Use existing ShadCN components instead of writing custom ones
 - **Icons**: Import from `lucide-react` directly
+- **Logo**: Always generate custom logo in `public/logo.svg` based on app purpose
 - **Error Handling**: ErrorBoundary components are pre-implemented
 - **Authentication**: Always use JWT tokens from Crowdin for API requests
 - **AI Provider Configuration**: Don't modify the aiProvider module configuration structure
@@ -46,6 +47,7 @@ Crowdin app with AI Provider module for integrating custom AI models into Crowdi
 
 ### Frontend Structure
 - `index.html` - HTML entry point with Crowdin Apps JS API script
+- `public/logo.svg` - App logo
 - `src/main.tsx` - React entry point with ErrorBoundary wrapper
 - `src/index.css` - Global styles and Tailwind CSS customizations
 - `src/components/` - React components
@@ -7001,8 +7003,7 @@ const configuration: ClientConfig = {
 ### 2. Key Files to Modify
 
 - `worker/app.ts` - Add new API endpoints here
+- `public/logo.svg` - Generate custom SVG logo representing app purpose
 - `src/pages/HomePage.tsx` - Main page component (customize for your app logic)
-- `src/components/app-sidebar.tsx` - Sidebar navigation (customize menu items)
-- `src/components/layout/AppLayout.tsx` - Application layout (customize layout structure)
 - `src/index.css` - Customize global styles and Tailwind theme
 - `tailwind.config.js` - Add custom colors and extend theme
