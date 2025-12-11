@@ -51,7 +51,6 @@ const customLogger = {
 
 function watchDependenciesPlugin() {
   return {
-    // Plugin to clear caches when dependencies change
     name: "watch-dependencies",
     configureServer(server: any) {
       const filesToWatch = [
@@ -64,12 +63,11 @@ function watchDependenciesPlugin() {
       server.watcher.on("change", (filePath: string) => {
         if (filesToWatch.includes(filePath)) {
           console.log(
-            `\n📦 Dependency file changed: ${path.basename(
+            `\n Dependency file changed: ${path.basename(
               filePath
             )}. Clearing caches...`
           );
 
-          // Run the cache-clearing command
           exec(
             "rm -f .eslintcache tsconfig.tsbuildinfo",
             (err, stdout, stderr) => {
@@ -77,9 +75,26 @@ function watchDependenciesPlugin() {
                 console.error("Failed to clear caches:", stderr);
                 return;
               }
-              console.log("✅ Caches cleared successfully.\n");
+              console.log("Caches cleared successfully.\n");
             }
           );
+        }
+      });
+    },
+  };
+}
+
+function reloadTriggerPlugin() {
+  return {
+    name: "reload-trigger",
+    configureServer(server: any) {
+      const triggerFile = path.resolve(".reload-trigger");
+      server.watcher.add(triggerFile);
+
+      server.watcher.on("change", (filePath: string) => {
+        if (filePath === triggerFile || filePath.endsWith(".reload-trigger")) {
+          logger.info("Reload triggered via .reload-trigger");
+          server.ws.send({ type: "full-reload" });
         }
       });
     },
@@ -90,7 +105,7 @@ function watchDependenciesPlugin() {
 export default ({ mode }: { mode: string }) => {
   const env = loadEnv(mode, process.cwd());
   return defineConfig({
-    plugins: [react(), cloudflare(), watchDependenciesPlugin()],
+    plugins: [react(), cloudflare(), watchDependenciesPlugin(), reloadTriggerPlugin()],
     build: {
       minify: true,
       sourcemap: "inline", // Use inline source maps for better error reporting
@@ -107,6 +122,12 @@ export default ({ mode }: { mode: string }) => {
     },
     server: {
       allowedHosts: true,
+      watch: {
+        awaitWriteFinish: {
+          stabilityThreshold: 150,
+          pollInterval: 50,
+        },
+      },
     },
     resolve: {
       alias: {
