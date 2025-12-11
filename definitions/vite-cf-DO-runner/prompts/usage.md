@@ -8,7 +8,7 @@ Cloudflare Workers + React. Single global Durable Object (DO) for all persistenc
 
 ## ⚠️ IMPORTANT: Demo Content
 **The existing demo pages, mock data, and API endpoints are FOR TEMPLATE UNDERSTANDING ONLY.**
-- Replace `HomePage.tsx` and `DemoPage.tsx` with actual application pages
+- Replace `src/pages/HomePage.tsx` with your application UI
 - Remove or replace mock data in `shared/mock-data.ts` with real data structures
 - Remove or replace demo API endpoints (`/api/demo`, `/api/counter`) and implement actual business logic
 - The counter and demo items examples show DO patterns - replace with real functionality
@@ -31,8 +31,8 @@ Cloudflare Workers + React. Single global Durable Object (DO) for all persistenc
 ## Code Organization
 
 ### Frontend Structure
-- `src/pages/HomePage.tsx` - Homepage for user to see while you are working on the app
-- `src/pages/DemoPage.tsx` - Main demo showcasing Durable Object features
+- `src/pages/HomePage.tsx` - Placeholder wait screen (replace it)
+- `src/components/TemplateDemo.tsx` - Demo-only UI (remove/ignore when building your app)
 - `src/components/ThemeToggle.tsx` - Theme switching component
 - `src/hooks/useTheme.ts` - Theme management hook
 
