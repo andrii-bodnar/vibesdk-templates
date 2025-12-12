@@ -113,6 +113,8 @@ await UserEntity.list(c.env, null, 10); // Fetch first 10 users
 
 Uses `createBrowserRouter` - do NOT switch to `BrowserRouter`/`HashRouter`.
 
+If you switch routers, `RouteErrorBoundary`/`useRouteError()` will not work (you'll get a router configuration error screen instead of proper route error handling).
+
 **Add routes in `src/main.tsx`:**
 ```tsx
 const router = createBrowserRouter([

@@ -458,6 +458,8 @@ Keep it simple and add only what you need!
 
 If you add React Router, use `createBrowserRouter` - do NOT use `BrowserRouter`/`HashRouter`.
 
+If you switch routers, `useRouteError()` will not work (you'll get a router configuration error screen instead of proper route error handling).
+
 **Add routes in `src/main.tsx`:**
 ```tsx
 const router = createBrowserRouter([
