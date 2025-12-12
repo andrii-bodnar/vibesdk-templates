@@ -3,22 +3,39 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { userRoutes } from './userRoutes';
 import { Env } from './core-utils';
+export * from './core-utils';
 
-export interface ClientErrorReport {
-  message: string;
-  url: string;
-  timestamp: string;
-  stack?: string;
-  componentStack?: string;
-  errorBoundary?: boolean;
-  errorBoundaryProps?: Record<string, unknown>;
-  source?: string;
-  lineno?: number;
-  colno?: number;
-  error?: unknown;
-}
+type UserRoutesModule = { userRoutes: (app: Hono<{ Bindings: Env }>) => void };
+
+const USER_ROUTES_MODULE = './userRoutes';
+const RETRY_MS = 750;
+let nextRetryAt = 0;
+let userRoutesLoaded = false;
+let userRoutesLoadError: string | null = null;
+
+const safeLoadUserRoutes = async (app: Hono<{ Bindings: Env }>) => {
+  if (userRoutesLoaded) return;
+
+  const now = Date.now();
+  const shouldRetry = userRoutesLoadError !== null;
+  if (shouldRetry && now < nextRetryAt) return;
+  nextRetryAt = now + RETRY_MS;
+
+  const bust = shouldRetry && import.meta.env?.DEV ? `?t=${now}` : '';
+  const spec = `${USER_ROUTES_MODULE}${bust}`;
+
+  try {
+    const mod = (await import(/* @vite-ignore */ spec)) as UserRoutesModule;
+    mod.userRoutes(app);
+    userRoutesLoaded = true;
+    userRoutesLoadError = null;
+  } catch (e) {
+    userRoutesLoadError = e instanceof Error ? e.message : String(e);
+  }
+};
+
+export type ClientErrorReport = { message: string; url: string; timestamp: string } & Record<string, unknown>;
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -26,7 +43,6 @@ app.use('*', logger());
 
 app.use('/api/*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization'] }));
 
-userRoutes(app);
 app.get('/api/health', (c) => c.json({ success: true, data: { status: 'healthy', timestamp: new Date().toISOString() }}));
 
 app.post('/api/client-errors', async (c) => {
@@ -45,4 +61,24 @@ app.onError((err, c) => { console.error(`[ERROR] ${err}`); return c.json({ succe
 
 console.log(`Server is running`)
 
-export default { fetch: app.fetch } satisfies ExportedHandler<Env>;
+export default {
+  async fetch(request, env, ctx) {
+    const pathname = new URL(request.url).pathname;
+
+    if (pathname.startsWith('/api/') && pathname !== '/api/health' && pathname !== '/api/client-errors') {
+      await safeLoadUserRoutes(app);
+      if (userRoutesLoadError) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Worker routes failed to load',
+            detail: userRoutesLoadError,
+          }),
+          { status: 500, headers: { 'content-type': 'application/json' } },
+        );
+      }
+    }
+
+    return app.fetch(request, env, ctx);
+  },
+} satisfies ExportedHandler<Env>;

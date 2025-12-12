@@ -10,3 +10,9 @@ package_patches:
 
 excludes:
   - "worker/userRoutes.ts"
+
+file_patches:
+  - file: "worker/index.ts"
+    replacements:
+      - find: "const USER_ROUTES_MODULE = './userRoutes';"
+        replace: "const USER_ROUTES_MODULE = './user-routes';"

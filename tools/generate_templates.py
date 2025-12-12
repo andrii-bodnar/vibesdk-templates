@@ -358,6 +358,70 @@ class TemplateGenerator:
             log_error(f"Failed to apply template-specific files: {e}")
             return False
 
+    def apply_file_patches(
+        self, target_dir: Path, file_patches: List[Dict[str, Any]]
+    ) -> bool:
+        """Apply string/regex replacements to generated files."""
+        flag_map = {"i": re.IGNORECASE, "m": re.MULTILINE, "s": re.DOTALL}
+
+        for patch in file_patches:
+            rel_file = patch.get("file")
+            if not rel_file:
+                log_error("file_patches entry missing 'file'")
+                return False
+
+            file_path = target_dir / rel_file
+            if not file_path.exists() or not file_path.is_file():
+                log_error(f"file_patches target not found: {rel_file}")
+                return False
+
+            try:
+                content = file_path.read_text(encoding="utf-8")
+            except Exception as e:
+                log_error(f"Failed reading {rel_file} for patching: {e}")
+                return False
+
+            for rep in patch.get("replacements", []) or []:
+                find = rep.get("find")
+                replace = rep.get("replace")
+                if find is None or replace is None:
+                    log_error(f"Invalid replacement in {rel_file} (need find/replace)")
+                    return False
+                if find not in content:
+                    log_error(f"Replacement 'find' not found in {rel_file}")
+                    return False
+                content = content.replace(find, replace)
+
+            for rep in patch.get("regex_replacements", []) or []:
+                pattern = rep.get("pattern")
+                replace = rep.get("replace")
+                flags_s = rep.get("flags", "")
+                if pattern is None or replace is None:
+                    log_error(
+                        f"Invalid regex_replacement in {rel_file} (need pattern/replace)"
+                    )
+                    return False
+                flags = 0
+                for ch in str(flags_s):
+                    flags |= flag_map.get(ch, 0)
+                try:
+                    new_content, n = re.subn(pattern, replace, content, flags=flags)
+                except re.error as e:
+                    log_error(f"Invalid regex in {rel_file}: {e}")
+                    return False
+                if n == 0:
+                    log_error(f"Regex pattern not matched in {rel_file}")
+                    return False
+                content = new_content
+
+            try:
+                file_path.write_text(content, encoding="utf-8")
+            except Exception as e:
+                log_error(f"Failed writing {rel_file} after patching: {e}")
+                return False
+
+        return True
+
     def generate_template_from_yaml(self, yaml_file: Path) -> bool:
         """
         Generate a template from YAML configuration.
@@ -377,6 +441,7 @@ class TemplateGenerator:
             base_reference = config.get("base_reference", "shared-reference")
             template_specific_files = config.get("template_specific_files")
             excludes = config.get("excludes", [])
+            file_patches = config.get("file_patches", [])
             package_patches = config.get("package_patches", {})
             inherit_dependencies = config.get("inherit_dependencies", True)
 
@@ -409,6 +474,11 @@ class TemplateGenerator:
             # Step 4: Apply excludes (remove files introduced by reference or overlays)
             if excludes:
                 self.apply_excludes(target_dir, excludes)
+
+            # Step 5: Apply file patches (string/regex replacements)
+            if file_patches:
+                if not self.apply_file_patches(target_dir, file_patches):
+                    return False
 
             log_info(f"✅ Successfully generated template: {template_name}")
             return True
