@@ -156,6 +156,8 @@ export default ({ mode }: { mode: string }) => {
     },
     server: {
       allowedHosts: true,
+      // Disable HMR to prevent "Expected `miniflare` to be defined" error.
+      hmr: false,
       watch: {
         awaitWriteFinish: {
           stabilityThreshold: 150,
