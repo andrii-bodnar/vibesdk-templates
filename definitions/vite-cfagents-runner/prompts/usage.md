@@ -1,6 +1,6 @@
 # Usage Instructions
 
-You can start customizing the template frontend by modifying `src/App.tsx`. The page auto-updates as you edit the file.
+You can start customizing the template frontend by modifying `src/pages/HomePage.tsx`. The page auto-updates as you edit the file.
 
 The chat API is powered by Cloudflare Agents (Which is a wrapper on Durable Objects) and accessible through the worker at `/api/chat/:sessionId/*` routes defined in `worker/userRoutes.ts`. **Use it!**
 
