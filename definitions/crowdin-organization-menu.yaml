@@ -1,6 +1,7 @@
 name: "crowdin-organization-menu"
 description: "Crowdin app with Organization Menu module"
 base_reference: "crowdin-reference"
+projectType: app
 
 package_patches:
   name: "crowdin-organization-menu"

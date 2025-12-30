@@ -1,6 +1,7 @@
 name: "crowdin-editor-right-panel"
 description: "Crowdin app with Editor Right Panel module"
 base_reference: "crowdin-reference"
+projectType: app
 
 package_patches:
   name: "crowdin-editor-right-panel"

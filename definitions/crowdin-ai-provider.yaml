@@ -1,6 +1,7 @@
 name: "crowdin-ai-provider"
 description: "Crowdin app with AI Provider module for custom AI model integration"
 base_reference: "crowdin-reference"
+projectType: app
 
 package_patches:
   name: "crowdin-ai-provider"

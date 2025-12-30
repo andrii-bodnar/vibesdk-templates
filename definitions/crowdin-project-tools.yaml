@@ -1,6 +1,7 @@
 name: "crowdin-project-tools"
 description: "Crowdin app with Project Tools module"
 base_reference: "crowdin-reference"
+projectType: app
 
 package_patches:
   name: "crowdin-project-tools"

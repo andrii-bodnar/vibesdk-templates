@@ -1,6 +1,7 @@
 name: "crowdin-file-processor"
 description: "Crowdin app with File Processing modules (Pre-Import, Post-Import, Pre-Export, Post-Export)"
 base_reference: "crowdin-reference"
+projectType: app
 
 package_patches:
   name: "crowdin-file-processor"

@@ -1,6 +1,7 @@
 name: "crowdin-custom-mt"
 description: "Crowdin app with Custom MT (Machine Translation) module"
 base_reference: "crowdin-reference"
+projectType: app
 
 package_patches:
   name: "crowdin-custom-mt"
