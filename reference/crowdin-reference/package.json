@@ -12,7 +12,7 @@
 		"cf-typegen": "wrangler types --include-runtime false --env-interface CloudflareEnv worker/types/cloudflare-env.d.ts"
 	},
 	"dependencies": {
-        "@crowdin/app-project-module": "next",
+		"@crowdin/app-project-module": "next",
 		"@dnd-kit/core": "^6.3.1",
 		"@dnd-kit/sortable": "^10.0.0",
 		"@headlessui/react": "^2.2.4",
@@ -46,8 +46,6 @@
 		"@radix-ui/react-tooltip": "^1.2.7",
 		"@typescript-eslint/eslint-plugin": "^8.38.0",
 		"@typescript-eslint/parser": "^8.38.0",
-		"@typescript-eslint/typescript-estree": "^8.39.0",
-		"chalk": "^5.6.2",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"cmdk": "^1.1.1",
@@ -64,7 +62,6 @@
 		"react": "^18.3.1",
 		"react-day-picker": "^9.8.0",
 		"react-dom": "^18.3.1",
-		"react-flow": "^1.0.3",
 		"react-hook-form": "^7.60.0",
 		"react-hotkeys-hook": "^5.1.0",
 		"react-resizable-panels": "^3.0.3",
