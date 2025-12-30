@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import argparse
+import yaml
 
 
 class Colors:
@@ -234,36 +235,106 @@ def read_file_content(file_path: Path) -> str:
         return ""
 
 
-def process_template(template_dir: Path) -> Dict[str, Any]:
+def read_template_metadata_from_yaml(template_name: str, definitions_dir: Path) -> Dict[str, Any]:
+    """
+    Read template metadata from the template's YAML definition file.
+
+    Args:
+        template_name: Name of the template
+        definitions_dir: Path to the definitions directory
+
+    Returns:
+        Dictionary with projectType, renderMode, and slideDirectory fields
+    """
+    yaml_file = definitions_dir / f"{template_name}.yaml"
+
+    default_metadata = {
+        'projectType': 'app',
+        'disabled': False,
+        'renderMode': None,
+        'slideDirectory': None
+    }
+
+    if not yaml_file.exists():
+        log_warn(f"YAML definition not found for {template_name}, using defaults")
+        return default_metadata
+
+    try:
+        with open(yaml_file, 'r', encoding='utf-8') as f:
+            yaml_data = yaml.safe_load(f)
+
+        project_type = yaml_data.get('projectType', 'app')
+
+        if project_type not in ['app', 'workflow', 'presentation']:
+            log_warn(f"Invalid projectType '{project_type}' in {yaml_file}, defaulting to 'app'")
+            project_type = 'app'
+
+        render_mode = yaml_data.get('renderMode')
+        if render_mode is not None and render_mode not in ['sandbox', 'browser']:
+            log_warn(f"Invalid renderMode '{render_mode}' in {yaml_file}, ignoring")
+            render_mode = None
+
+        slide_directory = yaml_data.get('slideDirectory')
+        if slide_directory is not None and not isinstance(slide_directory, str):
+            log_warn(f"Invalid slideDirectory in {yaml_file}, must be string")
+            slide_directory = None
+
+        return {
+            'projectType': project_type,
+            'disabled': yaml_data.get('disabled', False),
+            'renderMode': render_mode,
+            'slideDirectory': slide_directory
+        }
+    except Exception as e:
+        log_warn(f"Could not read metadata from {yaml_file}: {e}, using defaults")
+        return default_metadata
+
+
+def process_template(template_dir: Path, definitions_dir: Path) -> Dict[str, Any]:
     """
     Process a single template directory and extract its information.
-    
+
     Args:
         template_dir: Path to the template directory
-        
+        definitions_dir: Path to the definitions directory for YAML files
+
     Returns:
         Dictionary containing template information
     """
     template_name = template_dir.name
     log_info(f"Processing template: {template_name}")
-    
+
     # Extract frameworks from package.json
     frameworks = extract_frameworks(template_dir / "package.json")
-    
+
     # Read prompt files
     prompts_dir = template_dir / "prompts"
     selection_content = read_file_content(prompts_dir / "selection.md")
     usage_content = read_file_content(prompts_dir / "usage.md")
-    
-    return {
+
+    # Read metadata from YAML definition
+    metadata = read_template_metadata_from_yaml(template_name, definitions_dir)
+
+    template_data = {
         "name": template_name,
-        "language": "typescript",  # Hardcoded as requested
+        "language": "typescript",
         "frameworks": frameworks,
+        "projectType": metadata['projectType'],
+        "disabled": metadata.get('disabled', False),
         "description": {
             "selection": selection_content,
             "usage": usage_content
         }
     }
+
+    # Add optional presentation-specific fields if present
+    if metadata['renderMode'] is not None:
+        template_data['renderMode'] = metadata['renderMode']
+
+    if metadata['slideDirectory'] is not None:
+        template_data['slideDirectory'] = metadata['slideDirectory']
+
+    return template_data
 
 
 def main() -> None:
@@ -292,23 +363,32 @@ def main() -> None:
     # Get the directory to scan
     scan_dir = Path(args.directory).resolve()
     output_file = Path(args.output)
-    
+
+    # Determine definitions directory (relative to scan_dir)
+    definitions_dir = scan_dir.parent / "definitions"
+    if not definitions_dir.exists():
+        log_warn(f"Definitions directory not found at {definitions_dir}, projectType will default to 'app'")
+
     log_info("Starting template catalog generation...")
     log_info(f"Scanning directory: {scan_dir}")
-    
+    log_info(f"Definitions directory: {definitions_dir}")
+
     templates = []
     template_count = 0
     skipped_count = 0
-    
+
     # Scan directories
     for item in scan_dir.iterdir():
         # Skip non-directories and hidden/special directories
         if not item.is_dir() or item.name.startswith('.') or item.name in ('node_modules',):
             continue
-        
+
         if is_valid_template(item):
             log_info(f"✓ Valid template found: {item.name}")
-            template_data = process_template(item)
+            template_data = process_template(item, definitions_dir)
+            if template_data['disabled']:
+                log_info(f"✗ Skipping disabled template: {item.name}")
+                continue
             templates.append(template_data)
             template_count += 1
         else:

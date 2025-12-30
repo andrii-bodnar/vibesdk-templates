@@ -19,7 +19,7 @@ fi
 
 # 1) Generate templates into build/
 echo "🧱 Generating templates into build/..."
-python3 tools/generate_templates.py --clean
+python3 tools/generate_templates.py --clean --sync-lockfiles
 echo "✅ Templates generated"
 
 # 2) Generate template catalog (generate_template_catalog.py now defaults to ./build)
