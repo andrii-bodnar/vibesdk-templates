@@ -6197,6 +6197,310 @@ interface Context {
 }
 ```
 
+### Routing
+
+#### Overview
+
+The app uses React Router with `createHashRouter` for client-side navigation. Routes are configured in `src/main.tsx` with error boundaries for each route.
+
+**⚠️ CRITICAL**: Do NOT switch to `BrowserRouter`, `HashRouter`, or `MemoryRouter`. The `createHashRouter` is required for proper error boundary functionality with `useRouteError()`.
+
+#### Configuration
+
+Routes are defined in `src/main.tsx`:
+
+```tsx
+import {
+  createHashRouter,
+  RouterProvider,
+} from "react-router-dom";
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
+import { HomePage } from '@/pages/HomePage';
+
+const router = createHashRouter([
+  {
+    path: "/",
+    element: <HomePage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+]);
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  </StrictMode>,
+)
+```
+
+#### Common Examples
+
+**Adding a New Route:**
+```tsx
+import { SettingsPage } from '@/pages/SettingsPage';
+
+const router = createHashRouter([
+  {
+    path: "/",
+    element: <HomePage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/settings",
+    element: <SettingsPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+]);
+```
+
+**Navigation Between Pages:**
+```tsx
+import { Link } from 'react-router-dom';
+
+// In your component
+<Link to="/settings">Go to Settings</Link>
+```
+
+#### Best Practices
+
+1. **Always use createHashRouter**
+   ```tsx
+   // ✅ CORRECT - uses createHashRouter
+   import { createHashRouter, RouterProvider } from "react-router-dom";
+   
+   const router = createHashRouter([
+     { path: "/", element: <HomePage />, errorElement: <RouteErrorBoundary /> }
+   ]);
+   
+   <RouterProvider router={router} />
+   
+   // ❌ WRONG - BrowserRouter breaks RouteErrorBoundary
+   import { BrowserRouter, Routes, Route } from "react-router-dom";
+   
+   <BrowserRouter>
+     <Routes>
+       <Route path="/" element={<HomePage />} />
+     </Routes>
+   </BrowserRouter>
+   ```
+
+2. **Always include errorElement for each route**
+   ```tsx
+   // ✅ CORRECT - has errorElement
+   {
+     path: "/settings",
+     element: <SettingsPage />,
+     errorElement: <RouteErrorBoundary />,
+   }
+   
+   // ❌ WRONG - missing errorElement
+   {
+     path: "/settings",
+     element: <SettingsPage />,
+   }
+   ```
+
+3. **Use Link component for navigation, not anchor tags**
+   ```tsx
+   // ✅ CORRECT - uses Link component
+   import { Link } from 'react-router-dom';
+   <Link to="/settings">Settings</Link>
+   
+   // ❌ WRONG - causes full page reload
+   <a href="/settings">Settings</a>
+   ```
+
+4. **Don't use useRouteError outside of error boundaries**
+   ```tsx
+   // ✅ CORRECT - useRouteError only in RouteErrorBoundary
+   // RouteErrorBoundary.tsx handles this automatically
+   
+   // ❌ WRONG - useRouteError in regular components
+   function MyPage() {
+       const error = useRouteError(); // This will fail!
+       return <div>Page</div>;
+   }
+   ```
+
+5. **Create new page components in src/pages/**
+   ```tsx
+   // ✅ CORRECT - page in src/pages/
+   // src/pages/SettingsPage.tsx
+   export function SettingsPage() {
+       return <div>Settings</div>;
+   }
+   
+   // ❌ WRONG - page in wrong location
+   // src/components/SettingsPage.tsx
+   ```
+
+### UI Components
+
+#### Overview
+
+All UI components are pre-built ShadCN components located in `src/components/ui/`. These components are styled with Tailwind CSS and designed for accessibility.
+
+**⚠️ CRITICAL**: Do NOT rewrite or modify ShadCN components in `src/components/ui/`. Use them as-is and customize via Tailwind classes.
+
+#### Available Components
+
+The following ShadCN components are available:
+
+| Component | Import | Description |
+|-----------|--------|-------------|
+| `accordion` | `@/components/ui/accordion` | Expandable/collapsible sections |
+| `alert` | `@/components/ui/alert` | Alert messages |
+| `alert-dialog` | `@/components/ui/alert-dialog` | Confirmation dialogs |
+| `avatar` | `@/components/ui/avatar` | User avatars |
+| `badge` | `@/components/ui/badge` | Status badges |
+| `breadcrumb` | `@/components/ui/breadcrumb` | Navigation breadcrumbs |
+| `button` | `@/components/ui/button` | Buttons with variants |
+| `calendar` | `@/components/ui/calendar` | Date picker calendar |
+| `card` | `@/components/ui/card` | Content cards |
+| `carousel` | `@/components/ui/carousel` | Image/content carousel |
+| `chart` | `@/components/ui/chart` | Chart components |
+| `checkbox` | `@/components/ui/checkbox` | Checkbox inputs |
+| `collapsible` | `@/components/ui/collapsible` | Collapsible sections |
+| `command` | `@/components/ui/command` | Command palette |
+| `context-menu` | `@/components/ui/context-menu` | Right-click menus |
+| `dialog` | `@/components/ui/dialog` | Modal dialogs |
+| `drawer` | `@/components/ui/drawer` | Side drawer panels |
+| `dropdown-menu` | `@/components/ui/dropdown-menu` | Dropdown menus |
+| `form` | `@/components/ui/form` | Form components with validation |
+| `hover-card` | `@/components/ui/hover-card` | Hover tooltips with content |
+| `input` | `@/components/ui/input` | Text inputs |
+| `input-otp` | `@/components/ui/input-otp` | OTP code inputs |
+| `label` | `@/components/ui/label` | Form labels |
+| `menubar` | `@/components/ui/menubar` | Menu bars |
+| `navigation-menu` | `@/components/ui/navigation-menu` | Navigation menus |
+| `pagination` | `@/components/ui/pagination` | Pagination controls |
+| `popover` | `@/components/ui/popover` | Popover panels |
+| `progress` | `@/components/ui/progress` | Progress bars |
+| `radio-group` | `@/components/ui/radio-group` | Radio button groups |
+| `resizable` | `@/components/ui/resizable` | Resizable panels |
+| `scroll-area` | `@/components/ui/scroll-area` | Custom scrollbars |
+| `select` | `@/components/ui/select` | Select dropdowns |
+| `separator` | `@/components/ui/separator` | Visual separators |
+| `sheet` | `@/components/ui/sheet` | Slide-out panels |
+| `sidebar` | `@/components/ui/sidebar` | Sidebar navigation |
+| `skeleton` | `@/components/ui/skeleton` | Loading skeletons |
+| `slider` | `@/components/ui/slider` | Range sliders |
+| `sonner` | `@/components/ui/sonner` | Toast notifications |
+| `switch` | `@/components/ui/switch` | Toggle switches |
+| `table` | `@/components/ui/table` | Data tables |
+| `tabs` | `@/components/ui/tabs` | Tab panels |
+| `textarea` | `@/components/ui/textarea` | Multi-line text inputs |
+| `toggle` | `@/components/ui/toggle` | Toggle buttons |
+| `toggle-group` | `@/components/ui/toggle-group` | Toggle button groups |
+| `tooltip` | `@/components/ui/tooltip` | Hover tooltips |
+
+#### Common Examples
+
+**Button with Variants:**
+```tsx
+import { Button } from "@/components/ui/button";
+
+// Default button
+<Button>Click me</Button>
+
+// Button variants
+<Button variant="default">Default</Button>
+<Button variant="destructive">Delete</Button>
+<Button variant="outline">Outline</Button>
+<Button variant="secondary">Secondary</Button>
+<Button variant="ghost">Ghost</Button>
+<Button variant="link">Link</Button>
+
+// Button sizes
+<Button size="default">Default</Button>
+<Button size="sm">Small</Button>
+<Button size="lg">Large</Button>
+<Button size="icon"><IconComponent /></Button>
+
+// Disabled state
+<Button disabled>Disabled</Button>
+```
+
+#### Best Practices
+
+1. **Import components from the correct path**
+   ```tsx
+   // ✅ CORRECT - import from @/components/ui/
+   import { Button } from "@/components/ui/button";
+   import { Card, CardContent } from "@/components/ui/card";
+   
+   // ❌ WRONG - incorrect import path
+   import { Button } from "shadcn/ui";
+   import { Button } from "@radix-ui/react-button";
+   ```
+
+2. **Do NOT modify ShadCN component files**
+   ```tsx
+   // ✅ CORRECT - customize via className prop
+   <Button className="bg-blue-500 hover:bg-blue-600">
+       Custom styled button
+   </Button>
+   
+   // ❌ WRONG - modifying src/components/ui/button.tsx directly
+   ```
+
+3. **Use existing components instead of writing custom ones**
+   ```tsx
+   // ✅ CORRECT - use existing Dialog component
+   import { Dialog, DialogContent } from "@/components/ui/dialog";
+   
+   // ❌ WRONG - writing custom modal from scratch
+   function CustomModal({ children }) {
+       return <div className="fixed inset-0 bg-black/50">...</div>;
+   }
+   ```
+
+4. **Combine with Tailwind for layout and spacing**
+   ```tsx
+   // ✅ CORRECT - ShadCN for components, Tailwind for layout
+   <div className="flex flex-col gap-4 p-6">
+       <Card>
+           <CardContent className="pt-6">
+               <Button className="w-full">Full width button</Button>
+           </CardContent>
+       </Card>
+   </div>
+   ```
+
+5. **Use Lucide icons with components**
+   ```tsx
+   // ✅ CORRECT - import icons from lucide-react
+   import { Loader2, Check, X } from "lucide-react";
+   
+   <Button>
+       <Check className="mr-2 h-4 w-4" />
+       Confirm
+   </Button>
+   
+   // ❌ WRONG - using other icon libraries
+   import { FaCheck } from "react-icons/fa";
+   ```
+
+6. **Use toast for notifications instead of custom alerts**
+   ```tsx
+   // ✅ CORRECT - use toast from sonner
+   import { toast } from "sonner";
+   
+   const handleSave = async () => {
+       try {
+           await saveData();
+           toast.success("Saved successfully");
+       } catch (error) {
+           toast.error("Failed to save");
+       }
+   };
+   
+   // ❌ WRONG - custom alert implementation
+   const [showAlert, setShowAlert] = useState(false);
+   ```
+
 ## Development Workflow
 
 ### 1. Configure Your App Identity
