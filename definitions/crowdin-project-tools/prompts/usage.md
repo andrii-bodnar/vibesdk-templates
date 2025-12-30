@@ -1098,6 +1098,7 @@ export interface Credentials {
     token: string;
     organization?: string;
     baseUrl?: string;
+    apiDomain?: string;
 }
 export interface ClientConfig {
     httpClientType?: HttpClientType;
@@ -1166,12 +1167,13 @@ export declare class CrowdinValidationError extends CrowdinError {
 }
 export declare function handleHttpClientError(error: HttpClientError): never;
 export declare abstract class CrowdinApi {
-    private static readonly CROWDIN_URL_SUFFIX;
+    private static readonly CROWDIN_API_DOMAIN;
     private static readonly AXIOS_INSTANCE;
     private static readonly FETCH_INSTANCE;
     readonly token: string;
     readonly organization?: string;
     readonly url: string;
+    readonly apiDomain: string;
     readonly config: ClientConfig | undefined;
     readonly retryService: RetryService;
     protected fetchAllFlag: boolean;
@@ -2716,7 +2718,7 @@ export declare namespace ReportsModel {
     };
     interface ReportSettinsConfig {
         baseRates: BaseRate;
-        netRateSchemes: NetRateSchemas[];
+        netRateSchemes: NetRateSchemas;
         individualRates: IndividualRate[];
     }
     type Unit = 'strings' | 'words' | 'chars' | 'chars_with_spaces';
@@ -3730,6 +3732,8 @@ export declare class Tasks extends CrowdinApi {
     editTaskComment(projectId: number, taskId: number, commentId: number, request: PatchRequest[]): Promise<ResponseObject<TasksModel.TaskComment>>;
     listUserTasks(options?: TasksModel.ListUserTasksOptions): Promise<ResponseList<TasksModel.UserTask>>;
     listUserTasks(limit?: number, offset?: number, status?: TasksModel.Status, isArchived?: BooleanInt): Promise<ResponseList<TasksModel.UserTask>>;
+    listTasksOwnedByUser(userId: number, options?: TasksModel.ListOrganizationTasksOptions): Promise<ResponseList<TasksModel.Task>>;
+    listOrganizationTasks(options?: TasksModel.ListOrganizationTasksOptions): Promise<ResponseList<TasksModel.Task>>;
     editTaskArchivedStatus(projectId: number, taskId: number, request: PatchRequest[]): Promise<ResponseObject<TasksModel.UserTask>>;
     listTaskSettingsTemplates(projectId: number, options?: PaginationOptions): Promise<ResponseList<TasksModel.TaskSettingsTemplate>>;
     addTaskSettingsTemplate(projectId: number, request: TasksModel.AddTaskSettingsTemplate): Promise<ResponseObject<TasksModel.TaskSettingsTemplate>>;
@@ -3779,6 +3783,21 @@ export declare namespace TasksModel {
         status?: Status;
         isArchived?: BooleanInt;
         orderBy?: string;
+    }
+    interface ListOrganizationTasksOptions extends PaginationOptions {
+        orderBy?: string;
+        status?: string;
+        type?: string;
+        projectIds?: string;
+        groupIds?: string;
+        assigneeIds?: string;
+        creatorIds?: string;
+        targetLanguageIds?: string;
+        sourceLanguageIds?: string;
+        createdAtFrom?: string;
+        createdAtTo?: string;
+        deadlineFrom?: string;
+        deadlineTo?: string;
     }
     interface UserTask extends Task {
         isArchived: boolean;

@@ -157,7 +157,7 @@ def update_all_templates(reference_path: Path, definitions_path: Path) -> bool:
 
 
 def ensure_node_modules(reference_path: Path) -> bool:
-    """Ensure node_modules exists in reference, run npm install if needed."""
+    """Ensure node_modules exists in reference, run bun install if needed."""
     
     node_modules = reference_path / 'node_modules/@crowdin/crowdin-api-client'
     package_json = reference_path / 'package.json'
@@ -172,11 +172,11 @@ def ensure_node_modules(reference_path: Path) -> bool:
         print(f"✅ node_modules already installed in {reference_path}\n")
         return True
     
-    print(f"📦 node_modules not found, running npm install in {reference_path}...")
+    print(f"📦 node_modules not found, running bun install in {reference_path}...")
     
     try:
         result = subprocess.run(
-            ['npm', 'install'],
+            ['bun', 'install'],
             cwd=reference_path,
             capture_output=True,
             text=True,
@@ -184,31 +184,30 @@ def ensure_node_modules(reference_path: Path) -> bool:
         )
         
         if result.returncode == 0:
-            print(f"✅ npm install completed successfully\n")
+            print(f"✅ bun install completed successfully\n")
             return True
         else:
-            print(f"Error: npm install failed", file=sys.stderr)
+            print(f"Error: bun install failed", file=sys.stderr)
             print(result.stderr, file=sys.stderr)
             return False
             
     except subprocess.TimeoutExpired:
-        print(f"Error: npm install timed out", file=sys.stderr)
+        print(f"Error: bun install timed out", file=sys.stderr)
         return False
     except FileNotFoundError:
-        print(f"Error: npm not found. Please install Node.js", file=sys.stderr)
+        print(f"Error: bun not found. Please install bun", file=sys.stderr)
         return False
     except Exception as e:
-        print(f"Error running npm install: {e}", file=sys.stderr)
+        print(f"Error running bun install: {e}", file=sys.stderr)
         return False
 
 
 def cleanup_node_modules(reference_path: Path) -> None:
-    """Remove node_modules and package-lock.json after generation."""
+    """Remove node_modules after generation."""
     
     print(f"\n🧹 Cleaning up...")
     
     node_modules = reference_path / 'node_modules'
-    package_lock = reference_path / 'package-lock.json'
     
     # Remove node_modules
     if node_modules.exists():
@@ -217,14 +216,6 @@ def cleanup_node_modules(reference_path: Path) -> None:
             print(f"✅ Removed {node_modules}")
         except Exception as e:
             print(f"⚠️  Failed to remove node_modules: {e}", file=sys.stderr)
-    
-    # Remove package-lock.json
-    if package_lock.exists():
-        try:
-            package_lock.unlink()
-            print(f"✅ Removed {package_lock}")
-        except Exception as e:
-            print(f"⚠️  Failed to remove package-lock.json: {e}", file=sys.stderr)
 
 
 def main():
